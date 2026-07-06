@@ -578,6 +578,26 @@ a:hover {
     color: var(--white);
 }
 
+.btn-excel-outline {
+    background: transparent;
+    color: var(--success);
+    border: 2px solid var(--success);
+    font-weight: 600;
+    padding: 0.45rem 1.2rem;
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-excel-outline:hover {
+    background: var(--success);
+    color: var(--white);
+}
+
+
 .btn-uum-yellow {
     background: var(--uum-yellow);
     color: var(--uum-blue-dark);

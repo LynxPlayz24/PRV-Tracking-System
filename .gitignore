@@ -1,4 +1,7 @@
 /vendor/
 .env
-output.html
-test_map.php
+.env.local
+.env.*.local
+.vscode/
+.idea/
+*.log

@@ -36,7 +36,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                     </button>
                 </form>
                 <form action="<?= $baseUrl ?>/export/excel" method="POST" target="_blank" class="m-0">
-                    <button type="submit" class="btn btn-outline-success">
+                    <button type="submit" class="btn btn-excel-outline">
                         <i class="bi bi-file-earmark-excel me-1"></i> Bulk Excel
                     </button>
                 </form>
@@ -91,7 +91,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                     <i class="bi bi-file-earmark-pdf"></i> PDF
                                 </a>
                                 <a href="<?= $baseUrl ?>/export/excel/<?= $s['student_id'] ?>" 
-                                   class="btn btn-sm btn-outline-success" target="_blank" title="Export Excel">
+                                   class="btn btn-sm btn-excel-outline" target="_blank" title="Export Excel">
                                     <i class="bi bi-file-earmark-excel"></i> Excel
                                 </a>
                             </div>
