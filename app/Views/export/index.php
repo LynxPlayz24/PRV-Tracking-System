@@ -8,7 +8,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     </div>
 </div>
 
-<div class="card animate-fade-in-up stagger-1">
+<div class="card shadow-sm border-0 animate-fade-in-up stagger-1">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-file-earmark-arrow-down me-2"></i>Select a Student to Generate Report</span>
         <span class="badge bg-secondary" id="studentCount"><?= count($students ?? []) ?> students</span>
@@ -51,7 +51,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" id="exportTable">
-                <thead class="bg-light">
+                <thead class="table-light text-muted fw-semibold">
                     <tr>
                         <th class="px-4 py-3 border-0">Matric No</th>
                         <th class="py-3 border-0">Name</th>

@@ -10,11 +10,11 @@ $currentUserId = $_SESSION['user_id'] ?? 0;
     </div>
 </div>
 
-<div class="card animate-fade-in-up stagger-1">
+<div class="card shadow-sm border-0 animate-fade-in-up stagger-1">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+                <thead class="table-light text-muted fw-semibold">
                     <tr>
                         <th class="px-4 py-3 border-0">Username</th>
                         <th class="py-3 border-0">Name</th>

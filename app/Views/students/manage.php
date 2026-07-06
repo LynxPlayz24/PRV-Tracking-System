@@ -36,11 +36,11 @@ $csrf = $_SESSION['csrf_token'] ?? '';
     <input type="hidden" name="student_ids" id="bulkDeleteIds" value="">
 </form>
 
-<div class="card animate-fade-in-up stagger-1">
+<div class="card shadow-sm border-0 animate-fade-in-up stagger-1">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" id="manageTable">
-                <thead class="bg-light">
+                <thead class="table-light text-muted fw-semibold">
                     <tr>
                         <th class="ps-4 py-3 border-0" style="width: 40px;">
                             <input type="checkbox" class="form-check-input" id="selectAll" title="Select all">

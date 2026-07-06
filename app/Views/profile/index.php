@@ -11,7 +11,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
 
 <div class="row animate-fade-in-up stagger-1">
     <div class="col-lg-4 mb-4">
-        <div class="card text-center">
+        <div class="card shadow-sm border-0 text-center">
             <div class="card-body py-5">
                 <div class="position-relative d-inline-block mb-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fs-1 fw-bold" style="width:120px;height:120px;border:3px solid var(--uum-blue);">
@@ -32,8 +32,8 @@ $csrf = $_SESSION['csrf_token'] ?? '';
     </div>
 
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header bg-light">Edit Profile Settings</div>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0"><h5 class="mb-0 fw-bold text-dark">Edit Profile Settings</h5></div>
             <div class="card-body">
                 <form action="<?= $baseUrl ?>/profile/update" method="POST">
                     <input type="hidden" name="csrf_token" value="<?= $csrf ?>">

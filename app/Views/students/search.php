@@ -72,7 +72,7 @@
         <div class="table-prvts" id="resultsContainer">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-                    <thead>
+                    <thead class="table-light text-muted fw-semibold">
                         <tr>
                             <th>Matric No</th>
                             <th>Student Name</th>
