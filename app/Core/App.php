@@ -1,0 +1,95 @@
+<?php
+namespace App\Core;
+
+/**
+ * App Class
+ * Bootstrap the application: autoloading, session, route registration, dispatch.
+ */
+class App
+{
+    private Router $router;
+
+    public function __construct()
+    {
+        $this->router = new Router();
+        $this->registerRoutes();
+    }
+
+    /**
+     * Register all application routes
+     */
+    private function registerRoutes(): void
+    {
+        // ── Authentication ──
+        $this->router->get('/login',            'AuthController', 'login');
+        $this->router->post('/login',           'AuthController', 'loginPost');
+        $this->router->get('/register',         'AuthController', 'register');
+        $this->router->post('/register',        'AuthController', 'registerPost');
+        $this->router->get('/forgot-password',  'AuthController', 'forgotPassword');
+        $this->router->post('/forgot-password', 'AuthController', 'forgotPasswordPost');
+        $this->router->get('/reset-password',   'AuthController', 'resetPassword');
+        $this->router->post('/reset-password',  'AuthController', 'resetPasswordPost');
+        $this->router->get('/logout',           'AuthController', 'logout');
+
+        // ── Dashboard (Admin) ──
+        $this->router->get('/',                     'DashboardController', 'index');
+        $this->router->get('/dashboard',            'DashboardController', 'index');
+        $this->router->get('/dashboard/stats',      'DashboardController', 'stats');
+        $this->router->get('/dashboard/chart-data', 'DashboardController', 'chartData');
+
+        // ── Search ──
+        $this->router->get('/search',          'SearchController', 'index');
+        $this->router->get('/search/live',     'SearchController', 'liveSearch');
+
+        // ── Students ──
+        $this->router->get('/student/{id}',    'StudentController', 'detail');
+        $this->router->get('/students/create', 'StudentController', 'create');
+        $this->router->post('/students/store', 'StudentController', 'store');
+        $this->router->get('/students/manage', 'StudentController', 'manage');
+        $this->router->get('/students/edit/{id}',   'StudentController', 'edit');
+        $this->router->post('/students/update/{id}','StudentController', 'update');
+        $this->router->post('/students/delete/{id}','StudentController', 'delete');
+        $this->router->post('/students/bulk-delete', 'StudentController', 'bulkDelete');
+
+        // ── Import (Admin) ──
+        $this->router->get('/import',          'ImportController', 'index');
+        $this->router->post('/import/upload',  'ImportController', 'upload');
+
+        // ── Export ──
+        $this->router->get('/export',              'ExportController', 'index');
+        $this->router->post('/export/pdf',         'ExportController', 'exportPdf');
+        $this->router->post('/export/excel',       'ExportController', 'exportExcel');
+        $this->router->get('/export/pdf/{id}',     'ExportController', 'exportSinglePdf');
+        $this->router->get('/export/excel/{id}',   'ExportController', 'exportSingleExcel');
+
+        // ── User Management (Admin) ──
+        $this->router->get('/users',               'UserController', 'manage');
+        $this->router->post('/users/role/{id}',    'UserController', 'updateRole');
+        $this->router->post('/users/delete/{id}',  'UserController', 'delete');
+
+        // ── Academic Staff (Admin) ──
+        $this->router->get('/staff',                       'StaffController', 'manage');
+        $this->router->post('/staff/supervisors/store',    'StaffController', 'storeSupervisor');
+        $this->router->post('/staff/supervisors/update/{id}', 'StaffController', 'updateSupervisor');
+        $this->router->post('/staff/supervisors/delete/{id}', 'StaffController', 'deleteSupervisor');
+        $this->router->post('/staff/examiners/store',      'StaffController', 'storeExaminer');
+        $this->router->post('/staff/examiners/update/{id}',   'StaffController', 'updateExaminer');
+        $this->router->post('/staff/examiners/delete/{id}',   'StaffController', 'deleteExaminer');
+
+        // ── Profile ──
+        $this->router->get('/profile',         'ProfileController', 'index');
+        $this->router->post('/profile/update', 'ProfileController', 'update');
+        $this->router->post('/profile/password', 'ProfileController', 'changePassword');
+
+    }
+
+    /**
+     * Run the application
+     */
+    public function run(): void
+    {
+        $uri    = $_SERVER['REQUEST_URI'] ?? '/';
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $this->router->dispatch($uri, $method);
+    }
+}

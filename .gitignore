@@ -1,0 +1,4 @@
+/vendor/
+.env
+output.html
+test_map.php

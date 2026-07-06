@@ -1,0 +1,23 @@
+# Public .htaccess - Route all requests through index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /PRV_REPORT_TRACKING/public/
+
+    # If the request is for an existing file or directory, serve it directly
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Otherwise, route through index.php
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
