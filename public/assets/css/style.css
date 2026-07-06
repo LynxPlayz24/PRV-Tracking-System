@@ -174,23 +174,6 @@ a:hover {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.prvts-navbar .notification-badge {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background: var(--danger);
-    color: var(--white);
-    font-size: 0.65rem;
-    font-weight: 700;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-}
-
 .prvts-navbar .user-menu {
     display: flex;
     align-items: center;
@@ -834,54 +817,6 @@ a:hover {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.75rem;
-}
-
-/* ── Notifications Dropdown ── */
-.notification-dropdown {
-    width: 360px;
-    max-height: 420px;
-    overflow-y: auto;
-    padding: 0;
-}
-
-.notification-dropdown .notification-item {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--gray-100);
-    transition: background var(--transition-fast);
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
-}
-
-.notification-dropdown .notification-item:hover {
-    background: var(--gray-50);
-}
-
-.notification-dropdown .notification-item.unread {
-    background: var(--uum-blue-light);
-}
-
-.notification-dropdown .notification-item .notif-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-}
-
-.notification-dropdown .notification-item .notif-text {
-    font-size: var(--font-size-sm);
-    color: var(--gray-700);
-    line-height: 1.4;
-}
-
-.notification-dropdown .notification-item .notif-time {
-    font-size: var(--font-size-xs);
-    color: var(--gray-400);
-    margin-top: 0.15rem;
 }
 
 /* ── Import Upload Zone ── */
