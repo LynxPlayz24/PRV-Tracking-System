@@ -26,9 +26,6 @@ class App
         $this->router->get('/register',         'AuthController', 'register');
         $this->router->post('/register',        'AuthController', 'registerPost');
         $this->router->get('/forgot-password',  'AuthController', 'forgotPassword');
-        $this->router->post('/forgot-password', 'AuthController', 'forgotPasswordPost');
-        $this->router->get('/reset-password',   'AuthController', 'resetPassword');
-        $this->router->post('/reset-password',  'AuthController', 'resetPasswordPost');
         $this->router->get('/logout',           'AuthController', 'logout');
 
         // ── Dashboard (Admin) ──
@@ -65,6 +62,7 @@ class App
         // ── User Management (Admin) ──
         $this->router->get('/users',               'UserController', 'manage');
         $this->router->post('/users/role/{id}',    'UserController', 'updateRole');
+        $this->router->post('/users/reset-password/{id}', 'UserController', 'resetPassword');
         $this->router->post('/users/delete/{id}',  'UserController', 'delete');
 
         // ── Academic Staff (Admin) ──

@@ -70,6 +70,16 @@ $currentUserId = $_SESSION['user_id'] ?? 0;
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+
+                                <!-- Reset Password Button -->
+                                <?php if ($u['user_id'] !== $currentUserId): ?>
+                                <button type="button" class="btn btn-sm btn-outline-warning" title="Reset Password"
+                                        data-bs-toggle="modal" data-bs-target="#resetPasswordModal"
+                                        data-user-id="<?= $u['user_id'] ?>"
+                                        data-user-name="<?= htmlspecialchars($u['name']) ?>">
+                                    <i class="bi bi-key"></i>
+                                </button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -79,3 +89,68 @@ $currentUserId = $_SESSION['user_id'] ?? 0;
         </div>
     </div>
 </div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="resetPasswordForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resetPasswordModalLabel">
+                        <i class="bi bi-key me-2"></i>Reset Password
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        Setting a new password for <strong id="resetUserName"></strong>.
+                    </p>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="new_password" name="new_password"
+                                   placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
+                            <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" title="Show/Hide password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle me-1"></i>Reset Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('resetPasswordModal');
+    const form = document.getElementById('resetPasswordForm');
+    const userName = document.getElementById('resetUserName');
+    const passwordInput = document.getElementById('new_password');
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+
+    modal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const userId = button.getAttribute('data-user-id');
+        const name = button.getAttribute('data-user-name');
+
+        form.action = '<?= $baseUrl ?>/users/reset-password/' + userId;
+        userName.textContent = name;
+        passwordInput.value = '';
+    });
+
+    toggleBtn.addEventListener('click', function() {
+        const type = passwordInput.type === 'password' ? 'text' : 'password';
+        passwordInput.type = type;
+        this.querySelector('i').classList.toggle('bi-eye');
+        this.querySelector('i').classList.toggle('bi-eye-slash');
+    });
+});
+</script>

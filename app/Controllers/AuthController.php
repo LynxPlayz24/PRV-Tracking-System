@@ -157,113 +157,11 @@ class AuthController extends Controller
     }
 
     /**
-     * Show forgot password form
+     * Show forgot password page (directs users to contact admin)
      */
     public function forgotPassword(): void
     {
-        $data = [
-            'csrf_token' => $this->generateCsrfToken(),
-            'flash'      => $this->getFlash(),
-        ];
         require dirname(__DIR__) . '/Views/auth/forgot_password.php';
-    }
-
-    /**
-     * Process forgot password
-     */
-    public function forgotPasswordPost(): void
-    {
-        if (!$this->validateCsrfToken()) {
-            $this->setFlash('danger', 'Invalid security token.');
-            $this->redirect($this->baseUrl() . '/forgot-password');
-            return;
-        }
-
-        $email = trim($this->input('email', ''));
-        $user = $this->userModel->findByEmail($email);
-
-        if ($user) {
-            $token = bin2hex(random_bytes(32));
-            $this->userModel->setResetToken($email, $token);
-
-            // Display token in development environment. In production, this should be sent via email.
-            $resetUrl = $this->baseUrl() . '/reset-password?token=' . $token;
-            $this->setFlash('info', 'Password reset link (DEV): <a href="' . $resetUrl . '" class="alert-link">' . $resetUrl . '</a>');
-        } else {
-            // Don't reveal if email exists or not
-            $this->setFlash('info', 'If an account with that email exists, a reset link has been generated.');
-        }
-
-        $this->redirect($this->baseUrl() . '/forgot-password');
-    }
-
-    /**
-     * Show reset password form
-     */
-    public function resetPassword(): void
-    {
-        $token = $_GET['token'] ?? '';
-
-        if (empty($token)) {
-            $this->setFlash('danger', 'Invalid reset link.');
-            $this->redirect($this->baseUrl() . '/login');
-            return;
-        }
-
-        $user = $this->userModel->findByResetToken($token);
-        if (!$user) {
-            $this->setFlash('danger', 'Reset link is invalid or has expired.');
-            $this->redirect($this->baseUrl() . '/login');
-            return;
-        }
-
-        $data = [
-            'csrf_token' => $this->generateCsrfToken(),
-            'token'      => $token,
-            'flash'      => $this->getFlash(),
-        ];
-        require dirname(__DIR__) . '/Views/auth/forgot_password.php';
-    }
-
-    /**
-     * Process password reset
-     */
-    public function resetPasswordPost(): void
-    {
-        if (!$this->validateCsrfToken()) {
-            $this->setFlash('danger', 'Invalid security token.');
-            $this->redirect($this->baseUrl() . '/login');
-            return;
-        }
-
-        $token    = $this->input('token', '');
-        $password = $this->input('password', '');
-        $confirm  = $this->input('confirm_password', '');
-
-        if (strlen($password) < 6) {
-            $this->setFlash('danger', 'Password must be at least 6 characters.');
-            $this->redirect($this->baseUrl() . '/reset-password?token=' . $token);
-            return;
-        }
-
-        if ($password !== $confirm) {
-            $this->setFlash('danger', 'Passwords do not match.');
-            $this->redirect($this->baseUrl() . '/reset-password?token=' . $token);
-            return;
-        }
-
-        $user = $this->userModel->findByResetToken($token);
-        if (!$user) {
-            $this->setFlash('danger', 'Reset link is invalid or has expired.');
-            $this->redirect($this->baseUrl() . '/login');
-            return;
-        }
-
-        $this->userModel->updatePassword($user['user_id'], $password);
-        $this->userModel->clearResetToken($user['user_id']);
-
-        $this->setFlash('success', 'Password has been reset successfully. Please log in.');
-        $this->redirect($this->baseUrl() . '/login');
     }
 
     /**

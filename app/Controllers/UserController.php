@@ -74,6 +74,52 @@ class UserController extends Controller
     }
 
     /**
+     * Reset a user's password (admin action).
+     */
+    public function resetPassword(string $id): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->setFlash('danger', 'Invalid request.');
+            $this->redirect($this->baseUrl() . '/users');
+            return;
+        }
+
+        $userId = (int)$id;
+
+        // Prevent resetting your own password here (use profile page instead).
+        if ($userId === $_SESSION['user_id']) {
+            $this->setFlash('danger', 'Use the Profile page to change your own password.');
+            $this->redirect($this->baseUrl() . '/users');
+            return;
+        }
+
+        $user = $this->userModel->findById($userId);
+        if (!$user) {
+            $this->setFlash('danger', 'User not found.');
+            $this->redirect($this->baseUrl() . '/users');
+            return;
+        }
+
+        $newPassword = trim($this->input('new_password', ''));
+
+        if (strlen($newPassword) < 6) {
+            $this->setFlash('danger', 'Password must be at least 6 characters.');
+            $this->redirect($this->baseUrl() . '/users');
+            return;
+        }
+
+        if ($this->userModel->updatePassword($userId, $newPassword)) {
+            $this->setFlash('success', 'Password for <strong>' . htmlspecialchars($user['name']) . '</strong> has been reset successfully.');
+        } else {
+            $this->setFlash('danger', 'Failed to reset password.');
+        }
+
+        $this->redirect($this->baseUrl() . '/users');
+    }
+
+    /**
      * Delete a user.
      */
     public function delete(string $id): void
