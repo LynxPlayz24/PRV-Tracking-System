@@ -56,7 +56,7 @@ class ProfileController extends Controller
             return;
         }
 
-        // Handle password update
+        // Process password update if provided.
         $hash = null;
         if (!empty($password)) {
             if ($password !== $confirmPassword) {
@@ -72,7 +72,7 @@ class ProfileController extends Controller
             $hash = password_hash($password, PASSWORD_BCRYPT);
         }
 
-        // Update DB via Database directly since User model might not have this specific method
+        // Update database directly if User model lacks the specific method.
         $db = \App\Core\Database::getInstance();
         
         $sql = 'UPDATE users SET name = :name, email = :email';
@@ -95,7 +95,7 @@ class ProfileController extends Controller
         }
 
         if ($db->execute()) {
-            $_SESSION['user_name'] = $name; // Update session name
+            $_SESSION['user_name'] = $name; // Update session with new name.
             $this->setFlash('success', 'Profile updated successfully.');
         } else {
             $this->setFlash('danger', 'Failed to update profile.');

@@ -6,8 +6,7 @@ use App\Core\Database;
 use App\Core\Middleware;
 
 /**
- * SearchController
- * Handles the student search interface and AJAX live search endpoint.
+ * SearchController manages the student search interface and AJAX live search endpoint.
  */
 class SearchController extends Controller
 {
@@ -25,7 +24,7 @@ class SearchController extends Controller
     {
         Middleware::requireLogin();
 
-        // Get filter options for dropdowns
+        // Retrieve unique schools to populate filter dropdowns.
         $this->db->query('SELECT DISTINCT school FROM students WHERE school IS NOT NULL ORDER BY school');
         $schools = $this->db->resultSet();
         $degrees = ['Masters', 'PhD', 'DBA'];
@@ -106,7 +105,7 @@ class SearchController extends Controller
         $this->db->query($sql);
         $results = $this->db->resultSet($params);
 
-        // Map status to badge classes
+        // Map research statuses to corresponding CSS badge classes.
         foreach ($results as &$row) {
             $row['status_badge'] = $this->getStatusBadgeClass($row['research_status']);
         }

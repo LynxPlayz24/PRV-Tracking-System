@@ -64,7 +64,7 @@ class StudentController extends Controller
     {
         Middleware::requireAdmin();
 
-        // Ensure a fresh CSRF token exists for the form
+        // Generate a fresh CSRF token for the form.
         $this->generateCsrfToken();
 
         $data = [
@@ -102,14 +102,14 @@ class StudentController extends Controller
             return;
         }
 
-        // Check if matric exists
+        // Check if Matric Number is already in use.
         if ($this->studentModel->findByMatricNo($matricNo)) {
             $this->setFlash('danger', 'Matric Number already exists.');
             $this->redirect($this->baseUrl() . '/students/create');
             return;
         }
 
-        // Validate logical dates
+        // Validate logical sequence of dates.
         if ($error = $this->validateLogicalDates($_POST)) {
             $this->setFlash('danger', $error);
             $this->redirect($this->baseUrl() . '/students/create');

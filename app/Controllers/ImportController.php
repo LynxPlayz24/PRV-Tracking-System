@@ -97,7 +97,7 @@ class ImportController extends Controller
                 exit;
             }
 
-            // Combine the main header with the sub-header row beneath it
+            // Combine the main header with the sub-header.
             $combinedHeader = [];
             foreach ($headerRow as $i => $col) {
                 $col1 = trim(strval($col));
@@ -140,27 +140,27 @@ class ImportController extends Controller
 
                 $studentId = null;
                 if ($existingStudent) {
-                    // Update existing
+                    // Update existing student record.
                     $studentId = $existingStudent['student_id'];
                     $studentData['research_status'] = $existingStudent['research_status']; // preserve status
                     $this->studentModel->update($studentId, $studentData);
                     $updateCount++;
                 } else {
-                    // Create new
+                    // Create new student record.
                     $studentId = $this->studentModel->create($studentData);
                     $successCount++;
                 }
 
-                // Process Supervisors
+                // Process Supervisor assignments.
                 $this->processSupervisors($studentId, $row, $map);
 
-                // Process Viva & Examiners
+                // Process Viva records and Examiners.
                 $this->processViva($studentId, $row, $map);
 
-                // Process Corrections
+                // Process Correction records.
                 $this->processCorrections($studentId, $row, $map);
 
-                // Process Graduation
+                // Process Graduation records.
                 $this->processGraduation($studentId, $row, $map);
             }
 
@@ -187,7 +187,7 @@ class ImportController extends Controller
         $val = trim((string)$row[$index]);
         if ($val === '' || $val === '-' || strtolower($val) === 'n/a') return null;
 
-        // Check if it's an Excel numeric date
+        // Check if value is an Excel numeric date.
         if (is_numeric($val)) {
             try {
                 $dateTime = Date::excelToDateTimeObject($val);
@@ -197,7 +197,7 @@ class ImportController extends Controller
             }
         }
 
-        // Try standard parsing
+        // Attempt standard date parsing.
         $time = strtotime($val);
         if ($time !== false) {
             return date('Y-m-d', $time);

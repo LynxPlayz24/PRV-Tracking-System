@@ -6,8 +6,7 @@ use App\Core\Database;
 use App\Core\Middleware;
 
 /**
- * DashboardController
- * Handles the admin dashboard view and statistics endpoints.
+ * DashboardController renders the admin dashboard and computes statistics.
  */
 class DashboardController extends Controller
 {
@@ -43,7 +42,7 @@ class DashboardController extends Controller
     {
         $actions = [];
         
-        // Upcoming Vivas
+        // Retrieve students with Vivas scheduled in the next 14 days.
         $this->db->query("
             SELECT s.student_id, s.name, s.matric_no, v.viva_date 
             FROM students s
@@ -64,7 +63,7 @@ class DashboardController extends Controller
             ];
         }
 
-        // Approaching/Overdue Corrections
+        // Retrieve corrections that are approaching deadline or overdue.
         $this->db->query("
             SELECT s.student_id, s.name, s.matric_no, c.correction_deadline 
             FROM students s

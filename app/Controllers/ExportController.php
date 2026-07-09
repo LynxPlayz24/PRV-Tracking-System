@@ -55,7 +55,7 @@ class ExportController extends Controller
             return;
         }
 
-        // Configure DomPDF
+        // Configure DomPDF options.
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true); // allow remote images if any
@@ -63,21 +63,21 @@ class ExportController extends Controller
         
         $dompdf = new Dompdf($options);
 
-        // Load the HTML template
+        // Load the HTML template.
         ob_start();
         $this->view('export.pdf_template', ['student' => $student]);
         $html = ob_get_clean();
 
-        // Load HTML into DomPDF
+        // Load HTML into DomPDF.
         $dompdf->loadHtml($html);
 
-        // Set paper size and orientation
+        // Set paper size and orientation.
         $dompdf->setPaper('A4', 'portrait');
 
-        // Render the PDF
+        // Render the PDF.
         $dompdf->render();
 
-        // Output to browser
+        // Stream the PDF to the browser.
         $filename = 'PRVTS_Report_' . $student['matric_no'] . '.pdf';
         $dompdf->stream($filename, ['Attachment' => false]);
     }

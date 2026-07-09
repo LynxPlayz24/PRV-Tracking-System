@@ -15,7 +15,7 @@ class UserController extends Controller
     }
 
     /**
-     * Show user management page
+     * Render the user management page.
      */
     public function manage(): void
     {
@@ -36,7 +36,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update a user's role
+     * Update the role of a specific user.
      */
     public function updateRole(string $id): void
     {
@@ -57,7 +57,7 @@ class UserController extends Controller
             return;
         }
 
-        // Prevent self-demotion
+        // Prevent self-demotion.
         if ($userId === $_SESSION['user_id'] && $role !== 'admin') {
             $this->setFlash('danger', 'You cannot change your own admin role.');
             $this->redirect($this->baseUrl() . '/users');
@@ -74,7 +74,7 @@ class UserController extends Controller
     }
 
     /**
-     * Delete a user
+     * Delete a user.
      */
     public function delete(string $id): void
     {
@@ -88,14 +88,14 @@ class UserController extends Controller
 
         $userId = (int)$id;
 
-        // Prevent self-deletion
+        // Prevent self-deletion.
         if ($userId === $_SESSION['user_id']) {
             $this->setFlash('danger', 'You cannot delete yourself.');
             $this->redirect($this->baseUrl() . '/users');
             return;
         }
 
-        // We need a delete method in UserModel if not present. Let's add it via the DB object directly if needed.
+        // Execute delete directly via DB if UserModel lacks a delete method.
         $db = \App\Core\Database::getInstance();
         $db->query('DELETE FROM users WHERE user_id = :id');
         $db->bind(':id', $userId);

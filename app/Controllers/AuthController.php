@@ -5,8 +5,7 @@ use App\Core\Controller;
 use App\Models\User;
 
 /**
- * AuthController
- * Handles login, registration, password reset, and logout.
+ * AuthController handles authentication, including login, registration, password resets, and logout.
  */
 class AuthController extends Controller
 {
@@ -22,7 +21,7 @@ class AuthController extends Controller
      */
     public function login(): void
     {
-        // If already logged in, redirect
+        // Redirect to dashboard if already authenticated.
         if (isset($_SESSION['user_id'])) {
             $this->redirect($this->baseUrl() . '/dashboard');
             return;
@@ -66,7 +65,7 @@ class AuthController extends Controller
             return;
         }
 
-        // Regenerate session ID to prevent fixation
+        // Prevent session fixation
         session_regenerate_id(true);
 
         // Set session
@@ -187,7 +186,7 @@ class AuthController extends Controller
             $token = bin2hex(random_bytes(32));
             $this->userModel->setResetToken($email, $token);
 
-            // In development, display the token. In production, send via email.
+            // Display token in development environment. In production, this should be sent via email.
             $resetUrl = $this->baseUrl() . '/reset-password?token=' . $token;
             $this->setFlash('info', 'Password reset link (DEV): <a href="' . $resetUrl . '" class="alert-link">' . $resetUrl . '</a>');
         } else {

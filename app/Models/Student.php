@@ -76,7 +76,7 @@ class Student
     {
         if (empty($ids)) return 0;
 
-        // Build parameterized placeholders
+        // Build parameterized placeholders.
         $placeholders = [];
         foreach ($ids as $i => $id) {
             $placeholders[] = ':id' . $i;
@@ -100,18 +100,18 @@ class Student
 
     public function getFullDetails(int $studentId): array|false
     {
-        // Get base student info
+        // Retrieve base student information.
         $student = $this->findById($studentId);
         if (!$student) return false;
 
-        // Get supervisors
+        // Retrieve supervisors.
         $this->db->query('SELECT sup.*, ss.role FROM supervisors sup 
                           JOIN student_supervisors ss ON sup.supervisor_id = ss.supervisor_id 
                           WHERE ss.student_id = :id ORDER BY ss.role DESC');
         $this->db->bind(':id', $studentId);
         $student['supervisors'] = $this->db->resultSet();
 
-        // Get viva records & examiners
+        // Retrieve viva records and examiners.
         $this->db->query('SELECT v.*, 
                                  e_int.examiner_name as examiner_name, e_int.institution as institution, e_int.email as examiner_email,
                                  e_ext.examiner_name as external_examiner_name, e_ext.institution as external_institution, e_ext.email as external_email
@@ -122,12 +122,12 @@ class Student
         $this->db->bind(':id', $studentId);
         $student['viva_records'] = $this->db->resultSet();
 
-        // Get corrections
+        // Retrieve corrections.
         $this->db->query('SELECT * FROM corrections WHERE student_id = :id ORDER BY correction_id DESC LIMIT 1');
         $this->db->bind(':id', $studentId);
         $student['correction'] = $this->db->single() ?: null;
 
-        // Get graduation info
+        // Retrieve graduation information.
         $this->db->query('SELECT * FROM graduation WHERE student_id = :id LIMIT 1');
         $this->db->bind(':id', $studentId);
         $student['graduation'] = $this->db->single() ?: null;

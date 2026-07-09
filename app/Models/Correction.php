@@ -58,7 +58,7 @@ class Correction
             $val = $data[$dataKey] ?? null;
             if ($val === '') $val = null;
             
-            // special cases
+            // Handle special cases.
             if ($dbCol === 'correction_required') $val = empty($val) ? 0 : 1;
             if ($dbCol === 'verification_status') $val = $val ?? 'Pending';
             
