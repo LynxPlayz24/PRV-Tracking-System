@@ -76,8 +76,6 @@ class App
         // ── Profile ──
         $this->router->get('/profile',         'ProfileController', 'index');
         $this->router->post('/profile/update', 'ProfileController', 'update');
-        $this->router->post('/profile/password', 'ProfileController', 'changePassword');
-
     }
 
     /**

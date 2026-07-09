@@ -64,6 +64,18 @@ class ProfileController extends Controller
             return;
         }
 
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->setFlash('danger', 'Invalid email format.');
+            $this->redirect($this->baseUrl() . '/profile');
+            return;
+        }
+
+        if ($this->userModel->emailExists($email, $userId)) {
+            $this->setFlash('danger', 'Email is already taken by another account.');
+            $this->redirect($this->baseUrl() . '/profile');
+            return;
+        }
+
         // Process password update if provided.
         $hash = null;
         if (!empty($password)) {
