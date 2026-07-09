@@ -50,6 +50,14 @@ class ProfileController extends Controller
         $password = $this->input('password');
         $confirmPassword = $this->input('confirm_password');
 
+        // If password change is forced, password fields are required
+        $isForced = !empty($_SESSION['force_password_change']);
+        if ($isForced && empty($password)) {
+            $this->setFlash('danger', 'You must set a new password.');
+            $this->redirect($this->baseUrl() . '/profile');
+            return;
+        }
+
         if (empty($name) || empty($email)) {
             $this->setFlash('danger', 'Name and Email are required.');
             $this->redirect($this->baseUrl() . '/profile');
@@ -72,7 +80,7 @@ class ProfileController extends Controller
             $hash = password_hash($password, PASSWORD_BCRYPT);
         }
 
-        // Update database directly if User model lacks the specific method.
+        // Update database
         $db = \App\Core\Database::getInstance();
         
         $sql = 'UPDATE users SET name = :name, email = :email';
@@ -83,7 +91,7 @@ class ProfileController extends Controller
         ];
 
         if ($hash) {
-            $sql .= ', password_hash = :hash';
+            $sql .= ', password = :hash';
             $params[':hash'] = $hash;
         }
 
@@ -95,10 +103,27 @@ class ProfileController extends Controller
         }
 
         if ($db->execute()) {
-            $_SESSION['user_name'] = $name; // Update session with new name.
+            $_SESSION['user_name'] = $name;
+
+            // Clear force password change flag if password was updated
+            if ($hash) {
+                $this->userModel->clearForcePasswordChange($userId);
+                unset($_SESSION['force_password_change']);
+            }
+
             $this->setFlash('success', 'Profile updated successfully.');
         } else {
             $this->setFlash('danger', 'Failed to update profile.');
+        }
+
+        // Redirect based on role after forced change
+        if ($hash && !isset($_SESSION['force_password_change'])) {
+            if (($_SESSION['user_role'] ?? '') === 'admin') {
+                $this->redirect($this->baseUrl() . '/dashboard');
+            } else {
+                $this->redirect($this->baseUrl() . '/search');
+            }
+            return;
         }
 
         $this->redirect($this->baseUrl() . '/profile');

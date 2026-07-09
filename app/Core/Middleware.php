@@ -10,6 +10,7 @@ class Middleware
     /**
      * Require user to be logged in.
      * Redirects to login page if not authenticated.
+     * Redirects to profile if password change is required.
      */
     public static function requireLogin(): void
     {
@@ -21,6 +22,30 @@ class Middleware
             $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
             header("Location: {$baseUrl}/login");
             exit;
+        }
+
+        // Enforce password change (except on profile and logout routes)
+        self::requirePasswordChanged();
+    }
+
+    /**
+     * Redirect to profile if force_password_change is active.
+     * Allows access to /profile and /logout so the user isn't stuck.
+     */
+    public static function requirePasswordChanged(): void
+    {
+        if (!empty($_SESSION['force_password_change'])) {
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            // Allow profile and logout routes through
+            if (strpos($uri, '/profile') === false && strpos($uri, '/logout') === false) {
+                $_SESSION['flash'] = [
+                    'type'    => 'warning',
+                    'message' => 'You must change your password before continuing.',
+                ];
+                $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
+                header("Location: {$baseUrl}/profile");
+                exit;
+            }
         }
     }
 

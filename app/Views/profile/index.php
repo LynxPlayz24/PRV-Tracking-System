@@ -1,7 +1,16 @@
 <?php
 $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
 $csrf = $_SESSION['csrf_token'] ?? '';
+$forceChange = !empty($_SESSION['force_password_change']);
 ?>
+
+<?php if ($forceChange): ?>
+<div class="alert alert-warning animate-fade-in-up mb-4" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Password change required.</strong> You must set a new password before you can access the system.
+</div>
+<?php endif; ?>
+
 <div class="page-header animate-fade-in-up">
     <div>
         <div class="breadcrumb text-muted">PRVTS / Settings / Profile</div>
@@ -49,21 +58,29 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                     </div>
 
 
-                    <h6 class="mb-3 text-primary">Change Password</h6>
+                    <h6 class="mb-3 text-primary">
+                        <?= $forceChange ? 'Set New Password <span class="text-danger">*</span>' : 'Change Password' ?>
+                    </h6>
+                    <?php if ($forceChange): ?>
+                    <p class="text-muted small mb-3">You must choose a new password to replace the temporary one assigned by your administrator.</p>
+                    <?php endif; ?>
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label class="form-label">New Password</label>
-                            <input type="password" class="form-control" name="password" placeholder="Leave blank to keep current">
+                            <input type="password" class="form-control" name="password" 
+                                   placeholder="<?= $forceChange ? 'Required - min 6 characters' : 'Leave blank to keep current' ?>"
+                                   minlength="6" <?= $forceChange ? 'required' : '' ?>>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" name="confirm_password" placeholder="Confirm new password">
+                            <input type="password" class="form-control" name="confirm_password" 
+                                   placeholder="Confirm new password" <?= $forceChange ? 'required' : '' ?>>
                         </div>
                     </div>
 
                     <div class="text-end mt-4 pt-3 border-top">
                         <button type="submit" class="btn btn-uum px-4">
-                            <i class="bi bi-save me-2"></i>Save Changes
+                            <i class="bi bi-save me-2"></i><?= $forceChange ? 'Set Password & Continue' : 'Save Changes' ?>
                         </button>
                     </div>
                 </form>
@@ -71,3 +88,4 @@ $csrf = $_SESSION['csrf_token'] ?? '';
         </div>
     </div>
 </div>
+

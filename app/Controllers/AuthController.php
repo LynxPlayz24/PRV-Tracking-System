@@ -80,6 +80,14 @@ class AuthController extends Controller
             setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
         }
 
+        // Force password change on first login
+        if (!empty($user['force_password_change'])) {
+            $_SESSION['force_password_change'] = true;
+            $this->setFlash('warning', 'You must change your password before continuing.');
+            $this->redirect($this->baseUrl() . '/profile');
+            return;
+        }
+
         $this->setFlash('success', 'Welcome back, ' . $user['name'] . '!');
 
         // Redirect based on role

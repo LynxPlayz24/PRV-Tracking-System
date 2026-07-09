@@ -52,14 +52,15 @@ class User
     public function create(array $data): bool
     {
         $this->db->query(
-            'INSERT INTO users (name, email, username, password, role) 
-             VALUES (:name, :email, :username, :password, :role)'
+            'INSERT INTO users (name, email, username, password, role, force_password_change) 
+             VALUES (:name, :email, :username, :password, :role, :force_pw)'
         );
         $this->db->bind(':name', $data['name']);
         $this->db->bind(':email', $data['email']);
         $this->db->bind(':username', $data['username']);
         $this->db->bind(':password', password_hash($data['password'], PASSWORD_BCRYPT));
         $this->db->bind(':role', $data['role'] ?? 'staff');
+        $this->db->bind(':force_pw', $data['force_password_change'] ?? 1);
         return $this->db->execute();
     }
 
@@ -88,6 +89,25 @@ class User
         $this->db->bind(':password', password_hash($newPassword, PASSWORD_BCRYPT));
         $this->db->bind(':id', $id);
         return $this->db->execute();
+    }
+
+    /**
+     * Set force_password_change flag
+     */
+    public function setForcePasswordChange(int $id, bool $force = true): bool
+    {
+        $this->db->query('UPDATE users SET force_password_change = :flag WHERE user_id = :id');
+        $this->db->bind(':flag', $force ? 1 : 0);
+        $this->db->bind(':id', $id);
+        return $this->db->execute();
+    }
+
+    /**
+     * Clear force_password_change flag
+     */
+    public function clearForcePasswordChange(int $id): bool
+    {
+        return $this->setForcePasswordChange($id, false);
     }
 
     /**

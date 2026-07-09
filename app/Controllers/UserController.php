@@ -169,6 +169,7 @@ class UserController extends Controller
         }
 
         if ($this->userModel->updatePassword($userId, $newPassword)) {
+            $this->userModel->setForcePasswordChange($userId);
             $this->setFlash('success', 'Password for <strong>' . htmlspecialchars($user['name']) . '</strong> has been reset successfully.');
         } else {
             $this->setFlash('danger', 'Failed to reset password.');
