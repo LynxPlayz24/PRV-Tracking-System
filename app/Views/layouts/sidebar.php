@@ -105,7 +105,7 @@ unset($_SESSION['flash']);
 <?php if ($flash): ?>
 <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080; margin-top: var(--header-height);">
     <div class="alert alert-<?= htmlspecialchars($flash['type']) ?> alert-dismissible fade show animate-fade-in-up" role="alert">
-        <?= htmlspecialchars($flash['message']) ?>
+        <?= $flash['message'] ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 </div>
