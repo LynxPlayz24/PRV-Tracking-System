@@ -36,6 +36,64 @@ class UserController extends Controller
     }
 
     /**
+     * Create a new user account (admin action).
+     */
+    public function store(): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->setFlash('danger', 'Invalid request.');
+            $this->redirect($this->baseUrl() . '/users');
+            return;
+        }
+
+        $name     = trim($this->input('name', ''));
+        $email    = trim($this->input('email', ''));
+        $username = trim($this->input('username', ''));
+        $password = $this->input('password', '');
+        $role     = $this->input('role', 'staff');
+
+        // Validation
+        $errors = [];
+        if (empty($name))     $errors[] = 'Full name is required.';
+        if (empty($email))    $errors[] = 'Email is required.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email format.';
+        if (empty($username)) $errors[] = 'Username is required.';
+        if (strlen($username) < 3) $errors[] = 'Username must be at least 3 characters.';
+        if (strlen($password) < 6) $errors[] = 'Password must be at least 6 characters.';
+        if (!in_array($role, ['admin', 'staff'])) $errors[] = 'Invalid role.';
+
+        // Check uniqueness
+        if ($this->userModel->usernameExists($username)) {
+            $errors[] = 'Username is already taken.';
+        }
+        if ($this->userModel->emailExists($email)) {
+            $errors[] = 'Email is already registered.';
+        }
+
+        if (!empty($errors)) {
+            $this->setFlash('danger', implode('<br>', $errors));
+            $this->redirect($this->baseUrl() . '/users');
+            return;
+        }
+
+        if ($this->userModel->create([
+            'name'     => $name,
+            'email'    => $email,
+            'username' => $username,
+            'password' => $password,
+            'role'     => $role,
+        ])) {
+            $this->setFlash('success', 'User <strong>' . htmlspecialchars($name) . '</strong> created successfully.');
+        } else {
+            $this->setFlash('danger', 'Failed to create user.');
+        }
+
+        $this->redirect($this->baseUrl() . '/users');
+    }
+
+    /**
      * Update the role of a specific user.
      */
     public function updateRole(string $id): void

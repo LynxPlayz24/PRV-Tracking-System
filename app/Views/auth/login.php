@@ -76,12 +76,6 @@ $flash = $data['flash'] ?? null;
                     Sign In
                 </button>
             </form>
-
-            <div class="text-center mt-3">
-                <span style="font-size:0.85rem;color:var(--gray-500);">
-                    Don't have an account? <a href="<?= $baseUrl ?>/register">Register</a>
-                </span>
-            </div>
         </div>
     </div>
 

@@ -121,42 +121,6 @@ class User
     }
 
     /**
-     * Store password reset token
-     */
-    public function setResetToken(string $email, string $token): bool
-    {
-        $this->db->query(
-            'UPDATE users SET reset_token = :token, reset_expires = DATE_ADD(NOW(), INTERVAL 1 HOUR)
-             WHERE email = :email'
-        );
-        $this->db->bind(':token', $token);
-        $this->db->bind(':email', $email);
-        return $this->db->execute();
-    }
-
-    /**
-     * Find user by reset token (not expired)
-     */
-    public function findByResetToken(string $token): array|false
-    {
-        $this->db->query(
-            'SELECT * FROM users WHERE reset_token = :token AND reset_expires > NOW()'
-        );
-        $this->db->bind(':token', $token);
-        return $this->db->single();
-    }
-
-    /**
-     * Clear reset token after successful password reset
-     */
-    public function clearResetToken(int $id): bool
-    {
-        $this->db->query('UPDATE users SET reset_token = NULL, reset_expires = NULL WHERE user_id = :id');
-        $this->db->bind(':id', $id);
-        return $this->db->execute();
-    }
-
-    /**
      * Check if username exists (excluding a specific user)
      */
     public function usernameExists(string $username, ?int $excludeId = null): bool

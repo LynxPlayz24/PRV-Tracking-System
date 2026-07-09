@@ -23,8 +23,6 @@ class App
         // ── Authentication ──
         $this->router->get('/login',            'AuthController', 'login');
         $this->router->post('/login',           'AuthController', 'loginPost');
-        $this->router->get('/register',         'AuthController', 'register');
-        $this->router->post('/register',        'AuthController', 'registerPost');
         $this->router->get('/forgot-password',  'AuthController', 'forgotPassword');
         $this->router->get('/logout',           'AuthController', 'logout');
 
@@ -61,6 +59,7 @@ class App
 
         // ── User Management (Admin) ──
         $this->router->get('/users',               'UserController', 'manage');
+        $this->router->post('/users/store',        'UserController', 'store');
         $this->router->post('/users/role/{id}',    'UserController', 'updateRole');
         $this->router->post('/users/reset-password/{id}', 'UserController', 'resetPassword');
         $this->router->post('/users/delete/{id}',  'UserController', 'delete');

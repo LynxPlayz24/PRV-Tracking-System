@@ -24,8 +24,6 @@ CREATE TABLE IF NOT EXISTS `users` (
     `username`      VARCHAR(100) NOT NULL UNIQUE,
     `password`      VARCHAR(255) NOT NULL,
     `role`          ENUM('admin','staff') NOT NULL DEFAULT 'staff',
-    `reset_token`   VARCHAR(255) DEFAULT NULL,
-    `reset_expires` DATETIME DEFAULT NULL,
     `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
