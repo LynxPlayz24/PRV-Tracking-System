@@ -118,15 +118,15 @@ $supervisors = $supervisors ?? [];
                     <h5 class="card-title text-primary mb-4">Supervision & Submission Initiation</h5>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">Tarikh Penerimaan ITS</label>
+                            <label class="form-label">ITS Receipt Date</label>
                             <input type="date" class="form-control" name="its_receipt_date" value="<?= htmlspecialchars($student['its_receipt_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Tarikh Mesyuarat JIL / Bil. JIL Date</label>
+                            <label class="form-label">JIL Meeting Date</label>
                             <input type="date" class="form-control" name="jil_meeting_date" value="<?= htmlspecialchars($grad['jil_meeting_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Bil. JIL (No.)</label>
+                            <label class="form-label">JIL Meeting No.</label>
                             <input type="text" class="form-control" name="jil_meeting_no" value="<?= htmlspecialchars($grad['jil_meeting_no'] ?? '') ?>">
                         </div>
                         <div class="col-12"><hr></div>
@@ -207,11 +207,11 @@ $supervisors = $supervisors ?? [];
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Internal Examiner Email Persetujuan</label>
+                            <label class="form-label">Internal Examiner Approval Email</label>
                             <input type="date" class="form-control" name="internal_examiner_email_date" value="<?= htmlspecialchars($viva['internal_examiner_email_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">External Examiner Email Persetujuan</label>
+                            <label class="form-label">External Examiner Approval Email</label>
                             <input type="date" class="form-control" name="external_examiner_email_date" value="<?= htmlspecialchars($viva['external_examiner_email_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-4">
@@ -382,7 +382,7 @@ $supervisors = $supervisors ?? [];
                             <input type="date" class="form-control" name="endorsement_from_examiner_date" value="<?= htmlspecialchars($corr['endorsement_from_examiner_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Final Result (Selepas Pembetulan)</label>
+                            <label class="form-label">Final Result (After Correction)</label>
                             <input type="text" class="form-control" name="final_result" value="<?= htmlspecialchars($corr['final_result'] ?? '') ?>">
                         </div>
                     </div>

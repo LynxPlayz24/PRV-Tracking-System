@@ -136,8 +136,8 @@ function showVal($val) {
                             <tr><td class="text-muted">Internal Examiner</td><td><strong><?= showVal($viva['examiner_name'] ?? null) ?></strong></td></tr>
                             <tr><td class="text-muted">External Examiner</td><td><strong><?= showVal($viva['external_examiner_name'] ?? null) ?></strong></td></tr>
                             <tr><td colspan="2"><hr></td></tr>
-                            <tr><td class="text-muted">Internal Examiner Email Persetujuan</td><td><?= showDate($viva['internal_examiner_email_date'] ?? null) ?></td></tr>
-                            <tr><td class="text-muted">External Examiner Email Persetujuan</td><td><?= showDate($viva['external_examiner_email_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Internal Examiner Approval Email</td><td><?= showDate($viva['internal_examiner_email_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">External Examiner Approval Email</td><td><?= showDate($viva['external_examiner_email_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Panel Appointment Letter</td><td><?= showDate($viva['panel_appointment_letter_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Thesis to Panel (Hard)</td><td><?= showDate($viva['thesis_to_panel_hard_copy_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Thesis to Panel (Soft)</td><td><?= showDate($viva['thesis_to_panel_soft_copy_date'] ?? null) ?></td></tr>
