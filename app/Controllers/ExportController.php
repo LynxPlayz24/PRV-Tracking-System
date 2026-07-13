@@ -78,7 +78,7 @@ class ExportController extends Controller
         $dompdf->render();
 
         // Stream the PDF to the browser.
-        $filename = 'PRVTS_Report_' . $student['matric_no'] . '.pdf';
+        $filename = 'PRVTS_' . $student['matric_no'] . '.pdf';
         $dompdf->stream($filename, ['Attachment' => false]);
     }
 
@@ -135,7 +135,7 @@ class ExportController extends Controller
         };
 
         // Title
-        $sheet->setCellValue('A1', 'PRVTS Student Report: ' . $student['name']);
+        $sheet->setCellValue('A1', 'PRVTS Student Record: ' . $student['name']);
         $sheet->mergeCells('A1:B1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         
@@ -244,7 +244,7 @@ class ExportController extends Controller
         $sheet->getColumnDimension('B')->setAutoSize(true);
 
         $writer = new Xlsx($spreadsheet);
-        $filename = 'PRVTS_Report_' . $student['matric_no'] . '.xlsx';
+        $filename = 'PRVTS_' . $student['matric_no'] . '.xlsx';
         
         // Clean output buffer before sending headers
         if (ob_get_length()) {
@@ -297,7 +297,7 @@ class ExportController extends Controller
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        $filename = 'PRVTS_Bulk_Report_' . date('Ymd_His') . '.pdf';
+        $filename = 'PRVTS_Bulk_' . date('Ymd_His') . '.pdf';
         $dompdf->stream($filename, ['Attachment' => false]);
     }
 
