@@ -7,7 +7,16 @@ $csrf = $_SESSION['csrf_token'] ?? '';
         <div class="breadcrumb text-muted">PRVTS / Admin / Manage Students</div>
         <h1>Manage Students</h1>
     </div>
-    <div class="header-actions">
+    <div class="header-actions d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 text-muted small text-nowrap">Viva Year:</label>
+            <select class="form-select form-select-sm" id="yearFilter" style="width: auto; min-width: 120px;" onchange="window.location.href='<?= $baseUrl ?>/students/manage' + (this.value ? '?year=' + this.value : '')">
+                <option value="">All Years</option>
+                <?php foreach(($vivaYears ?? []) as $y): ?>
+                    <option value="<?= htmlspecialchars($y) ?>" <?= ($selectedYear ?? '') == $y ? 'selected' : '' ?>><?= htmlspecialchars($y) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <a href="<?= $baseUrl ?>/students/create" class="btn btn-uum">
             <i class="bi bi-person-plus me-2"></i>Add Student
         </a>

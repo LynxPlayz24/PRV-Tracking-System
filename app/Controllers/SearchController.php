@@ -33,12 +33,17 @@ class SearchController extends Controller
             'Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated'
         ];
 
+        // Retrieve distinct viva years for the year filter.
+        $this->db->query('SELECT DISTINCT YEAR(v.viva_date) AS viva_year FROM viva_records v WHERE v.viva_date IS NOT NULL ORDER BY viva_year DESC');
+        $vivaYears = array_column($this->db->resultSet(), 'viva_year');
+
         $data = [
             'pageTitle'    => 'Search Students',
             'currentPage'  => 'search',
             'schools'      => array_column($schools, 'school'),
             'degrees'      => $degrees,
             'statuses'     => $statuses,
+            'vivaYears'    => $vivaYears,
             'extraScripts' => ['search.js']
         ];
 
@@ -59,11 +64,13 @@ class SearchController extends Controller
         $degree        = $this->param('degree', '');
         $school        = $this->param('school', '');
         $researchStatus= $this->param('research_status', '');
+        $vivaYear      = $this->param('viva_year', '');
 
         $sql = "SELECT s.student_id, s.matric_no, s.name, s.programme, s.school, s.degree_level, s.research_status 
                 FROM students s 
                 LEFT JOIN student_supervisors ss ON s.student_id = ss.student_id 
                 LEFT JOIN supervisors sup ON ss.supervisor_id = sup.supervisor_id
+                LEFT JOIN viva_records v ON s.student_id = v.student_id
                 WHERE 1=1 ";
         
         $params = [];
@@ -98,6 +105,11 @@ class SearchController extends Controller
         if (!empty($researchStatus)) {
             $sql .= " AND s.research_status = :research_status";
             $params[':research_status'] = $researchStatus;
+        }
+
+        if (!empty($vivaYear)) {
+            $sql .= " AND YEAR(v.viva_date) = :viva_year";
+            $params[':viva_year'] = (int)$vivaYear;
         }
 
         $sql .= " GROUP BY s.student_id ORDER BY s.name ASC LIMIT 50";

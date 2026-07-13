@@ -48,6 +48,17 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
+                
+                <!-- Viva Year -->
+                <div class="mb-3">
+                    <label class="form-label">Viva Year</label>
+                    <select class="form-select form-select-sm" name="viva_year" id="filterVivaYear">
+                        <option value="">All Years</option>
+                        <?php foreach($vivaYears as $y): ?>
+                            <option value="<?= htmlspecialchars($y) ?>"><?= htmlspecialchars($y) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </form>
         </div>
     </div>

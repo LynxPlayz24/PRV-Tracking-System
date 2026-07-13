@@ -162,10 +162,32 @@ class StudentController extends Controller
         Middleware::requireAdmin();
 
         $this->generateCsrfToken();
+
+        $db = \App\Core\Database::getInstance();
+
+        // Retrieve distinct viva years for the year filter dropdown.
+        $db->query('SELECT DISTINCT YEAR(v.viva_date) AS viva_year FROM viva_records v WHERE v.viva_date IS NOT NULL ORDER BY viva_year DESC');
+        $vivaYears = array_column($db->resultSet(), 'viva_year');
+
+        $selectedYear = $_GET['year'] ?? '';
+
+        // Build query with optional year filter.
+        if (!empty($selectedYear)) {
+            $db->query('SELECT DISTINCT s.* FROM students s
+                        INNER JOIN viva_records v ON s.student_id = v.student_id
+                        WHERE YEAR(v.viva_date) = :viva_year
+                        ORDER BY s.name ASC');
+            $students = $db->resultSet([':viva_year' => (int)$selectedYear]);
+        } else {
+            $students = $this->studentModel->getAll();
+        }
+
         $data = [
-            'pageTitle'   => 'Manage Students',
-            'currentPage' => 'manage',
-            'students'    => $this->studentModel->getAll()
+            'pageTitle'    => 'Manage Students',
+            'currentPage'  => 'manage',
+            'students'     => $students,
+            'vivaYears'    => $vivaYears,
+            'selectedYear' => $selectedYear
         ];
 
         $this->view('layouts.header', $data);

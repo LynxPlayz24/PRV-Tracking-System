@@ -126,12 +126,17 @@ class ImportController extends Controller
 
                 $existingStudent = $this->studentModel->findByMatricNo($matricNo);
                 
+                $degree = $this->getVal($row, $map['degree_level'], 'Masters');
+                if (stripos($degree, 'master') !== false) {
+                    $degree = 'Masters';
+                }
+
                 $studentData = [
                     'matric_no'       => $matricNo,
                     'name'            => $name,
                     'programme'       => $this->getVal($row, $map['programme']),
                     'school'          => $this->getVal($row, $map['school']),
-                    'degree_level'    => $this->getVal($row, $map['degree_level'], 'Masters'),
+                    'degree_level'    => $degree,
                     'cohort'          => $this->getVal($row, $map['cohort']),
                     'its_receipt_date'=> $this->getDateVal($row, $map['its_receipt_date']),
                     'thesis_title'    => $this->getVal($row, $map['thesis_title']),
@@ -198,8 +203,10 @@ class ImportController extends Controller
         }
 
         // Attempt standard date parsing.
-        $time = strtotime($val);
-        if ($time !== false) {
+        // Replace slashes with dashes so PHP's strtotime parses as DD-MM-YYYY instead of MM/DD/YYYY
+        $cleanVal = str_replace('/', '-', $val);
+        $time = strtotime($cleanVal);
+        if ($time !== false && $time > 0) {
             return date('Y-m-d', $time);
         }
         return null;
@@ -215,7 +222,8 @@ class ImportController extends Controller
             'draft_soft_copy_date' => -1, 'turnitin_percentage' => -1, 'draft_submission_form_date' => -1,
             'internal_examiner_email_date' => -1, 'external_examiner_email_date' => -1, 'panel_appointment_letter_date' => -1,
             'thesis_to_panel_hard_copy_date' => -1, 'thesis_to_panel_soft_copy_date' => -1, 'confirm_date_email_date' => -1,
-            'invitation_letter_date' => -1, 'viva_date' => -1, 'chairperson_name' => -1, 'internal_examiner_name' => -1,
+            'invitation_letter_date' => -1, 'viva_date' => -1, 'viva_hari' => -1, 'viva_bulan' => -1, 'viva_tahun' => -1,
+            'chairperson_name' => -1, 'internal_examiner_name' => -1,
             'internal_examiner_report_date' => -1, 'external_examiner_name' => -1, 'viva_result' => -1,
             'correction_deadline' => -1, 'reviewed_by' => -1, 'best_thesis_candidate' => -1, 'report_sent_to_student_date' => -1,
             'internal_report_status' => -1, 'external_report_status' => -1, 'honorarium_chairperson' => -1,
@@ -263,6 +271,9 @@ class ImportController extends Controller
             elseif ($map['confirm_date_email_date'] === -1 && str_contains($col, 'confirm tarikh')) $map['confirm_date_email_date'] = $index;
             elseif ($map['invitation_letter_date'] === -1 && str_contains($col, 'surat jemputan')) $map['invitation_letter_date'] = $index;
             elseif ($map['viva_date'] === -1 && (str_contains($col, 'tarikh viva-voce') || str_contains($col, 'viva date') || str_contains($col, 'tarkh viva-voce'))) $map['viva_date'] = $index;
+            elseif ($map['viva_hari'] === -1 && str_contains($col, 'hari') && (str_contains($col, 'viva') || $index > 20)) $map['viva_hari'] = $index;
+            elseif ($map['viva_bulan'] === -1 && str_contains($col, 'bulan') && (str_contains($col, 'viva') || $index > 20)) $map['viva_bulan'] = $index;
+            elseif ($map['viva_tahun'] === -1 && str_contains($col, 'tahun') && (str_contains($col, 'viva') || $index > 20)) $map['viva_tahun'] = $index;
             elseif ($map['chairperson_name'] === -1 && (str_contains($col, 'nama pengerusi') || str_contains($col, 'chairperson'))) $map['chairperson_name'] = $index;
             elseif ($map['internal_examiner_name'] === -1 && (str_contains($col, 'nama pemeriksa dalam') && !str_contains($col, 'penilaian'))) $map['internal_examiner_name'] = $index;
             elseif ($map['internal_examiner_report_date'] === -1 && str_contains($col, 'laporan penilaian pemeriksa dalam')) $map['internal_examiner_report_date'] = $index;
@@ -369,6 +380,20 @@ class ImportController extends Controller
             'honorarium_external' => $this->getVal($row, $map['honorarium_external']),
             'honorarium_refreshment' => $this->getVal($row, $map['honorarium_refreshment'])
         ];
+
+        // Fallback: construct viva_date from separate HARI/BULAN/TAHUN columns if the combined date is empty.
+        if (empty($vivaData['viva_date'])) {
+            $hari  = $this->getVal($row, $map['viva_hari']);
+            $bulan = $this->getVal($row, $map['viva_bulan']);
+            $tahun = $this->getVal($row, $map['viva_tahun']);
+
+            if (!empty($tahun) && !empty($bulan) && !empty($hari)) {
+                $vivaData['viva_date'] = sprintf('%04d-%02d-%02d', (int)$tahun, (int)$bulan, (int)$hari);
+            } elseif (!empty($tahun) && !empty($bulan)) {
+                // If only year and month are available, default day to 1.
+                $vivaData['viva_date'] = sprintf('%04d-%02d-01', (int)$tahun, (int)$bulan);
+            }
+        }
 
         $this->vivaModel->createOrUpdate($studentId, $vivaData);
     }
