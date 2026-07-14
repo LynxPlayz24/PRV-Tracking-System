@@ -11,6 +11,6 @@
     RewriteRule ^\.env          - [F,L]
 
     # Redirect to public folder
-    RewriteCond %{REQUEST_URI} !^/PRV_REPORT_TRACKING/public/
+    RewriteCond %{REQUEST_URI} !^/PRV_Tracking_System/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
