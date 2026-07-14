@@ -131,7 +131,7 @@ $coSups = array_filter($student['supervisors'] ?? [], fn($s) => $s['role'] === '
     <div class="header">
         <h1>Universiti Utara Malaysia</h1>
         <h2>Ghazali Shafie Graduate School of Government</h2>
-        <p>Postgraduate Research & Viva Tracking System (PRVTS) &mdash; Student Report</p>
+        <p>Progress Report Viva Tracking System (PRVTS) &mdash; Student Report</p>
     </div>
 
     <!-- =============================================
