@@ -66,7 +66,7 @@ It streamlines the management and tracking of postgraduate students (Masters, Ph
    - Access the application via your browser: `http://localhost/PRV_Tracking_System`
    - Default login credentials (if seeded):
      - Username: `admin`
-     - Password: `password123` (You will be forced to change this upon first login)
+     - Password: `password` (You will be forced to change this upon first login)
 
 ## 📂 Project Structure
 
