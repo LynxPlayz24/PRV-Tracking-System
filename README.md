@@ -9,7 +9,7 @@ It streamlines the management and tracking of postgraduate students (Masters, Ph
 ## 🚀 Features
 
 - **Dashboard Analytics**: Visual overviews of student statuses, viva statistics, and degree-level distributions using Chart.js.
-- **Student Management**: Complete tracking of a student's academic and research milestones.
+- **Student Management**: Complete tracking of a student's academic and research milestones, including advanced filtering by year.
 - **Viva-Voce Tracking**: Manage examination panel assignments (internal/external examiners), viva dates, and final outcomes.
 - **Post-Viva Corrections**: Track correction deadlines, review statuses, and thesis endorsements.
 - **Institutional Approvals**: Monitor JIL (Jawatankuasa Pengajian Siswazah) and Senate meeting statuses leading up to graduation.
@@ -17,7 +17,11 @@ It streamlines the management and tracking of postgraduate students (Masters, Ph
   - Import large batches of students via Excel/CSV.
   - Export comprehensive summary reports in bulk to **PDF** (via Dompdf) and **Excel** (via PhpSpreadsheet).
 - **Staff Management**: Maintain a registry of academic supervisors and internal/external examiners.
-- **Role-based Authentication**: Secure access for Admin and Staff roles.
+- **Security & Authentication**: 
+  - Role-based secure access for Admin and Staff.
+  - Admin-managed user creation and password resets (no public registration).
+  - Forced password change on first login for enhanced security.
+  - Secure session handling and environment-based debugging toggle (`APP_DEBUG`).
 
 ## 🛠️ Technology Stack
 
@@ -49,7 +53,8 @@ It streamlines the management and tracking of postgraduate students (Masters, Ph
 
 4. **Environment Setup**:
    - Copy `.env.example` to `.env` (if provided, otherwise configure database directly in `config/database.php`).
-   - Ensure the `APP_URL` in `.env` points to your local project path (e.g., `http://localhost/PRV_REPORT_TRACKING`).
+   - Ensure the `APP_URL` in `.env` points to your local project path (e.g., `http://localhost/PRV_Tracking_System`).
+   - Set `APP_DEBUG=true` during development, or `false` for production safety.
 
 5. **Database Configuration**:
    - Open phpMyAdmin (e.g., `http://localhost/phpmyadmin`).
@@ -58,10 +63,10 @@ It streamlines the management and tracking of postgraduate students (Masters, Ph
    - Import `database/seed.sql` to populate it with sample data (optional).
 
 6. **Run the Application**:
-   - Access the application via your browser: `http://localhost/PRV_REPORT_TRACKING`
+   - Access the application via your browser: `http://localhost/PRV_Tracking_System`
    - Default login credentials (if seeded):
      - Username: `admin`
-     - Password: `password123`
+     - Password: `password123` (You will be forced to change this upon first login)
 
 ## 📂 Project Structure
 
