@@ -31,7 +31,11 @@ $csrf = $_SESSION['csrf_token'] ?? '';
              SUPERVISORS TAB
              ============================== -->
         <div class="tab-pane fade show active" id="supervisors" role="tabpanel">
-            <div class="d-flex justify-content-end mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="position-relative" style="min-width: 280px;">
+                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 12px;"></i>
+                    <input type="text" class="form-control ps-5" id="searchSupervisors" placeholder="Search supervisors..." autocomplete="off">
+                </div>
                 <button class="btn btn-uum" data-bs-toggle="modal" data-bs-target="#addSupervisorModal">
                     <i class="bi bi-plus-lg me-1"></i> Add Supervisor
                 </button>
@@ -118,7 +122,11 @@ $csrf = $_SESSION['csrf_token'] ?? '';
              EXAMINERS TAB
              ============================== -->
         <div class="tab-pane fade" id="examiners" role="tabpanel">
-            <div class="d-flex justify-content-end mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="position-relative" style="min-width: 280px;">
+                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 12px;"></i>
+                    <input type="text" class="form-control ps-5" id="searchExaminers" placeholder="Search examiners..." autocomplete="off">
+                </div>
                 <button class="btn btn-uum" data-bs-toggle="modal" data-bs-target="#addExaminerModal">
                     <i class="bi bi-plus-lg me-1"></i> Add Examiner
                 </button>
@@ -273,6 +281,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
 <!-- Simple script to retain active tab on reload if redirected via hash -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Retain active tab on reload
     let hash = window.location.hash;
     if (hash) {
         let triggerEl = document.querySelector('button[data-bs-target="' + hash + '"]');
@@ -281,5 +290,26 @@ document.addEventListener("DOMContentLoaded", function() {
             tab.show();
         }
     }
+
+    // Live search filtering
+    function setupSearch(inputId, tableSelector) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const rows = document.querySelectorAll(tableSelector + ' tbody tr');
+            rows.forEach(function(row) {
+                // Skip the "no results" placeholder row
+                if (row.querySelector('td[colspan]')) return;
+                const cells = row.querySelectorAll('td:not(:last-child)');
+                let text = '';
+                cells.forEach(function(cell) { text += cell.textContent.toLowerCase() + ' '; });
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    }
+
+    setupSearch('searchSupervisors', '#supervisors table');
+    setupSearch('searchExaminers', '#examiners table');
 });
 </script>
