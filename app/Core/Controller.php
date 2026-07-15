@@ -65,7 +65,7 @@ class Controller
             return false;
         }
         // Regenerate token after successful validation
-        unset($_SESSION['csrf_token']);
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         return true;
     }
 

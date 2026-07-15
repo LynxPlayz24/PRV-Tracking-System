@@ -24,7 +24,8 @@ class ProfileController extends Controller
         $data = [
             'pageTitle'   => 'My Profile',
             'currentPage' => 'profile',
-            'user'        => $user
+            'user'        => $user,
+            'csrf_token'  => $this->generateCsrfToken()
         ];
 
         $this->view('layouts.header', $data);

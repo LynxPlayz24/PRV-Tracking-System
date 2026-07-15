@@ -1,6 +1,6 @@
 <?php
 $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
-$csrf = $_SESSION['csrf_token'] ?? '';
+$csrf = $csrf_token ?? $_SESSION['csrf_token'] ?? '';
 $forceChange = !empty($_SESSION['force_password_change']);
 ?>
 
