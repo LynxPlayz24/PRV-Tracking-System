@@ -274,12 +274,18 @@ $coSups = array_filter($student['supervisors'] ?? [], fn($s) => $s['role'] === '
     <div class="sub-section-title">Panel Arrangement Dates</div>
     <table>
         <tr>
-            <th>Internal Examiner Approval Email</th>
-            <td><?= pdfDate($viva['internal_examiner_email_date'] ?? null) ?></td>
+            <th>Internal Examiner Confirmation Email</th>
+            <td>
+                <?= pdfDate($viva['internal_examiner_email_date'] ?? null) ?>
+                <?= !empty($viva['internal_examiner_email_date']) ? ' - <strong>' . htmlspecialchars($viva['internal_examiner_status'] ?? 'Pending') . '</strong>' : '' ?>
+            </td>
         </tr>
         <tr>
-            <th>External Examiner Approval Email</th>
-            <td><?= pdfDate($viva['external_examiner_email_date'] ?? null) ?></td>
+            <th>External Examiner Confirmation Email</th>
+            <td>
+                <?= pdfDate($viva['external_examiner_email_date'] ?? null) ?>
+                <?= !empty($viva['external_examiner_email_date']) ? ' - <strong>' . htmlspecialchars($viva['external_examiner_status'] ?? 'Pending') . '</strong>' : '' ?>
+            </td>
         </tr>
         <tr>
             <th>Panel Appointment Letter</th>

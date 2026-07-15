@@ -94,29 +94,63 @@ class DashboardController extends Controller
     {
         $pending = [];
         
+        // 1. Internal Examiner Confirmation
+        $this->db->query("
+            SELECT s.student_id, s.name, s.matric_no, v.internal_examiner_email_date AS sent_date
+            FROM students s JOIN viva_records v ON s.student_id = v.student_id
+            WHERE v.internal_examiner_email_date IS NOT NULL 
+              AND v.internal_examiner_status = 'Pending'
+              AND v.internal_examiner_email_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        ");
+        foreach ($this->db->resultSet() as $res) {
+            $pending[] = [
+                'student_id' => $res['student_id'],
+                'name' => $res['name'],
+                'matric_no' => $res['matric_no'],
+                'task' => 'Pending Internal Examiner Confirmation',
+                'sent_date' => $res['sent_date']
+            ];
+        }
+
+        // 2. External Examiner Confirmation
+        $this->db->query("
+            SELECT s.student_id, s.name, s.matric_no, v.external_examiner_email_date AS sent_date
+            FROM students s JOIN viva_records v ON s.student_id = v.student_id
+            WHERE v.external_examiner_email_date IS NOT NULL 
+              AND v.external_examiner_status = 'Pending'
+              AND v.external_examiner_email_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        ");
+        foreach ($this->db->resultSet() as $res) {
+            $pending[] = [
+                'student_id' => $res['student_id'],
+                'name' => $res['name'],
+                'matric_no' => $res['matric_no'],
+                'task' => 'Pending External Examiner Confirmation',
+                'sent_date' => $res['sent_date']
+            ];
+        }
+
+        // 3. Internal Examiner Report
         $this->db->query("
             SELECT s.student_id, s.name, s.matric_no, 
-                   v.internal_examiner_email_date,
-                   v.internal_examiner_report_date
-            FROM students s
-            JOIN viva_records v ON s.student_id = v.student_id
-            WHERE v.internal_examiner_email_date IS NOT NULL 
+                   COALESCE(v.thesis_to_panel_soft_copy_date, v.thesis_to_panel_hard_copy_date) AS sent_date
+            FROM students s JOIN viva_records v ON s.student_id = v.student_id
+            WHERE (v.thesis_to_panel_soft_copy_date IS NOT NULL OR v.thesis_to_panel_hard_copy_date IS NOT NULL)
               AND v.internal_examiner_report_date IS NULL
-            ORDER BY v.internal_examiner_email_date ASC
-            LIMIT 10
+              AND COALESCE(v.thesis_to_panel_soft_copy_date, v.thesis_to_panel_hard_copy_date) <= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
         ");
-        $responses = $this->db->resultSet();
-        foreach ($responses as $res) {
+        foreach ($this->db->resultSet() as $res) {
             $pending[] = [
                 'student_id' => $res['student_id'],
                 'name' => $res['name'],
                 'matric_no' => $res['matric_no'],
                 'task' => 'Waiting for Internal Examiner Report',
-                'sent_date' => $res['internal_examiner_email_date']
+                'sent_date' => $res['sent_date']
             ];
         }
-        
-        return $pending;
+
+        usort($pending, fn($a, $b) => strtotime($a['sent_date']) - strtotime($b['sent_date']));
+        return array_slice($pending, 0, 10);
     }
 
     private function getStats(): array

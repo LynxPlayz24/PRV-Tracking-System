@@ -104,6 +104,10 @@ for ($i = 1; $i <= 80; $i++) {
         
         $intExamEmailDate = randomSequentialDate($draftSubFormDate, 1, 10);
         $extExamEmailDate = randomSequentialDate($draftSubFormDate, 1, 10);
+        
+        $intExamStatus = ($status == 'Examiner Assigned' && rand(0, 1)) ? "'Pending'" : "'Confirmed'";
+        $extExamStatus = ($status == 'Examiner Assigned' && rand(0, 1)) ? "'Pending'" : "'Confirmed'";
+        
         $panelApptDate = randomSequentialDate(max($intExamEmailDate, $extExamEmailDate), 1, 10);
         
         $thesisPanelHard = randomSequentialDate($panelApptDate, 1, 5);
@@ -134,12 +138,12 @@ for ($i = 1; $i <= 80; $i++) {
                 
                 $sql .= "INSERT INTO `viva_records` (`student_id`, `internal_examiner_id`, `external_examiner_id`, `chairperson_name`, 
                          `thesis_submission_email_date`, `draft_hard_copy_date`, `draft_soft_copy_date`, `turnitin_percentage`, 
-                         `draft_submission_form_date`, `internal_examiner_email_date`, `external_examiner_email_date`, 
+                         `draft_submission_form_date`, `internal_examiner_email_date`, `internal_examiner_status`, `external_examiner_email_date`, `external_examiner_status`, 
                          `panel_appointment_letter_date`, `thesis_to_panel_hard_copy_date`, `thesis_to_panel_soft_copy_date`, 
                          `confirm_date_email_date`, `invitation_letter_date`, `viva_date`, `viva_result`, `internal_examiner_report_date`, 
                          `best_thesis_candidate`, `honorarium_chairperson`, `honorarium_internal`, `honorarium_external`, `honorarium_refreshment`) 
                          VALUES (@student_id, $intExam, $extExam, '$chairperson', '$thesisSubDate', '$draftHardCopyDate', '$draftSoftCopyDate', 
-                         '$turnitin', '$draftSubFormDate', '$intExamEmailDate', '$extExamEmailDate', '$panelApptDate', '$thesisPanelHard', 
+                         '$turnitin', '$draftSubFormDate', '$intExamEmailDate', $intExamStatus, '$extExamEmailDate', $extExamStatus, '$panelApptDate', '$thesisPanelHard', 
                          '$thesisPanelSoft', '$confirmDateEmail', '$invitationLetterDate', $vivaDateStr, $vivaResult, '$intReportDate', 
                          $bestThesis, '$honChair', '$honInt', '$honExt', '$honRef');\n";
                          
@@ -212,21 +216,21 @@ for ($i = 1; $i <= 80; $i++) {
                 // Scheduled but not completed
                 $sql .= "INSERT INTO `viva_records` (`student_id`, `internal_examiner_id`, `external_examiner_id`, `chairperson_name`, 
                          `thesis_submission_email_date`, `draft_hard_copy_date`, `draft_soft_copy_date`, `turnitin_percentage`, 
-                         `draft_submission_form_date`, `internal_examiner_email_date`, `external_examiner_email_date`, 
+                         `draft_submission_form_date`, `internal_examiner_email_date`, `internal_examiner_status`, `external_examiner_email_date`, `external_examiner_status`, 
                          `panel_appointment_letter_date`, `thesis_to_panel_hard_copy_date`, `thesis_to_panel_soft_copy_date`, 
                          `confirm_date_email_date`, `invitation_letter_date`, `viva_date`, `viva_result`) 
                          VALUES (@student_id, $intExam, $extExam, '$chairperson', '$thesisSubDate', '$draftHardCopyDate', '$draftSoftCopyDate', 
-                         '$turnitin', '$draftSubFormDate', '$intExamEmailDate', '$extExamEmailDate', '$panelApptDate', '$thesisPanelHard', 
+                         '$turnitin', '$draftSubFormDate', '$intExamEmailDate', $intExamStatus, '$extExamEmailDate', $extExamStatus, '$panelApptDate', '$thesisPanelHard', 
                          '$thesisPanelSoft', '$confirmDateEmail', '$invitationLetterDate', $vivaDateStr, NULL);\n";
             }
         } else {
             // Examiner Assigned but not scheduled yet
             $sql .= "INSERT INTO `viva_records` (`student_id`, `internal_examiner_id`, `external_examiner_id`, `chairperson_name`, 
                      `thesis_submission_email_date`, `draft_hard_copy_date`, `draft_soft_copy_date`, `turnitin_percentage`, 
-                     `draft_submission_form_date`, `internal_examiner_email_date`, `external_examiner_email_date`, 
+                     `draft_submission_form_date`, `internal_examiner_email_date`, `internal_examiner_status`, `external_examiner_email_date`, `external_examiner_status`,
                      `panel_appointment_letter_date`, `thesis_to_panel_hard_copy_date`, `thesis_to_panel_soft_copy_date`) 
                      VALUES (@student_id, $intExam, $extExam, '$chairperson', '$thesisSubDate', '$draftHardCopyDate', '$draftSoftCopyDate', 
-                     '$turnitin', '$draftSubFormDate', '$intExamEmailDate', '$extExamEmailDate', '$panelApptDate', '$thesisPanelHard', 
+                     '$turnitin', '$draftSubFormDate', '$intExamEmailDate', $intExamStatus, '$extExamEmailDate', $extExamStatus, '$panelApptDate', '$thesisPanelHard', 
                      '$thesisPanelSoft');\n";
         }
     }

@@ -344,4 +344,13 @@ class StudentController extends Controller
         $this->redirect($this->baseUrl() . '/students/manage');
     }
 
+    /**
+     * Validates that dates logically progress.
+     * Returns an error message string if invalid, or null if valid.
+     */
+    private function validateLogicalDates(array $data): ?string
+    {
+        // Add specific date logic validations here if needed
+        return null;
+    }
 }

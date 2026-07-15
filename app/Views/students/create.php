@@ -207,12 +207,24 @@ $supervisors = $supervisors ?? [];
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Internal Examiner Approval Email</label>
-                            <input type="date" class="form-control" name="internal_examiner_email_date" value="<?= htmlspecialchars($viva['internal_examiner_email_date'] ?? '') ?>">
+                            <label class="form-label">Internal Examiner Confirmation Email</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" name="internal_examiner_email_date" value="<?= htmlspecialchars($viva['internal_examiner_email_date'] ?? '') ?>">
+                                <select class="form-select" name="internal_examiner_status" style="max-width: 140px;">
+                                    <option value="Pending" <?= ($viva['internal_examiner_status'] ?? 'Pending') === 'Pending' ? 'selected' : '' ?>>Pending</option>
+                                    <option value="Confirmed" <?= ($viva['internal_examiner_status'] ?? '') === 'Confirmed' ? 'selected' : '' ?>>Confirmed</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">External Examiner Approval Email</label>
-                            <input type="date" class="form-control" name="external_examiner_email_date" value="<?= htmlspecialchars($viva['external_examiner_email_date'] ?? '') ?>">
+                            <label class="form-label">External Examiner Confirmation Email</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" name="external_examiner_email_date" value="<?= htmlspecialchars($viva['external_examiner_email_date'] ?? '') ?>">
+                                <select class="form-select" name="external_examiner_status" style="max-width: 140px;">
+                                    <option value="Pending" <?= ($viva['external_examiner_status'] ?? 'Pending') === 'Pending' ? 'selected' : '' ?>>Pending</option>
+                                    <option value="Confirmed" <?= ($viva['external_examiner_status'] ?? '') === 'Confirmed' ? 'selected' : '' ?>>Confirmed</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Panel Appointment Letter</label>
