@@ -92,9 +92,9 @@ class ImportController extends Controller
             }
 
             if (!$headerRow) {
-                $_SESSION['error'] = 'Invalid file format. Could not detect header row.';
-                header('Location: /staff/import');
-                exit;
+                $this->setFlash('danger', 'Invalid file format. Could not detect header row.');
+                $this->redirect($this->baseUrl() . '/import');
+                return;
             }
 
             // Combine the main header with the sub-header.

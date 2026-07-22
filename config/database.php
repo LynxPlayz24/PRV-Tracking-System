@@ -1,12 +1,8 @@
 <?php
 /**
  * Database Configuration
- * Reads credentials from .env file via phpdotenv
+ * Reads credentials from .env file (loaded by public/index.php via phpdotenv)
  */
-
-// Load environment variables
-$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
-$dotenv->load();
 
 return [
     'host'     => $_ENV['DB_HOST'] ?? 'localhost',

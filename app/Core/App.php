@@ -29,7 +29,6 @@ class App
         // ── Dashboard (Admin) ──
         $this->router->get('/',                     'DashboardController', 'index');
         $this->router->get('/dashboard',            'DashboardController', 'index');
-        $this->router->get('/dashboard/stats',      'DashboardController', 'stats');
         $this->router->get('/dashboard/chart-data', 'DashboardController', 'chartData');
 
         // ── Search ──

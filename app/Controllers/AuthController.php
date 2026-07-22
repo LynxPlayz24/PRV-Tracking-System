@@ -47,7 +47,6 @@ class AuthController extends Controller
 
         $username = trim($this->input('username', ''));
         $password = $this->input('password', '');
-        $remember = $this->input('remember') ? true : false;
 
         // Validation
         if (empty($username) || empty($password)) {
@@ -73,12 +72,6 @@ class AuthController extends Controller
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['user_role'] = $user['role'];
         $_SESSION['username']  = $user['username'];
-
-        // Remember me cookie (30 days)
-        if ($remember) {
-            $token = bin2hex(random_bytes(32));
-            setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
-        }
 
         // Force password change on first login
         if (!empty($user['force_password_change'])) {
@@ -122,9 +115,6 @@ class AuthController extends Controller
                 $params['secure'], $params['httponly']
             );
         }
-
-        // Delete remember me cookie
-        setcookie('remember_token', '', time() - 42000, '/');
 
         session_destroy();
 

@@ -76,9 +76,6 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     })();
     </script>
 
-    <!-- Common App JS -->
-    <script src="<?= $baseUrl ?>/assets/js/app.js"></script>
-
     <?php if (isset($extraScripts)): ?>
         <?php foreach ((array)$extraScripts as $script): ?>
             <script src="<?= $baseUrl ?>/assets/js/<?= $script ?>"></script>

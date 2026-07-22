@@ -7,7 +7,6 @@
     RewriteRule ^config/        - [F,L]
     RewriteRule ^database/      - [F,L]
     RewriteRule ^vendor/        - [F,L]
-    RewriteRule ^uploads/       - [F,L]
     RewriteRule ^\.env          - [F,L]
 
     # Redirect to public folder
