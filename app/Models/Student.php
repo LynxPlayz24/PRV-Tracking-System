@@ -140,47 +140,50 @@ class Student
      */
     public function getFiltered(array $filters = []): array
     {
-        $sql = "SELECT DISTINCT s.*, v.viva_date, v.viva_result 
-                FROM students s 
-                LEFT JOIN viva_records v ON s.student_id = v.student_id 
+        $sql = "SELECT * FROM (
+                    SELECT s.*, 
+                    (SELECT viva_date FROM viva_records WHERE student_id = s.student_id ORDER BY viva_date DESC LIMIT 1) as viva_date,
+                    (SELECT viva_result FROM viva_records WHERE student_id = s.student_id ORDER BY viva_date DESC LIMIT 1) as viva_result
+                    FROM students s
+                ) as base
                 WHERE 1=1 ";
         $params = [];
 
         if (!empty($filters['month'])) {
-            $sql .= " AND MONTH(v.viva_date) = :month ";
+            $sql .= " AND MONTH(viva_date) = :month ";
             $params[':month'] = (int)$filters['month'];
         }
 
         if (!empty($filters['year'])) {
-            $sql .= " AND YEAR(v.viva_date) = :year ";
+            $sql .= " AND YEAR(viva_date) = :year ";
             $params[':year'] = (int)$filters['year'];
         }
 
         if (!empty($filters['school'])) {
-            $sql .= " AND s.school = :school ";
+            $sql .= " AND school = :school ";
             $params[':school'] = $filters['school'];
         }
 
         if (!empty($filters['degree_level'])) {
-            $sql .= " AND s.degree_level = :degree_level ";
+            $sql .= " AND degree_level = :degree_level ";
             $params[':degree_level'] = $filters['degree_level'];
         }
 
         if (!empty($filters['research_status'])) {
-            $sql .= " AND s.research_status = :research_status ";
+            $sql .= " AND research_status = :research_status ";
             $params[':research_status'] = $filters['research_status'];
         }
 
         // Sorting
         $sortViva = $filters['sort_viva'] ?? '';
         if ($sortViva === 'asc') {
-            $sql .= " ORDER BY (v.viva_date IS NULL) ASC, v.viva_date ASC, s.name ASC ";
+            $sql .= " ORDER BY (viva_date IS NULL) ASC, viva_date ASC, name ASC ";
         } elseif ($sortViva === 'desc') {
-            $sql .= " ORDER BY (v.viva_date IS NULL) ASC, v.viva_date DESC, s.name ASC ";
+            $sql .= " ORDER BY (viva_date IS NULL) ASC, viva_date DESC, name ASC ";
         } elseif ($sortViva === 'month') {
-            $sql .= " ORDER BY (v.viva_date IS NULL) ASC, MONTH(v.viva_date) ASC, DAY(v.viva_date) ASC, s.name ASC ";
+            $sql .= " ORDER BY (viva_date IS NULL) ASC, MONTH(viva_date) ASC, DAY(viva_date) ASC, name ASC ";
         } else {
-            $sql .= " ORDER BY s.name ASC ";
+            $sql .= " ORDER BY name ASC ";
         }
 
         $this->db->query($sql);

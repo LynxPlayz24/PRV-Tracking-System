@@ -226,7 +226,8 @@ class StudentController extends Controller
             'currentPage' => 'manage',
             'student'     => $student,
             'supervisors' => $this->supervisorModel->getAll(),
-            'examiners'   => $this->examinerModel->getAll()
+            'examiners'   => $this->examinerModel->getAll(),
+            'remarks'     => $this->remarkModel->getForStudent($studentId)
         ];
 
         $this->view('layouts.header', $data);
@@ -358,17 +359,21 @@ class StudentController extends Controller
         Middleware::requireLogin();
 
         $studentId = (int)$id;
-        $student = $this->studentModel->getById($studentId);
+        $student = $this->studentModel->findById($studentId);
         if (!$student) {
             $this->setFlash('danger', 'Student not found.');
             $this->redirect($this->baseUrl() . '/search');
             return;
         }
 
+        $redirectUrl = $this->input('redirect_to') === 'edit' 
+            ? '/students/edit/' . $studentId . '#remarks'
+            : '/student/' . $studentId . '#tab-remarks';
+
         $remarkText = trim($this->input('remark_text', ''));
         if (empty($remarkText)) {
             $this->setFlash('danger', 'Remark text cannot be empty.');
-            $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+            $this->redirect($this->baseUrl() . $redirectUrl);
             return;
         }
 
@@ -388,7 +393,7 @@ class StudentController extends Controller
 
             if ($file['size'] > $maxSize) {
                 $this->setFlash('danger', 'File exceeds the maximum 10MB size limit.');
-                $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+                $this->redirect($this->baseUrl() . $redirectUrl);
                 return;
             }
 
@@ -397,7 +402,7 @@ class StudentController extends Controller
 
             if (!in_array($ext, $allowedExts)) {
                 $this->setFlash('danger', 'Invalid file type. Allowed formats: PDF, DOC/DOCX, Images, TXT, ZIP, Excel.');
-                $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+                $this->redirect($this->baseUrl() . $redirectUrl);
                 return;
             }
 
@@ -428,7 +433,7 @@ class StudentController extends Controller
         ]);
 
         $this->setFlash('success', 'Remark added successfully.');
-        $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+        $this->redirect($this->baseUrl() . $redirectUrl);
     }
 
     /**
@@ -455,7 +460,11 @@ class StudentController extends Controller
             $this->setFlash('danger', 'Remark not found.');
         }
 
-        $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+        $redirectUrl = $this->input('redirect_to') === 'edit' 
+            ? '/students/edit/' . $studentId . '#remarks'
+            : '/student/' . $studentId . '#tab-remarks';
+
+        $this->redirect($this->baseUrl() . $redirectUrl);
     }
 
     /**
