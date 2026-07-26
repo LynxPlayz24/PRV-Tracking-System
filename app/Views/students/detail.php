@@ -22,8 +22,14 @@ function showVal($val) {
         <h1 class="h3"><?= htmlspecialchars($student['name']) ?></h1>
     </div>
     <div class="header-actions">
-        <a href="<?= $baseUrl ?>/students/manage" class="btn btn-outline-secondary">Back</a>
-        <a href="<?= $baseUrl ?>/students/edit/<?= $student['student_id'] ?>" class="btn btn-primary">Edit Student</a>
+        <a href="<?= $baseUrl ?>/<?= ($_SESSION['user_role'] ?? '') === 'admin' ? 'students/manage' : 'search' ?>" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+        <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
+            <a href="<?= $baseUrl ?>/students/edit/<?= $student['student_id'] ?>" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i>Edit Student
+            </a>
+        <?php endif; ?>
     </div>
 </div>
 
