@@ -103,7 +103,6 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                 </div>
             </div>
         </div>
-    </div>
     
     <!-- Academic Staff Pending Responses Table -->
     <div class="col-lg-6">
