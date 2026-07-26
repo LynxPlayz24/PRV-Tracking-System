@@ -58,6 +58,11 @@ class App
         $this->router->get('/export/pdf/{id}',     'ExportController', 'exportSinglePdf');
         $this->router->get('/export/excel/{id}',   'ExportController', 'exportSingleExcel');
 
+        // ── Docx Templates ──
+        $this->router->get('/docx-templates',          'DocxTemplateController', 'index');
+        $this->router->post('/docx-templates/generate', 'DocxTemplateController', 'generate');
+        $this->router->get('/docx-templates/generate',  'DocxTemplateController', 'generate');
+
         // ── User Management (Admin) ──
         $this->router->get('/users',               'UserController', 'manage');
         $this->router->post('/users/store',        'UserController', 'store');

@@ -52,6 +52,10 @@ $current = $currentPage ?? '';
             <i class="bi bi-file-earmark-arrow-down"></i>
             <span>Generate Report</span>
         </a>
+        <a href="<?= $baseUrl ?>/docx-templates" class="nav-link <?= $current === 'docx_templates' ? 'active' : '' ?>">
+            <i class="bi bi-file-earmark-word"></i>
+            <span>Docx Templates</span>
+        </a>
     </div>
 
     <div class="nav-section">
@@ -77,6 +81,10 @@ $current = $currentPage ?? '';
         <a href="<?= $baseUrl ?>/export" class="nav-link <?= $current === 'export' ? 'active' : '' ?>">
             <i class="bi bi-file-earmark-arrow-down"></i>
             <span>Generate Report</span>
+        </a>
+        <a href="<?= $baseUrl ?>/docx-templates" class="nav-link <?= $current === 'docx_templates' ? 'active' : '' ?>">
+            <i class="bi bi-file-earmark-word"></i>
+            <span>Docx Templates</span>
         </a>
     </div>
     <?php endif; ?>
