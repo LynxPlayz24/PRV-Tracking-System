@@ -30,7 +30,6 @@ class App
         $this->router->get('/',                     'DashboardController', 'index');
         $this->router->get('/dashboard',            'DashboardController', 'index');
         $this->router->get('/dashboard/chart-data', 'DashboardController', 'chartData');
-        $this->router->post('/dashboard/alert/resolve', 'DashboardController', 'resolveAlert');
 
         // ── Search ──
         $this->router->get('/search',          'SearchController', 'index');

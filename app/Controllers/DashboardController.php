@@ -38,47 +38,9 @@ class DashboardController extends Controller
         $this->view('layouts.footer', $data);
     }
 
-    /**
-     * Resolve / Mark as Done an alert item
-     */
-    public function resolveAlert(): void
-    {
-        Middleware::requireAdmin();
-
-        $alertKey = trim($this->input('alert_key', ''));
-        if (empty($alertKey)) {
-            $this->jsonResponse(['success' => false, 'message' => 'Alert key is required']);
-            return;
-        }
-
-        $resolvedBy = $_SESSION['user_name'] ?? $_SESSION['user']['name'] ?? 'Admin';
-
-        $this->db->query("
-            INSERT INTO alert_resolutions (alert_key, resolved_by) 
-            VALUES (:key, :by)
-            ON DUPLICATE KEY UPDATE resolved_at = CURRENT_TIMESTAMP
-        ");
-        $this->db->bind(':key', $alertKey);
-        $this->db->bind(':by', $resolvedBy);
-        $success = $this->db->execute();
-
-        $this->jsonResponse(['success' => (bool)$success]);
-    }
-
-    /**
-     * Get list of resolved alert keys
-     */
-    private function getResolvedAlertKeys(): array
-    {
-        $this->db->query("SELECT alert_key FROM alert_resolutions");
-        $rows = $this->db->resultSet();
-        return array_column($rows, 'alert_key');
-    }
-
     private function getActionRequired(): array
     {
         $actions = [];
-        $resolvedKeys = $this->getResolvedAlertKeys();
 
         // 1. Upcoming Viva Sessions (within 30 days)
         $this->db->query("
@@ -92,7 +54,6 @@ class DashboardController extends Controller
         $vivas = $this->db->resultSet();
         foreach ($vivas as $viva) {
             $key = 'viva_' . $viva['viva_id'] . '_' . $viva['viva_date'];
-            if (in_array($key, $resolvedKeys)) continue;
 
             $actions[] = [
                 'alert_key'  => $key,
@@ -122,7 +83,6 @@ class DashboardController extends Controller
         foreach ($corrections as $corr) {
             $isOverdue = (strtotime($corr['correction_deadline']) < time());
             $key = 'corr_' . $corr['correction_id'] . '_' . $corr['correction_deadline'];
-            if (in_array($key, $resolvedKeys)) continue;
 
             $actions[] = [
                 'alert_key'  => $key,
@@ -155,7 +115,6 @@ class DashboardController extends Controller
         $honorariums = $this->db->resultSet();
         foreach ($honorariums as $hon) {
             $key = 'hon_' . $hon['viva_id'];
-            if (in_array($key, $resolvedKeys)) continue;
 
             $actions[] = [
                 'alert_key'  => $key,
@@ -179,7 +138,6 @@ class DashboardController extends Controller
     private function getPendingResponses(): array
     {
         $pending = [];
-        $resolvedKeys = $this->getResolvedAlertKeys();
         
         // 1. Internal Examiner Confirmation Pending
         $this->db->query("
@@ -195,7 +153,6 @@ class DashboardController extends Controller
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_int_conf_' . $res['viva_id'];
-            if (in_array($key, $resolvedKeys)) continue;
 
             $pending[] = [
                 'alert_key'    => $key,
@@ -226,7 +183,6 @@ class DashboardController extends Controller
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_ext_conf_' . $res['viva_id'];
-            if (in_array($key, $resolvedKeys)) continue;
 
             $pending[] = [
                 'alert_key'    => $key,
@@ -257,7 +213,6 @@ class DashboardController extends Controller
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_int_rpt_' . $res['viva_id'];
-            if (in_array($key, $resolvedKeys)) continue;
 
             $pending[] = [
                 'alert_key'    => $key,
@@ -289,7 +244,6 @@ class DashboardController extends Controller
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_sv_end_' . $res['correction_id'];
-            if (in_array($key, $resolvedKeys)) continue;
 
             $pending[] = [
                 'alert_key'    => $key,

@@ -90,21 +90,17 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                         </td>
                                         <td><span class="text-dark fw-medium small"><?= date('d M Y', strtotime($action['date'])) ?></span></td>
                                         <td class="text-end">
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="<?= $baseUrl ?>/students/edit/<?= $action['student_id'] ?>#<?= $action['tab'] ?? '' ?>" class="btn btn-outline-primary" title="Update Record">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-outline-success resolve-btn" data-key="<?= htmlspecialchars($action['alert_key']) ?>" title="Mark as Done">
-                                                    <i class="bi bi-check-lg"></i> Done
-                                                </button>
-                                            </div>
+                                            <a href="<?= $baseUrl ?>/students/edit/<?= $action['student_id'] ?>#<?= $action['tab'] ?? '' ?>" class="btn btn-sm btn-outline-primary px-3">
+                                                <i class="bi bi-pencil-square me-1"></i> Update Record
+                                            </a>
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -162,14 +158,9 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                             <span class="badge bg-secondary rounded-pill small"><?= $days ?> days ago</span>
                                         </td>
                                         <td class="text-end">
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="<?= $baseUrl ?>/students/edit/<?= $p['student_id'] ?>#<?= $p['tab'] ?? '' ?>" class="btn btn-outline-primary" title="Update Student">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                </a>
-                                                <button type="button" class="btn btn-outline-success resolve-btn" data-key="<?= htmlspecialchars($p['alert_key']) ?>" title="Mark as Done">
-                                                    <i class="bi bi-check-lg"></i>
-                                                </button>
-                                            </div>
+                                            <a href="<?= $baseUrl ?>/students/edit/<?= $p['student_id'] ?>#<?= $p['tab'] ?? '' ?>" class="btn btn-sm btn-outline-primary px-3">
+                                                <i class="bi bi-pencil-square me-1"></i> Update Record
+                                            </a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -181,48 +172,3 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Resolve / Mark as Done button click handler
-    document.querySelectorAll('.resolve-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const btn = this;
-            const alertKey = btn.getAttribute('data-key');
-            if (!alertKey) return;
-
-            const row = btn.closest('tr');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-
-            fetch('<?= $baseUrl ?>/dashboard/alert/resolve', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'alert_key=' + encodeURIComponent(alertKey)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    if (row) {
-                        row.style.transition = 'all 0.4s ease';
-                        row.style.opacity = '0';
-                        row.style.transform = 'translateX(20px)';
-                        setTimeout(() => row.remove(), 400);
-                    }
-                } else {
-                    alert('Could not resolve alert: ' + (data.message || 'Error occurred'));
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
-            });
-        });
-    });
-});
-</script>
