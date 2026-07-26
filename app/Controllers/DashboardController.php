@@ -102,7 +102,8 @@ class DashboardController extends Controller
                 'type'       => 'Upcoming Viva',
                 'date'       => $viva['viva_date'],
                 'badge'      => 'bg-info text-dark',
-                'icon'       => 'bi-calendar-event'
+                'icon'       => 'bi-calendar-event',
+                'tab'        => 'viva'
             ];
         }
 
@@ -131,7 +132,8 @@ class DashboardController extends Controller
                 'type'       => $isOverdue ? 'Overdue Correction' : 'Correction Due Soon',
                 'date'       => $corr['correction_deadline'],
                 'badge'      => $isOverdue ? 'bg-danger text-white' : 'bg-warning text-dark',
-                'icon'       => $isOverdue ? 'bi-exclamation-triangle-fill' : 'bi-clock-history'
+                'icon'       => $isOverdue ? 'bi-exclamation-triangle-fill' : 'bi-clock-history',
+                'tab'        => 'postviva'
             ];
         }
 
@@ -163,7 +165,8 @@ class DashboardController extends Controller
                 'type'       => 'Pending Honorarium',
                 'date'       => $hon['viva_date'],
                 'badge'      => 'bg-success text-white',
-                'icon'       => 'bi-cash-coin'
+                'icon'       => 'bi-cash-coin',
+                'tab'        => 'postviva'
             ];
         }
 
@@ -204,7 +207,8 @@ class DashboardController extends Controller
                 'staff_email'  => $res['staff_email'] ?: '',
                 'role'         => 'Internal Examiner',
                 'task'         => 'Pending Examiner Confirmation',
-                'sent_date'    => $res['sent_date']
+                'sent_date'    => $res['sent_date'],
+                'tab'          => 'viva'
             ];
         }
 
@@ -234,7 +238,8 @@ class DashboardController extends Controller
                 'staff_email'  => $res['staff_email'] ?: '',
                 'role'         => 'External Examiner',
                 'task'         => 'Pending Examiner Confirmation',
-                'sent_date'    => $res['sent_date']
+                'sent_date'    => $res['sent_date'],
+                'tab'          => 'viva'
             ];
         }
 
@@ -264,7 +269,8 @@ class DashboardController extends Controller
                 'staff_email'  => $res['staff_email'] ?: '',
                 'role'         => 'Internal Examiner',
                 'task'         => 'Waiting for Examiner Evaluation Report',
-                'sent_date'    => $res['sent_date']
+                'sent_date'    => $res['sent_date'],
+                'tab'          => 'viva'
             ];
         }
 
@@ -295,7 +301,8 @@ class DashboardController extends Controller
                 'staff_email'  => $res['staff_email'] ?: '',
                 'role'         => 'Main Supervisor',
                 'task'         => 'Waiting for Supervisor Endorsement',
-                'sent_date'    => $res['sent_date']
+                'sent_date'    => $res['sent_date'],
+                'tab'          => 'postviva'
             ];
         }
 

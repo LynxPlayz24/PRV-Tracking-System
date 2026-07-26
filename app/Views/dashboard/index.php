@@ -91,8 +91,8 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                         <td><span class="text-dark fw-medium small"><?= date('d M Y', strtotime($action['date'])) ?></span></td>
                                         <td class="text-end">
                                             <div class="btn-group btn-group-sm">
-                                                <a href="<?= $baseUrl ?>/student/<?= $action['student_id'] ?>" class="btn btn-outline-primary" title="View Student">
-                                                    <i class="bi bi-eye"></i>
+                                                <a href="<?= $baseUrl ?>/students/edit/<?= $action['student_id'] ?>#<?= $action['tab'] ?? '' ?>" class="btn btn-outline-primary" title="Update Record">
+                                                    <i class="bi bi-pencil-square"></i>
                                                 </a>
                                                 <button type="button" class="btn btn-outline-success resolve-btn" data-key="<?= htmlspecialchars($action['alert_key']) ?>" title="Mark as Done">
                                                     <i class="bi bi-check-lg"></i> Done
@@ -163,8 +163,8 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                         </td>
                                         <td class="text-end">
                                             <div class="btn-group btn-group-sm">
-                                                <a href="<?= $baseUrl ?>/student/<?= $p['student_id'] ?>" class="btn btn-outline-primary" title="Update Student">
-                                                    <i class="bi bi-pencil"></i>
+                                                <a href="<?= $baseUrl ?>/students/edit/<?= $p['student_id'] ?>#<?= $p['tab'] ?? '' ?>" class="btn btn-outline-primary" title="Update Student">
+                                                    <i class="bi bi-pencil-square"></i>
                                                 </a>
                                                 <button type="button" class="btn btn-outline-success resolve-btn" data-key="<?= htmlspecialchars($p['alert_key']) ?>" title="Mark as Done">
                                                     <i class="bi bi-check-lg"></i>

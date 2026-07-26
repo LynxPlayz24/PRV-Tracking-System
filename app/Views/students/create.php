@@ -687,5 +687,41 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // 1. Auto-switch tab based on URL hash
+    if (window.location.hash) {
+        const targetTab = document.querySelector(`button[data-bs-target="${window.location.hash}"]`);
+        if (targetTab) {
+            targetTab.click();
+            // Scroll slightly up to account for fixed header if needed
+            setTimeout(() => window.scrollTo(0, 0), 100);
+        }
+    }
+
+    // 2. Inject "Today" quick-fill buttons for all date inputs
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+        // Skip if already in an input group
+        if (!input.parentNode.classList.contains('input-group')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-group';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+            
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-secondary px-2';
+            btn.title = 'Set to Today (Mark as Done)';
+            btn.innerHTML = '<i class="bi bi-calendar-check text-success"></i>';
+            btn.addEventListener('click', () => {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                input.value = `${yyyy}-${mm}-${dd}`;
+                input.dispatchEvent(new Event('change'));
+            });
+            wrapper.appendChild(btn);
+        }
+    });
 });
 </script>
