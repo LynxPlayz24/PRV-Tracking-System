@@ -125,7 +125,7 @@ function showVal($val) {
                         <table class="table table-borderless table-sm w-100">
                             <tr><td class="text-muted" style="width: 30%;">Thesis Title</td><td><strong><?= showVal($student['thesis_title']) ?></strong></td></tr>
                             <tr><td class="text-muted">Programme</td><td><?= showVal($student['programme']) ?></td></tr>
-                            <tr><td class="text-muted">ITS Receipt Date</td><td><?= showDate($student['its_receipt_date']) ?></td></tr>
+                            <tr><td class="text-muted">ITS Application Date</td><td><?= showDate($student['its_receipt_date']) ?></td></tr>
                             <tr><td class="text-muted">JIL Meeting Date</td><td><?= showDate($grad['jil_meeting_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">JIL Meeting No.</td><td><?= showVal($grad['jil_meeting_no'] ?? null) ?></td></tr>
                             

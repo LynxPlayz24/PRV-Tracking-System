@@ -125,7 +125,7 @@ $supervisors = $supervisors ?? [];
                     <h5 class="card-title text-primary mb-4">Supervision & Submission Initiation</h5>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">ITS Receipt Date</label>
+                            <label class="form-label">ITS Application Date</label>
                             <input type="date" class="form-control" name="its_receipt_date" value="<?= htmlspecialchars($student['its_receipt_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-4">

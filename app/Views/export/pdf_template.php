@@ -165,7 +165,7 @@ $coSups = array_filter($student['supervisors'] ?? [], fn($s) => $s['role'] === '
             <td><?= pdfVal($student['cohort'] ?? null) ?></td>
         </tr>
         <tr>
-            <th>ITS Receipt Date</th>
+            <th>ITS Application Date</th>
             <td><?= pdfDate($student['its_receipt_date'] ?? null) ?></td>
         </tr>
         <tr>
