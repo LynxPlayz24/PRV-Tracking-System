@@ -62,7 +62,11 @@ class VivaRecord
         $this->db->bind(':id', $studentId);
         foreach ($fields as $dbCol => $dataKey) {
             $val = $data[$dataKey] ?? null;
-            if ($val === '') $val = null; // Convert empty strings to null
+            if ($val === '') $val = null;
+            // Checkboxes: unchecked = absent from POST. Ensure 0 not null for tinyint.
+            if ($dbCol === 'best_thesis_candidate') {
+                $val = isset($data[$dataKey]) && $data[$dataKey] ? 1 : 0;
+            }
             $this->db->bind(":$dbCol", $val);
         }
 

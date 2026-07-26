@@ -475,8 +475,10 @@ $supervisors = $supervisors ?? [];
             </div>
         </div>
 
+        </form> <!-- Close studentForm here to avoid nested forms -->
+
         <?php if ($isEdit): ?>
-        <!-- TAB 6: Remarks (pane inside tab-content but outside the student form to avoid nested forms) -->
+        <!-- TAB 6: Remarks -->
         <div class="tab-pane fade" id="remarks" role="tabpanel">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="mb-0"><i class="bi bi-chat-square-dots me-2 text-primary"></i>Student Remarks &amp; Attachments</h5>
@@ -582,9 +584,7 @@ $supervisors = $supervisors ?? [];
             <?php endif; ?>
         </div>
         <?php endif; ?>
-
     </div>
-</form>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
