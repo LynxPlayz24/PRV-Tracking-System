@@ -29,12 +29,12 @@ class ExportController extends Controller
         Middleware::requireLogin();
 
         $filters = [
-            'month'           => trim($this->input('month', '')),
-            'year'            => trim($this->input('year', '')),
-            'school'          => trim($this->input('school', '')),
-            'degree_level'    => trim($this->input('degree_level', '')),
-            'research_status' => trim($this->input('research_status', '')),
-            'sort_viva'       => trim($this->input('sort_viva', '')),
+            'month'           => trim($_GET['month'] ?? ''),
+            'year'            => trim($_GET['year'] ?? ''),
+            'school'          => trim($_GET['school'] ?? ''),
+            'degree_level'    => trim($_GET['degree_level'] ?? ''),
+            'research_status' => trim($_GET['research_status'] ?? ''),
+            'sort_viva'       => trim($_GET['sort_viva'] ?? ''),
         ];
 
         $students  = $this->studentModel->getFiltered($filters);

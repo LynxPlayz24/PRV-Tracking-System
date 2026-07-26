@@ -187,12 +187,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Resolve / Mark as Done button click handler
     document.querySelectorAll('.resolve-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const alertKey = this.getAttribute('data-key');
+            const btn = this;
+            const alertKey = btn.getAttribute('data-key');
             if (!alertKey) return;
 
-            const row = this.closest('tr');
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            const row = btn.closest('tr');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
 
             fetch('<?= $baseUrl ?>/dashboard/alert/resolve', {
                 method: 'POST',
@@ -212,14 +213,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } else {
                     alert('Could not resolve alert: ' + (data.message || 'Error occurred'));
-                    this.disabled = false;
-                    this.innerHTML = '<i class="bi bi-check-lg"></i> Done';
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
                 }
             })
             .catch(err => {
                 console.error(err);
-                this.disabled = false;
-                this.innerHTML = '<i class="bi bi-check-lg"></i> Done';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
             });
         });
     });

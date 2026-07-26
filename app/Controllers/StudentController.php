@@ -132,6 +132,8 @@ class StudentController extends Controller
             'programme'       => trim($this->input('programme')),
             'school'          => trim($this->input('school')),
             'degree_level'    => $this->input('degree_level'),
+            'cohort'          => trim($this->input('cohort')),
+            'its_receipt_date'=> $this->input('its_receipt_date'),
             'thesis_title'    => trim($this->input('thesis_title')),
             'research_status' => $status
         ]);
@@ -275,6 +277,8 @@ class StudentController extends Controller
             'programme'       => trim($this->input('programme')),
             'school'          => trim($this->input('school')),
             'degree_level'    => $this->input('degree_level'),
+            'cohort'          => trim($this->input('cohort')),
+            'its_receipt_date'=> $this->input('its_receipt_date'),
             'thesis_title'    => trim($this->input('thesis_title')),
             'research_status' => $status
         ]);

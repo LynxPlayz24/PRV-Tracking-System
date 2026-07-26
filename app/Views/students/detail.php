@@ -48,17 +48,17 @@ function showVal($val) {
                 </span>
             </div>
             <ul class="list-group list-group-flush border-top">
-                <li class="list-group-item d-flex justify-content-between p-3">
-                    <span class="text-muted">Degree</span>
-                    <strong><?= htmlspecialchars($student['degree_level']) ?></strong>
+                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <span class="text-muted flex-shrink-0 me-2">Degree</span>
+                    <strong class="text-end"><?= htmlspecialchars($student['degree_level']) ?></strong>
                 </li>
-                <li class="list-group-item d-flex justify-content-between p-3">
-                    <span class="text-muted">School</span>
-                    <strong><?= htmlspecialchars($student['school'] ?? '-') ?></strong>
+                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <span class="text-muted flex-shrink-0 me-2">School</span>
+                    <strong class="text-end"><?= htmlspecialchars($student['school'] ?? '-') ?></strong>
                 </li>
-                <li class="list-group-item d-flex justify-content-between p-3">
-                    <span class="text-muted">Cohort</span>
-                    <strong><?= htmlspecialchars($student['cohort'] ?? '-') ?></strong>
+                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <span class="text-muted flex-shrink-0 me-2">Cohort</span>
+                    <strong class="text-end"><?= htmlspecialchars($student['cohort'] ?? '-') ?></strong>
                 </li>
             </ul>
         </div>
