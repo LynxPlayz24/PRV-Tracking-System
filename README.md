@@ -1,4 +1,4 @@
-# PRVTS - Postgraduate Research & Viva Tracking System
+# PRVTS - Progress Report Viva Tracking System
 
 ![PRVTS Dashboard Preview](https://img.shields.io/badge/Status-Active-brightgreen) ![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue) ![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-orange)
 
