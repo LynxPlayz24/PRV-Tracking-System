@@ -2,7 +2,7 @@
 
 ![PRVTS Dashboard Preview](https://img.shields.io/badge/Status-Active-brightgreen) ![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue) ![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-orange)
 
-The **Postgraduate Research & Viva Tracking System (PRVTS)** is a comprehensive web-based application designed for the **Ghazali Shafie Graduate School of Government (GSGSG)** at **Universiti Utara Malaysia (UUM)**. 
+The **Progress Report Viva Tracking System (PRVTS)** is a comprehensive web-based application designed for the **Ghazali Shafie Graduate School of Government (GSGSG)** at **Universiti Utara Malaysia (UUM)**. 
 
 It streamlines the management and tracking of postgraduate students (Masters, PhD, DBA) throughout their research journey—from proposal submission and examination panel assignment to the final viva-voce and graduation.
 
