@@ -51,6 +51,7 @@ class StaffController extends Controller
         $data = [
             'supervisor_name' => trim($this->input('supervisor_name', '')),
             'email'           => trim($this->input('email', '')),
+            'phone'           => trim($this->input('phone', '')),
             'department'      => trim($this->input('department', '')),
         ];
 
@@ -82,6 +83,7 @@ class StaffController extends Controller
         $data = [
             'supervisor_name' => trim($this->input('supervisor_name', '')),
             'email'           => trim($this->input('email', '')),
+            'phone'           => trim($this->input('phone', '')),
             'department'      => trim($this->input('department', '')),
         ];
 
@@ -132,9 +134,11 @@ class StaffController extends Controller
         }
 
         $data = [
-            'examiner_name' => trim($this->input('examiner_name', '')),
-            'email'         => trim($this->input('email', '')),
-            'institution'   => trim($this->input('institution', '')),
+            'examiner_name'  => trim($this->input('examiner_name', '')),
+            'email'          => trim($this->input('email', '')),
+            'phone'          => trim($this->input('phone', '')),
+            'institution'    => trim($this->input('institution', '')),
+            'classification' => trim($this->input('classification', 'Internal')),
         ];
 
         if (empty($data['examiner_name'])) {
@@ -163,9 +167,11 @@ class StaffController extends Controller
         }
 
         $data = [
-            'examiner_name' => trim($this->input('examiner_name', '')),
-            'email'         => trim($this->input('email', '')),
-            'institution'   => trim($this->input('institution', '')),
+            'examiner_name'  => trim($this->input('examiner_name', '')),
+            'email'          => trim($this->input('email', '')),
+            'phone'          => trim($this->input('phone', '')),
+            'institution'    => trim($this->input('institution', '')),
+            'classification' => trim($this->input('classification', 'Internal')),
         ];
 
         if (empty($data['examiner_name'])) {

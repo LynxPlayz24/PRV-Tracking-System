@@ -48,18 +48,28 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                                 <tr>
                                     <th class="px-4 py-3 border-0">Name</th>
                                     <th class="py-3 border-0">Email</th>
+                                    <th class="py-3 border-0">Phone Number</th>
                                     <th class="py-3 border-0">Department</th>
                                     <th class="px-4 py-3 border-0 text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($supervisors)): ?>
-                                    <tr><td colspan="4" class="text-center py-4 text-muted">No supervisors found.</td></tr>
+                                    <tr><td colspan="5" class="text-center py-4 text-muted">No supervisors found.</td></tr>
                                 <?php else: ?>
                                     <?php foreach($supervisors as $sup): ?>
                                     <tr>
                                         <td class="px-4 fw-medium"><?= htmlspecialchars($sup['supervisor_name']) ?></td>
                                         <td><?= htmlspecialchars($sup['email'] ?: '-') ?></td>
+                                        <td>
+                                            <?php if (!empty($sup['phone'])): ?>
+                                                <a href="tel:<?= htmlspecialchars($sup['phone']) ?>" class="text-decoration-none text-dark">
+                                                    <i class="bi bi-telephone me-1 text-primary"></i><?= htmlspecialchars($sup['phone']) ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?= htmlspecialchars($sup['department'] ?: '-') ?></td>
                                         <td class="px-4 text-end">
                                             <button class="btn btn-sm btn-outline-primary me-1" title="Edit" 
@@ -82,7 +92,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                 </div>
             </div>
 
-            <!-- Edit Supervisor Modals (outside the table for correct rendering) -->
+            <!-- Edit Supervisor Modals -->
             <?php if (!empty($supervisors)): ?>
                 <?php foreach($supervisors as $sup): ?>
                 <div class="modal fade" id="editSupervisorModal<?= $sup['supervisor_id'] ?>" tabindex="-1" aria-hidden="true">
@@ -100,11 +110,15 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($sup['email']) ?>">
+                                    <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($sup['email'] ?? '') ?>">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" name="phone" value="<?= htmlspecialchars($sup['phone'] ?? '') ?>" placeholder="e.g. +60 12-345 6789">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Department</label>
-                                    <input type="text" class="form-control" name="department" value="<?= htmlspecialchars($sup['department']) ?>">
+                                    <input type="text" class="form-control" name="department" value="<?= htmlspecialchars($sup['department'] ?? '') ?>">
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -138,19 +152,37 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                             <thead class="table-light text-muted fw-semibold">
                                 <tr>
                                     <th class="px-4 py-3 border-0">Name</th>
+                                    <th class="py-3 border-0">Classification</th>
                                     <th class="py-3 border-0">Email</th>
+                                    <th class="py-3 border-0">Phone Number</th>
                                     <th class="py-3 border-0">Institution</th>
                                     <th class="px-4 py-3 border-0 text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($examiners)): ?>
-                                    <tr><td colspan="4" class="text-center py-4 text-muted">No examiners found.</td></tr>
+                                    <tr><td colspan="6" class="text-center py-4 text-muted">No examiners found.</td></tr>
                                 <?php else: ?>
                                     <?php foreach($examiners as $ex): ?>
                                     <tr>
                                         <td class="px-4 fw-medium"><?= htmlspecialchars($ex['examiner_name']) ?></td>
+                                        <td>
+                                            <?php if (($ex['classification'] ?? 'Internal') === 'External'): ?>
+                                                <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-building me-1"></i>External</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-primary px-2 py-1"><i class="bi bi-house-door me-1"></i>Internal</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?= htmlspecialchars($ex['email'] ?: '-') ?></td>
+                                        <td>
+                                            <?php if (!empty($ex['phone'])): ?>
+                                                <a href="tel:<?= htmlspecialchars($ex['phone']) ?>" class="text-decoration-none text-dark">
+                                                    <i class="bi bi-telephone me-1 text-primary"></i><?= htmlspecialchars($ex['phone']) ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?= htmlspecialchars($ex['institution'] ?: '-') ?></td>
                                         <td class="px-4 text-end">
                                             <button class="btn btn-sm btn-outline-primary me-1" title="Edit" 
@@ -173,7 +205,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                 </div>
             </div>
 
-            <!-- Edit Examiner Modals (outside the table for correct rendering) -->
+            <!-- Edit Examiner Modals -->
             <?php if (!empty($examiners)): ?>
                 <?php foreach($examiners as $ex): ?>
                 <div class="modal fade" id="editExaminerModal<?= $ex['examiner_id'] ?>" tabindex="-1" aria-hidden="true">
@@ -190,12 +222,23 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                                     <input type="text" class="form-control" name="examiner_name" value="<?= htmlspecialchars($ex['examiner_name']) ?>" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label">Classification <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="classification" required>
+                                        <option value="Internal" <?= ($ex['classification'] ?? 'Internal') === 'Internal' ? 'selected' : '' ?>>Internal Examiner</option>
+                                        <option value="External" <?= ($ex['classification'] ?? 'Internal') === 'External' ? 'selected' : '' ?>>External Examiner</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($ex['email']) ?>">
+                                    <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($ex['email'] ?? '') ?>">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" name="phone" value="<?= htmlspecialchars($ex['phone'] ?? '') ?>" placeholder="e.g. +60 12-345 6789">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Institution</label>
-                                    <input type="text" class="form-control" name="institution" value="<?= htmlspecialchars($ex['institution']) ?>">
+                                    <input type="text" class="form-control" name="institution" value="<?= htmlspecialchars($ex['institution'] ?? '') ?>">
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -228,15 +271,19 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                 <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
                 <div class="mb-3">
                     <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="supervisor_name" required>
+                    <input type="text" class="form-control" name="supervisor_name" required placeholder="e.g. Prof. Dr. Ahmad">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email">
+                    <input type="email" class="form-control" name="email" placeholder="e.g. supervisor@uum.edu.my">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" name="phone" placeholder="e.g. +60 12-345 6789">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Department</label>
-                    <input type="text" class="form-control" name="department">
+                    <input type="text" class="form-control" name="department" placeholder="e.g. School of Computing">
                 </div>
             </div>
             <div class="modal-footer">
@@ -259,15 +306,26 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                 <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
                 <div class="mb-3">
                     <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="examiner_name" required>
+                    <input type="text" class="form-control" name="examiner_name" required placeholder="e.g. Dr. Siti Aminah">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Classification <span class="text-danger">*</span></label>
+                    <select class="form-select" name="classification" required>
+                        <option value="Internal">Internal Examiner</option>
+                        <option value="External">External Examiner</option>
+                    </select>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email">
+                    <input type="email" class="form-control" name="email" placeholder="e.g. examiner@university.edu.my">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" name="phone" placeholder="e.g. +60 19-876 5432">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Institution</label>
-                    <input type="text" class="form-control" name="institution">
+                    <input type="text" class="form-control" name="institution" placeholder="e.g. Universiti Utara Malaysia">
                 </div>
             </div>
             <div class="modal-footer">
@@ -278,10 +336,8 @@ $csrf = $_SESSION['csrf_token'] ?? '';
     </div>
 </div>
 
-<!-- Simple script to retain active tab on reload if redirected via hash -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Retain active tab on reload
     let hash = window.location.hash;
     if (hash) {
         let triggerEl = document.querySelector('button[data-bs-target="' + hash + '"]');
@@ -291,7 +347,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Live search filtering
     function setupSearch(inputId, tableSelector) {
         const input = document.getElementById(inputId);
         if (!input) return;
@@ -299,7 +354,6 @@ document.addEventListener("DOMContentLoaded", function() {
             const query = this.value.toLowerCase().trim();
             const rows = document.querySelectorAll(tableSelector + ' tbody tr');
             rows.forEach(function(row) {
-                // Skip the "no results" placeholder row
                 if (row.querySelector('td[colspan]')) return;
                 const cells = row.querySelectorAll('td:not(:last-child)');
                 let text = '';

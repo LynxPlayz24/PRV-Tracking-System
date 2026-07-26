@@ -30,6 +30,7 @@ class App
         $this->router->get('/',                     'DashboardController', 'index');
         $this->router->get('/dashboard',            'DashboardController', 'index');
         $this->router->get('/dashboard/chart-data', 'DashboardController', 'chartData');
+        $this->router->post('/dashboard/alert/resolve', 'DashboardController', 'resolveAlert');
 
         // ── Search ──
         $this->router->get('/search',          'SearchController', 'index');
@@ -44,6 +45,8 @@ class App
         $this->router->post('/students/update/{id}','StudentController', 'update');
         $this->router->post('/students/delete/{id}','StudentController', 'delete');
         $this->router->post('/students/bulk-delete', 'StudentController', 'bulkDelete');
+        $this->router->post('/student/{id}/remarks', 'StudentController', 'addRemark');
+        $this->router->post('/student/{id}/remarks/delete/{remarkId}', 'StudentController', 'deleteRemark');
 
         // ── Import (Admin) ──
         $this->router->get('/import',          'ImportController', 'index');

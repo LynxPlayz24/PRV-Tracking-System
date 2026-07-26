@@ -9,6 +9,7 @@ use App\Models\Examiner;
 use App\Models\VivaRecord;
 use App\Models\Correction;
 use App\Models\Graduation;
+use App\Models\Remark;
 
 class StudentController extends Controller
 {
@@ -18,6 +19,7 @@ class StudentController extends Controller
     private VivaRecord $vivaModel;
     private Correction $correctionModel;
     private Graduation $graduationModel;
+    private Remark $remarkModel;
 
     public function __construct()
     {
@@ -27,6 +29,7 @@ class StudentController extends Controller
         $this->vivaModel = new VivaRecord();
         $this->correctionModel = new Correction();
         $this->graduationModel = new Graduation();
+        $this->remarkModel = new Remark();
     }
 
     /**
@@ -45,10 +48,13 @@ class StudentController extends Controller
             return;
         }
 
+        $remarks = $this->remarkModel->getForStudent($studentId);
+
         $data = [
             'pageTitle'   => 'Student Details - ' . $student['name'],
             'currentPage' => 'search',
-            'student'     => $student
+            'student'     => $student,
+            'remarks'     => $remarks
         ];
 
         $this->view('layouts.header', $data);
@@ -345,12 +351,119 @@ class StudentController extends Controller
     }
 
     /**
+     * Add remark with optional file upload for a student
+     */
+    public function addRemark(string $id): void
+    {
+        Middleware::requireLogin();
+
+        $studentId = (int)$id;
+        $student = $this->studentModel->getById($studentId);
+        if (!$student) {
+            $this->setFlash('danger', 'Student not found.');
+            $this->redirect($this->baseUrl() . '/search');
+            return;
+        }
+
+        $remarkText = trim($this->input('remark_text', ''));
+        if (empty($remarkText)) {
+            $this->setFlash('danger', 'Remark text cannot be empty.');
+            $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+            return;
+        }
+
+        $authorName = $_SESSION['user_name'] ?? $_SESSION['user']['name'] ?? 'Staff User';
+
+        $fileData = [
+            'file_path' => null,
+            'file_name' => null,
+            'file_type' => null,
+            'file_size' => null
+        ];
+
+        // Handle File Attachment Upload
+        if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['attachment'];
+            $maxSize = 10 * 1024 * 1024; // 10 MB
+
+            if ($file['size'] > $maxSize) {
+                $this->setFlash('danger', 'File exceeds the maximum 10MB size limit.');
+                $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+                return;
+            }
+
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $allowedExts = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'zip', 'xlsx', 'csv'];
+
+            if (!in_array($ext, $allowedExts)) {
+                $this->setFlash('danger', 'Invalid file type. Allowed formats: PDF, DOC/DOCX, Images, TXT, ZIP, Excel.');
+                $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+                return;
+            }
+
+            $uploadDir = dirname(__DIR__, 2) . '/public/uploads/remarks/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $filename = 'remark_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+            $destination = $uploadDir . $filename;
+
+            if (move_uploaded_file($file['tmp_name'], $destination)) {
+                $fileData['file_path'] = 'uploads/remarks/' . $filename;
+                $fileData['file_name'] = $file['name'];
+                $fileData['file_type'] = $file['type'] ?: $ext;
+                $fileData['file_size'] = $file['size'];
+            }
+        }
+
+        $this->remarkModel->create([
+            'student_id'  => $studentId,
+            'author_name' => $authorName,
+            'remark_text' => $remarkText,
+            'file_path'   => $fileData['file_path'],
+            'file_name'   => $fileData['file_name'],
+            'file_type'   => $fileData['file_type'],
+            'file_size'   => $fileData['file_size']
+        ]);
+
+        $this->setFlash('success', 'Remark added successfully.');
+        $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+    }
+
+    /**
+     * Delete a remark attachment
+     */
+    public function deleteRemark(string $id, string $remarkId): void
+    {
+        Middleware::requireLogin();
+
+        $studentId = (int)$id;
+        $remId = (int)$remarkId;
+
+        $remark = $this->remarkModel->getById($remId);
+        if ($remark && $remark['student_id'] == $studentId) {
+            if (!empty($remark['file_path'])) {
+                $fullPath = dirname(__DIR__, 2) . '/public/' . $remark['file_path'];
+                if (file_exists($fullPath)) {
+                    @unlink($fullPath);
+                }
+            }
+            $this->remarkModel->delete($remId);
+            $this->setFlash('success', 'Remark deleted successfully.');
+        } else {
+            $this->setFlash('danger', 'Remark not found.');
+        }
+
+        $this->redirect($this->baseUrl() . '/student/' . $studentId . '#tab-remarks');
+    }
+
+    /**
      * Validates that dates logically progress.
      * Returns an error message string if invalid, or null if valid.
      */
     private function validateLogicalDates(array $data): ?string
     {
-        // Add specific date logic validations here if needed
         return null;
     }
 }

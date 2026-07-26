@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS `supervisors` (
     `supervisor_id`   INT AUTO_INCREMENT PRIMARY KEY,
     `supervisor_name` VARCHAR(200) NOT NULL,
     `email`           VARCHAR(200) DEFAULT NULL,
+    `phone`           VARCHAR(50) DEFAULT NULL,
     `department`      VARCHAR(200) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -97,7 +98,8 @@ CREATE TABLE IF NOT EXISTS `examiners` (
     `examiner_name` VARCHAR(200) NOT NULL,
     `institution`   VARCHAR(200) DEFAULT NULL,
     `email`         VARCHAR(200) DEFAULT NULL,
-    `phone`         VARCHAR(50) DEFAULT NULL
+    `phone`         VARCHAR(50) DEFAULT NULL,
+    `classification` ENUM('Internal', 'External') NOT NULL DEFAULT 'Internal'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -207,6 +209,36 @@ CREATE TABLE IF NOT EXISTS `graduation` (
     CONSTRAINT `fk_grad_student`
         FOREIGN KEY (`student_id`) REFERENCES `students`(`student_id`)
         ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 9. STUDENT_REMARKS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `student_remarks` (
+    `remark_id`       INT AUTO_INCREMENT PRIMARY KEY,
+    `student_id`      INT NOT NULL,
+    `author_name`     VARCHAR(150) NOT NULL,
+    `remark_text`     TEXT NOT NULL,
+    `file_path`       VARCHAR(255) DEFAULT NULL,
+    `file_name`       VARCHAR(255) DEFAULT NULL,
+    `file_type`       VARCHAR(100) DEFAULT NULL,
+    `file_size`       INT DEFAULT NULL,
+    `created_at`      DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX `idx_remarks_student` (`student_id`),
+    CONSTRAINT `fk_remarks_student`
+        FOREIGN KEY (`student_id`) REFERENCES `students`(`student_id`)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 10. ALERT_RESOLUTIONS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `alert_resolutions` (
+    `id`           INT AUTO_INCREMENT PRIMARY KEY,
+    `alert_key`    VARCHAR(100) NOT NULL UNIQUE,
+    `resolved_by`  VARCHAR(150) DEFAULT NULL,
+    `resolved_at`  DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 COMMIT;

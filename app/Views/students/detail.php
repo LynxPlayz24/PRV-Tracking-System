@@ -102,6 +102,11 @@ function showVal($val) {
                     <li class="nav-item">
                         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-grad" type="button">Graduation</button>
                     </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="remarks-tab-btn" data-bs-toggle="tab" data-bs-target="#tab-remarks" type="button">
+                            <i class="bi bi-chat-left-text me-1"></i>Remarks (<?= count($remarks ?? []) ?>)
+                        </button>
+                    </li>
                 </ul>
             </div>
             
@@ -223,8 +228,126 @@ function showVal($val) {
                             <tr><td class="text-muted fs-5">Graduation Date</td><td><strong class="text-success fs-5"><?= showDate($grad['graduation_date'] ?? null) ?></strong></td></tr>
                         </table>
                     </div>
+
+                    <!-- REMARKS TAB -->
+                    <div class="tab-pane fade" id="tab-remarks">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0"><i class="bi bi-chat-square-dots me-2 text-primary"></i>Student Remarks & Attachments</h5>
+                        </div>
+
+                        <!-- Add Remark Form -->
+                        <div class="card bg-light border-0 mb-4 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-success"></i>Add New Remark / File Attachment</h6>
+                                <form action="<?= $baseUrl ?>/student/<?= $student['student_id'] ?>/remarks" method="POST" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <textarea class="form-control" name="remark_text" rows="3" placeholder="Enter remark notes, feedback, or meeting updates..." required></textarea>
+                                    </div>
+                                    <div class="row align-items-center g-3">
+                                        <div class="col-md-7">
+                                            <label class="form-label small text-muted mb-1"><i class="bi bi-paperclip me-1"></i>Attach Media / Document (PDF, Images, DOC, ZIP - max 10MB)</label>
+                                            <input type="file" class="form-control form-control-sm" name="attachment">
+                                        </div>
+                                        <div class="col-md-5 text-md-end pt-md-3">
+                                            <button type="submit" class="btn btn-uum btn-sm px-4">
+                                                <i class="bi bi-send me-1"></i> Post Remark
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Remarks List -->
+                        <?php if (empty($remarks)): ?>
+                            <div class="text-center text-muted py-4 border rounded bg-white">
+                                <i class="bi bi-journal-x fs-1 d-block mb-2 text-secondary"></i>
+                                No remarks recorded yet for this student.
+                            </div>
+                        <?php else: ?>
+                            <div class="timeline position-relative ps-2">
+                                <?php foreach ($remarks as $rem): ?>
+                                    <div class="card border shadow-sm mb-3 position-relative">
+                                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2 px-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle bg-primary bg-opacity-10 text-primary me-2 fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem; line-height:32px; text-align:center; border-radius:50%;">
+                                                    <?= strtoupper(substr($rem['author_name'] ?? 'S', 0, 1)) ?>
+                                                </div>
+                                                <div>
+                                                    <span class="fw-bold text-dark me-2"><?= htmlspecialchars($rem['author_name']) ?></span>
+                                                    <span class="small text-muted"><i class="bi bi-clock me-1"></i><?= date('d M Y, h:i A', strtotime($rem['created_at'])) ?></span>
+                                                </div>
+                                            </div>
+                                            <form action="<?= $baseUrl ?>/student/<?= $student['student_id'] ?>/remarks/delete/<?= $rem['remark_id'] ?>" method="POST" onsubmit="return confirm('Delete this remark and its attachment?');">
+                                                <button type="submit" class="btn btn-sm text-danger p-0 border-0" title="Delete Remark">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="card-body py-3 px-3">
+                                            <p class="card-text mb-2 text-dark" style="white-space: pre-wrap;"><?= htmlspecialchars($rem['remark_text']) ?></p>
+
+                                            <?php if (!empty($rem['file_path'])): ?>
+                                                <?php 
+                                                $fileExt = strtolower(pathinfo($rem['file_name'], PATHINFO_EXTENSION));
+                                                $iconClass = match($fileExt) {
+                                                    'pdf' => 'bi-file-earmark-pdf text-danger',
+                                                    'doc', 'docx' => 'bi-file-earmark-word text-primary',
+                                                    'jpg', 'jpeg', 'png', 'gif' => 'bi-file-earmark-image text-success',
+                                                    'zip' => 'bi-file-earmark-zip text-warning',
+                                                    'xlsx', 'csv' => 'bi-file-earmark-excel text-success',
+                                                    default => 'bi-file-earmark-text text-secondary'
+                                                };
+                                                $fileUrl = $baseUrl . '/' . $rem['file_path'];
+                                                $isImage = in_array($fileExt, ['jpg', 'jpeg', 'png', 'gif']);
+                                                ?>
+                                                <div class="mt-3 p-2 bg-light rounded border d-flex align-items-center justify-content-between">
+                                                    <div class="d-flex align-items-center overflow-hidden">
+                                                        <i class="bi <?= $iconClass ?> fs-4 me-2"></i>
+                                                        <div class="text-truncate">
+                                                            <a href="<?= $fileUrl ?>" target="_blank" class="fw-semibold text-decoration-none text-dark">
+                                                                <?= htmlspecialchars($rem['file_name']) ?>
+                                                            </a>
+                                                            <div class="small text-muted">
+                                                                <?= !empty($rem['file_size']) ? round($rem['file_size'] / 1024, 1) . ' KB' : '' ?>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <a href="<?= $fileUrl ?>" download="<?= htmlspecialchars($rem['file_name']) ?>" class="btn btn-sm btn-outline-secondary ms-3">
+                                                        <i class="bi bi-download me-1"></i> Download
+                                                    </a>
+                                                </div>
+
+                                                <?php if ($isImage): ?>
+                                                    <div class="mt-2 text-center">
+                                                        <a href="<?= $fileUrl ?>" target="_blank">
+                                                            <img src="<?= $fileUrl ?>" alt="Attachment" class="img-fluid rounded border shadow-sm" style="max-height: 200px; object-fit: contain;">
+                                                        </a>
+                                                    </div>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let hash = window.location.hash;
+    if (hash) {
+        let triggerEl = document.querySelector('button[data-bs-target="' + hash + '"]');
+        if (triggerEl) {
+            let tab = new bootstrap.Tab(triggerEl);
+            tab.show();
+        }
+    }
+});
+</script>
+

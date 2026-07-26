@@ -134,4 +134,77 @@ class Student
 
         return $student;
     }
+
+    /**
+     * Get filtered students with viva details for bulk export & sorting
+     */
+    public function getFiltered(array $filters = []): array
+    {
+        $sql = "SELECT DISTINCT s.*, v.viva_date, v.viva_result 
+                FROM students s 
+                LEFT JOIN viva_records v ON s.student_id = v.student_id 
+                WHERE 1=1 ";
+        $params = [];
+
+        if (!empty($filters['month'])) {
+            $sql .= " AND MONTH(v.viva_date) = :month ";
+            $params[':month'] = (int)$filters['month'];
+        }
+
+        if (!empty($filters['year'])) {
+            $sql .= " AND YEAR(v.viva_date) = :year ";
+            $params[':year'] = (int)$filters['year'];
+        }
+
+        if (!empty($filters['school'])) {
+            $sql .= " AND s.school = :school ";
+            $params[':school'] = $filters['school'];
+        }
+
+        if (!empty($filters['degree_level'])) {
+            $sql .= " AND s.degree_level = :degree_level ";
+            $params[':degree_level'] = $filters['degree_level'];
+        }
+
+        if (!empty($filters['research_status'])) {
+            $sql .= " AND s.research_status = :research_status ";
+            $params[':research_status'] = $filters['research_status'];
+        }
+
+        // Sorting
+        $sortViva = $filters['sort_viva'] ?? '';
+        if ($sortViva === 'asc') {
+            $sql .= " ORDER BY (v.viva_date IS NULL) ASC, v.viva_date ASC, s.name ASC ";
+        } elseif ($sortViva === 'desc') {
+            $sql .= " ORDER BY (v.viva_date IS NULL) ASC, v.viva_date DESC, s.name ASC ";
+        } elseif ($sortViva === 'month') {
+            $sql .= " ORDER BY (v.viva_date IS NULL) ASC, MONTH(v.viva_date) ASC, DAY(v.viva_date) ASC, s.name ASC ";
+        } else {
+            $sql .= " ORDER BY s.name ASC ";
+        }
+
+        $this->db->query($sql);
+        foreach ($params as $param => $val) {
+            $this->db->bind($param, $val);
+        }
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get list of unique schools
+     */
+    public function getSchools(): array
+    {
+        $this->db->query("SELECT DISTINCT school FROM students WHERE school IS NOT NULL AND school != '' ORDER BY school ASC");
+        return array_column($this->db->resultSet(), 'school');
+    }
+
+    /**
+     * Get list of unique viva years
+     */
+    public function getVivaYears(): array
+    {
+        $this->db->query("SELECT DISTINCT YEAR(viva_date) as yr FROM viva_records WHERE viva_date IS NOT NULL ORDER BY yr DESC");
+        return array_column($this->db->resultSet(), 'yr');
+    }
 }

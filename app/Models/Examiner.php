@@ -34,12 +34,13 @@ class Examiner
 
     public function create(array $data): int
     {
-        $this->db->query('INSERT INTO examiners (examiner_name, institution, email, phone) 
-                          VALUES (:name, :institution, :email, :phone)');
+        $this->db->query('INSERT INTO examiners (examiner_name, institution, email, phone, classification) 
+                          VALUES (:name, :institution, :email, :phone, :classification)');
         $this->db->bind(':name', $data['examiner_name']);
         $this->db->bind(':institution', empty($data['institution']) ? null : $data['institution']);
         $this->db->bind(':email', empty($data['email']) ? null : $data['email']);
         $this->db->bind(':phone', empty($data['phone']) ? null : $data['phone']);
+        $this->db->bind(':classification', in_array($data['classification'] ?? '', ['Internal', 'External']) ? $data['classification'] : 'Internal');
         $this->db->execute();
         return (int)$this->db->lastInsertId();
     }
@@ -49,11 +50,15 @@ class Examiner
         $this->db->query('UPDATE examiners SET 
                           examiner_name = :name, 
                           institution = :institution, 
-                          email = :email 
+                          email = :email, 
+                          phone = :phone, 
+                          classification = :classification 
                           WHERE examiner_id = :id');
         $this->db->bind(':name', $data['examiner_name']);
         $this->db->bind(':institution', empty($data['institution']) ? null : $data['institution']);
         $this->db->bind(':email', empty($data['email']) ? null : $data['email']);
+        $this->db->bind(':phone', empty($data['phone']) ? null : $data['phone']);
+        $this->db->bind(':classification', in_array($data['classification'] ?? '', ['Internal', 'External']) ? $data['classification'] : 'Internal');
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }

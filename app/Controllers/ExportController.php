@@ -8,6 +8,9 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ExportController extends Controller
 {
@@ -19,18 +22,32 @@ class ExportController extends Controller
     }
 
     /**
-     * Show export page with student list
+     * Show export page with filtered student list
      */
     public function index(): void
     {
         Middleware::requireLogin();
 
-        $students = $this->studentModel->getAll();
+        $filters = [
+            'month'           => trim($this->input('month', '')),
+            'year'            => trim($this->input('year', '')),
+            'school'          => trim($this->input('school', '')),
+            'degree_level'    => trim($this->input('degree_level', '')),
+            'research_status' => trim($this->input('research_status', '')),
+            'sort_viva'       => trim($this->input('sort_viva', '')),
+        ];
+
+        $students  = $this->studentModel->getFiltered($filters);
+        $schools   = $this->studentModel->getSchools();
+        $vivaYears = $this->studentModel->getVivaYears();
 
         $data = [
             'pageTitle'   => 'Export Data',
             'currentPage' => 'export',
-            'students'    => $students
+            'students'    => $students,
+            'schools'     => $schools,
+            'vivaYears'   => $vivaYears,
+            'filters'     => $filters
         ];
 
         $this->view('layouts.header', $data);
@@ -55,35 +72,27 @@ class ExportController extends Controller
             return;
         }
 
-        // Configure DomPDF options.
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
-        $options->set('isRemoteEnabled', true); // allow remote images if any
+        $options->set('isRemoteEnabled', true);
         $options->set('defaultFont', 'Helvetica');
         
         $dompdf = new Dompdf($options);
 
-        // Load the HTML template.
         ob_start();
         $this->view('export.pdf_template', ['student' => $student]);
         $html = ob_get_clean();
 
-        // Load HTML into DomPDF.
         $dompdf->loadHtml($html);
-
-        // Set paper size and orientation.
         $dompdf->setPaper('A4', 'portrait');
-
-        // Render the PDF.
         $dompdf->render();
 
-        // Stream the PDF to the browser.
         $filename = 'PRVTS_' . $student['matric_no'] . '.pdf';
         $dompdf->stream($filename, ['Attachment' => false]);
     }
 
     /**
-     * Generate Excel for a single student
+     * Generate Modern Excel for a single student
      */
     public function exportSingleExcel(string $id): void
     {
@@ -100,61 +109,77 @@ class ExportController extends Controller
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Student Report');
+        $sheet->setTitle('Student Detail Report');
 
-        // Styles
-        $headerStyle = [
-            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF003399']]
+        // Professional Color Palette
+        $navyBanner = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 14],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A8A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER]
         ];
-        $labelStyle = ['font' => ['bold' => true]];
 
-        $row = 1;
+        $sectionHeader = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF2563EB']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT]
+        ];
 
-        // Function to add a section header
-        $addHeader = function($title) use (&$sheet, &$row, $headerStyle) {
-            $row++;
-            $sheet->setCellValue('A' . $row, $title);
+        $labelStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FF334155']],
+            'borders' => ['bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE2E8F0']]]
+        ];
+
+        $valueStyle = [
+            'borders' => ['bottom' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE2E8F0']]]
+        ];
+
+        // Title Banner
+        $sheet->setCellValue('A1', ' PRVTS RECORD: ' . strtoupper($student['name']) . ' (' . $student['matric_no'] . ')');
+        $sheet->mergeCells('A1:B1');
+        $sheet->getStyle('A1:B1')->applyFromArray($navyBanner);
+        $sheet->getRowDimension(1)->setRowHeight(35);
+
+        $row = 3;
+
+        $addHeader = function($title) use (&$sheet, &$row, $sectionHeader) {
+            $sheet->setCellValue('A' . $row, ' ' . $title);
             $sheet->mergeCells('A' . $row . ':B' . $row);
-            $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray($headerStyle);
+            $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray($sectionHeader);
+            $sheet->getRowDimension($row)->setRowHeight(24);
             $row++;
         };
 
-        // Function to add a data row
-        $addRow = function($label, $value) use (&$sheet, &$row, $labelStyle) {
+        $addRow = function($label, $value) use (&$sheet, &$row, $labelStyle, $valueStyle) {
             $sheet->setCellValue('A' . $row, $label);
             $sheet->getStyle('A' . $row)->applyFromArray($labelStyle);
             
-            // Format dates simply if it looks like YYYY-MM-DD
             if ($value && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
                 $value = date('d M Y', strtotime($value));
             }
             
             $sheet->setCellValue('B' . $row, $value ?? '-');
+            $sheet->getStyle('B' . $row)->applyFromArray($valueStyle);
+            $sheet->getRowDimension($row)->setRowHeight(20);
             $row++;
         };
 
-        // Title
-        $sheet->setCellValue('A1', 'PRVTS Student Record: ' . $student['name']);
-        $sheet->mergeCells('A1:B1');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-        
         // Data Extraction
         $viva = $student['viva_records'][0] ?? [];
         $corr = $student['correction'] ?? [];
         $grad = $student['graduation'] ?? [];
 
         // 1. Personal & Academic
-        $addHeader('Personal & Academic Information');
+        $addHeader('1. Personal & Academic Information');
         $addRow('Name', $student['name']);
         $addRow('Matric No', $student['matric_no']);
         $addRow('Programme', $student['programme']);
         $addRow('School', $student['school']);
         $addRow('Degree Level', $student['degree_level']);
         $addRow('Research Status', $student['research_status']);
+        $row++;
 
         // 2. Research Information
-        $addHeader('Research Information');
+        $addHeader('2. Research Information');
         $addRow('Thesis Title', $student['thesis_title']);
         
         $mainSups = array_filter($student['supervisors'] ?? [], fn($s) => $s['role'] === 'main');
@@ -162,81 +187,37 @@ class ExportController extends Controller
         
         $addRow('Main Supervisor(s)', implode(", ", array_column($mainSups, 'supervisor_name')));
         $addRow('Co-Supervisor(s)', implode(", ", array_column($coSups, 'supervisor_name')));
-        
-        $addRow('Registration Date', $grad['registration_date'] ?? null);
-        $addRow('No of Semesters', $grad['no_of_semesters'] ?? null);
-        $addRow('End of Study Date', $grad['end_of_study_date'] ?? null);
-        $addRow('Title Proposal Defence Date', $grad['title_proposal_defence_date'] ?? null);
-        $addRow('JIL Meeting No', $grad['jil_meeting_no'] ?? null);
+        $row++;
 
         // 3. Draft Thesis Requirements
-        $addHeader('Draft Thesis Requirements');
-        $addRow('Notice of Submission Date', $viva['notice_of_submission_date'] ?? null);
-        $addRow('Turnitin Report Date', $viva['turnitin_report_date'] ?? null);
+        $addHeader('3. Draft Thesis Requirements');
+        $addRow('Submission Email Date', $viva['thesis_submission_email_date'] ?? null);
+        $addRow('Draft 4 Hard Copy Date', $viva['draft_hard_copy_date'] ?? null);
+        $addRow('Soft Copy Date', $viva['draft_soft_copy_date'] ?? null);
         $addRow('Turnitin Percentage (%)', $viva['turnitin_percentage'] ?? null);
         $addRow('Draft Submission Form Date', $viva['draft_submission_form_date'] ?? null);
+        $row++;
 
         // 4. Examination Panel & Viva
-        $addHeader('Examination Panel');
-        $addRow('Internal Examiner(s)', implode(", ", array_column(array_filter($student['examiners'] ?? [], fn($e) => $e['role'] === 'internal'), 'examiner_name')));
-        $addRow('External Examiner(s)', implode(", ", array_column(array_filter($student['examiners'] ?? [], fn($e) => $e['role'] === 'external'), 'examiner_name')));
-
-        $addHeader('Panel Arrangement Dates');
-        $addRow('Senate Endorsement Date', $viva['senate_endorsement_date'] ?? null);
-        $addRow('Appointment Letter Date', $viva['appointment_letter_date'] ?? null);
-        $addRow('Thesis Handed to Panel Date', $viva['thesis_handed_to_panel_date'] ?? null);
-        
-        $addHeader('Viva-Voce');
-        $addRow('Invitation Letter Date', $viva['invitation_letter_date'] ?? null);
-        $addRow('Viva Date', $viva['viva_date'] ?? null);
+        $addHeader('4. Examination Panel & Viva-Voce');
         $addRow('Chairperson Name', $viva['chairperson_name'] ?? null);
-        $addRow('Internal Examiner Report Date', $viva['internal_examiner_report_date'] ?? null);
-        $addRow('External Examiner Report Date', $viva['external_examiner_report_date'] ?? null);
+        $addRow('Internal Examiner', $viva['examiner_name'] ?? null);
+        $addRow('External Examiner', $viva['external_examiner_name'] ?? null);
+        $addRow('Viva Date', $viva['viva_date'] ?? null);
         $addRow('Viva Result', $viva['viva_result'] ?? null);
         $addRow('Best Thesis Candidate', !empty($viva['best_thesis_candidate']) ? 'Yes' : 'No');
+        $row++;
 
         // 5. Post-Viva Corrections
-        $addHeader('Post-Viva Corrections & Submission');
+        $addHeader('5. Post-Viva Corrections');
         $addRow('Correction Deadline', $corr['correction_deadline'] ?? null);
-        $addRow('Internal Report Status', $corr['internal_report_status'] ?? null);
-        $addRow('External Report Status', $corr['external_report_status'] ?? null);
-        
-        $addHeader('Corrected Thesis Tracking');
         $addRow('Corrected Thesis Received Date', $corr['corrected_thesis_received_date'] ?? null);
-        $addRow('Checklist After Viva Date', $corr['checklist_after_viva_date'] ?? null);
-        $addRow('Correction Schedule Date', $corr['correction_schedule_date'] ?? null);
-        $addRow('Post-Viva Turnitin (%)', $corr['post_viva_turnitin_percentage'] ?? null);
-        $addRow('Supervisor Endorsement Date', $corr['supervisor_endorsement_date'] ?? null);
-        $addRow('Sent to Internal Date', $corr['sent_to_internal_date'] ?? null);
-        $addRow('Sent to External Date', $corr['sent_to_external_date'] ?? null);
-        $addRow('Sent to Supervisor Date', $corr['sent_to_supervisor_date'] ?? null);
-        $addRow('Endorsement from Examiner Date', $corr['endorsement_from_examiner_date'] ?? null);
-        $addRow('Abstract Received Date', $corr['abstract_received_date'] ?? null);
         $addRow('Final Result', $corr['final_result'] ?? null);
+        $row++;
 
-        // 6. Honorarium
-        $addHeader('Honorarium Details');
-        $addRow('Chairperson', $viva['honorarium_chairperson'] ?? null);
-        $addRow('Internal Examiner', $viva['honorarium_internal'] ?? null);
-        $addRow('External Examiner', $viva['honorarium_external'] ?? null);
-        $addRow('Refreshment', $viva['honorarium_refreshment'] ?? null);
-
-        // 7. Graduation & Approvals
-        $addHeader('Institutional Approvals & Graduation');
-        $addRow('GAIS Key-in Date', $grad['gais_keyin_date'] ?? null);
-        $addRow('Senate Meeting Date', $grad['senate_meeting_date'] ?? null);
-        $addRow('Senate Meeting No.', $grad['senate_meeting_no'] ?? null);
+        // 6. Graduation & Approvals
+        $addHeader('6. Institutional Approvals & Graduation');
         $addRow('Senate Status', $grad['senate_status'] ?? null);
-        $addRow('Thesis Certification Date', $grad['thesis_certification_date'] ?? null);
-        
-        $addHeader('Final Document Submissions');
-        $addRow('Final Thesis Form Date', $grad['final_thesis_form_date'] ?? null);
-        $addRow('Hard Bound Copies Date', $grad['hard_bound_copies_date'] ?? null);
-        $addRow('Loose Copy Date', $grad['loose_copy_date'] ?? null);
-        $addRow('CD Copies Date', $grad['cd_copies_date'] ?? null);
-        $addRow('ETD Form Date', $grad['etd_form_date'] ?? null);
-        $addRow('Sent to PSB Date', $grad['sent_to_psb_date'] ?? null);
-        
         $addRow('Graduation Date', $grad['graduation_date'] ?? null);
 
         // Auto-size columns
@@ -246,7 +227,6 @@ class ExportController extends Controller
         $writer = new Xlsx($spreadsheet);
         $filename = 'PRVTS_' . $student['matric_no'] . '.xlsx';
         
-        // Clean output buffer before sending headers
         if (ob_get_length()) {
             ob_end_clean();
         }
@@ -260,16 +240,25 @@ class ExportController extends Controller
     }
 
     /**
-     * Generate bulk PDF for all students
+     * Generate bulk PDF for filtered students
      */
     public function exportPdf(): void
     {
         Middleware::requireLogin();
 
-        $students = $this->studentModel->getAll();
+        $filters = [
+            'month'           => trim($this->input('month', '')),
+            'year'            => trim($this->input('year', '')),
+            'school'          => trim($this->input('school', '')),
+            'degree_level'    => trim($this->input('degree_level', '')),
+            'research_status' => trim($this->input('research_status', '')),
+            'sort_viva'       => trim($this->input('sort_viva', '')),
+        ];
 
-        if (empty($students)) {
-            $this->setFlash('warning', 'No students available to export.');
+        $basicStudents = $this->studentModel->getFiltered($filters);
+
+        if (empty($basicStudents)) {
+            $this->setFlash('warning', 'No students match your criteria to export.');
             $this->redirect($this->baseUrl() . '/export');
             return;
         }
@@ -282,11 +271,11 @@ class ExportController extends Controller
         $dompdf = new Dompdf($options);
 
         ob_start();
-        foreach ($students as $index => $basicStudent) {
+        foreach ($basicStudents as $index => $basicStudent) {
             $student = $this->studentModel->getFullDetails((int)$basicStudent['student_id']);
             if ($student) {
                 $this->view('export.pdf_template', ['student' => $student]);
-                if ($index < count($students) - 1) {
+                if ($index < count($basicStudents) - 1) {
                     echo '<div style="page-break-after: always;"></div>';
                 }
             }
@@ -302,50 +291,116 @@ class ExportController extends Controller
     }
 
     /**
-     * Generate bulk Excel for all students
+     * Generate Modern Bulk Excel Export with Multi-Parameter Filtering & Viva Month Sorting
      */
     public function exportExcel(): void
     {
         Middleware::requireLogin();
 
-        $students = $this->studentModel->getAll();
+        $filters = [
+            'month'           => trim($this->input('month', '')),
+            'year'            => trim($this->input('year', '')),
+            'school'          => trim($this->input('school', '')),
+            'degree_level'    => trim($this->input('degree_level', '')),
+            'research_status' => trim($this->input('research_status', '')),
+            'sort_viva'       => trim($this->input('sort_viva', '')),
+        ];
 
-        if (empty($students)) {
-            $this->setFlash('warning', 'No students available to export.');
+        $basicStudents = $this->studentModel->getFiltered($filters);
+
+        if (empty($basicStudents)) {
+            $this->setFlash('warning', 'No students match your filter criteria for Excel export.');
             $this->redirect($this->baseUrl() . '/export');
             return;
         }
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('All Students Summary');
+        $sheet->setTitle('PRVTS Students Summary');
 
-        $headerStyle = [
-            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF003399']]
+        // Styles & Branding Palette
+        $titleBannerStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 14],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF0F172A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
         ];
 
-        // Headers
+        $metricCardLabel = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FF475569'], 'size' => 9],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF1F5F9']]
+        ];
+
+        $metricCardVal = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FF1E293B'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF1F5F9']]
+        ];
+
+        $tableHeaderStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 10],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A8A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+        ];
+
+        $thinBorder = [
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFE2E8F0']]
+            ]
+        ];
+
+        // 1. Header Banner
+        $sheet->setCellValue('A1', 'POSTGRADUATE RESEARCH & VIVA TRACKING SYSTEM (PRVTS)');
+        $sheet->mergeCells('A1:J1');
+        $sheet->getStyle('A1:J1')->applyFromArray($titleBannerStyle);
+        $sheet->getRowDimension(1)->setRowHeight(36);
+
+        // 2. Metric Cards Block
+        $monthNames = [1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'];
+        $selectedMonth = !empty($filters['month']) ? ($monthNames[(int)$filters['month']] ?? 'All') : 'All Months';
+        $selectedSchool = !empty($filters['school']) ? $filters['school'] : 'All Schools';
+
+        $sheet->setCellValue('A3', 'TOTAL RECORDS');
+        $sheet->setCellValue('A4', count($basicStudents) . ' Students');
+        $sheet->getStyle('A3')->applyFromArray($metricCardLabel);
+        $sheet->getStyle('A4')->applyFromArray($metricCardVal);
+
+        $sheet->setCellValue('D3', 'FILTERED SCHOOL');
+        $sheet->setCellValue('D4', $selectedSchool);
+        $sheet->getStyle('D3')->applyFromArray($metricCardLabel);
+        $sheet->getStyle('D4')->applyFromArray($metricCardVal);
+
+        $sheet->setCellValue('G3', 'VIVA MONTH FILTER');
+        $sheet->setCellValue('G4', $selectedMonth);
+        $sheet->getStyle('G3')->applyFromArray($metricCardLabel);
+        $sheet->getStyle('G4')->applyFromArray($metricCardVal);
+
+        $sheet->setCellValue('J3', 'GENERATED DATE');
+        $sheet->setCellValue('J4', date('d M Y'));
+        $sheet->getStyle('J3')->applyFromArray($metricCardLabel);
+        $sheet->getStyle('J4')->applyFromArray($metricCardVal);
+
+        // 3. Table Column Headers
         $headers = [
-            'A1' => 'Matric No',
-            'B1' => 'Name',
-            'C1' => 'Programme',
-            'D1' => 'School',
-            'E1' => 'Degree Level',
-            'F1' => 'Status',
-            'G1' => 'Main Supervisor',
-            'H1' => 'Viva Date',
-            'I1' => 'Viva Result',
-            'J1' => 'Graduation Date'
+            'A6' => 'Matric No',
+            'B6' => 'Student Name',
+            'C6' => 'Programme',
+            'D6' => 'School',
+            'E6' => 'Degree Level',
+            'F6' => 'Research Status',
+            'G6' => 'Main Supervisor',
+            'H6' => 'Viva Date',
+            'I6' => 'Viva Result',
+            'J6' => 'Graduation Date'
         ];
 
         foreach ($headers as $cell => $text) {
             $sheet->setCellValue($cell, $text);
         }
-        $sheet->getStyle('A1:J1')->applyFromArray($headerStyle);
+        $sheet->getStyle('A6:J6')->applyFromArray($tableHeaderStyle);
+        $sheet->getRowDimension(6)->setRowHeight(26);
 
-        $row = 2;
-        foreach ($students as $basicStudent) {
+        // 4. Data Rows
+        $row = 7;
+        foreach ($basicStudents as $basicStudent) {
             $student = $this->studentModel->getFullDetails((int)$basicStudent['student_id']);
             if (!$student) continue;
 
@@ -366,11 +421,26 @@ class ExportController extends Controller
             $sheet->setCellValue('H' . $row, $vivaDate);
             $sheet->setCellValue('I' . $row, $viva['viva_result'] ?? '-');
             $sheet->setCellValue('J' . $row, $gradDate);
-            
+
+            // Apply borders & row dimension
+            $sheet->getStyle('A' . $row . ':J' . $row)->applyFromArray($thinBorder);
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('H' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('J' . $row)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Zebra shading for even rows
+            if ($row % 2 === 0) {
+                $sheet->getStyle('A' . $row . ':J' . $row)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFF8FAFC');
+            }
+
+            $sheet->getRowDimension($row)->setRowHeight(22);
             $row++;
         }
 
-        // Auto-size columns
+        // Auto-size columns A through J
         foreach (range('A', 'J') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }

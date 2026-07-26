@@ -53,10 +53,11 @@ class Supervisor
 
     public function create(array $data): int
     {
-        $this->db->query('INSERT INTO supervisors (supervisor_name, email, department) 
-                          VALUES (:name, :email, :dept)');
+        $this->db->query('INSERT INTO supervisors (supervisor_name, email, phone, department) 
+                          VALUES (:name, :email, :phone, :dept)');
         $this->db->bind(':name', $data['supervisor_name']);
         $this->db->bind(':email', empty($data['email']) ? null : $data['email']);
+        $this->db->bind(':phone', empty($data['phone']) ? null : $data['phone']);
         $this->db->bind(':dept', empty($data['department']) ? null : $data['department']);
         $this->db->execute();
         return (int)$this->db->lastInsertId();
@@ -67,10 +68,12 @@ class Supervisor
         $this->db->query('UPDATE supervisors SET 
                           supervisor_name = :name, 
                           email = :email, 
+                          phone = :phone, 
                           department = :dept 
                           WHERE supervisor_id = :id');
         $this->db->bind(':name', $data['supervisor_name']);
         $this->db->bind(':email', empty($data['email']) ? null : $data['email']);
+        $this->db->bind(':phone', empty($data['phone']) ? null : $data['phone']);
         $this->db->bind(':dept', empty($data['department']) ? null : $data['department']);
         $this->db->bind(':id', $id);
         return $this->db->execute();
