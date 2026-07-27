@@ -5,7 +5,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
 <div class="page-header animate-fade-in-up">
     <div>
         <div class="breadcrumb text-muted">PRVTS / Data / Docx Templates</div>
-        <h1>Perakuan Kerja Tesis Document Generator</h1>
+        <h1>Thesis Certification Generator</h1>
     </div>
 </div>
 
@@ -34,7 +34,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <div class="form-text mt-2">Select a student from the database to generate their official Perakuan Kerja Tesis document.</div>
+                        <div class="form-text mt-2">Select a student from the database to generate their official Thesis Certification Document.</div>
                     </div>
 
                     <!-- Submit Button -->

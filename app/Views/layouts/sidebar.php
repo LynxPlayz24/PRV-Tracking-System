@@ -54,7 +54,7 @@ $current = $currentPage ?? '';
         </a>
         <a href="<?= $baseUrl ?>/docx-templates" class="nav-link <?= $current === 'docx_templates' ? 'active' : '' ?>">
             <i class="bi bi-file-earmark-word"></i>
-            <span>Docx Templates</span>
+            <span>Thesis Certification</span>
         </a>
     </div>
 
