@@ -49,6 +49,34 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     </div>
 </div>
 
+<style>
+.dashboard-alert-scroll {
+    max-height: 540px;
+    overflow-y: auto;
+}
+.dashboard-alert-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.dashboard-alert-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+.dashboard-alert-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.dashboard-alert-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+.dashboard-alert-scroll table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8fafc !important;
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+</style>
+
 <div class="row g-4 animate-fade-in-up stagger-2">
     <!-- Action Required Table -->
     <div class="col-lg-6">
@@ -66,8 +94,8 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                         No immediate actions required!
                     </div>
                 <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                    <div class="table-responsive dashboard-alert-scroll">
+                        <table class="table table-hover align-middle mb-0">
                             <thead class="table-light text-muted small">
                                 <tr>
                                     <th>Student</th>
@@ -120,8 +148,8 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                         No pending responses from Academic Staff.
                     </div>
                 <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+                    <div class="table-responsive dashboard-alert-scroll">
+                        <table class="table table-hover align-middle mb-0">
                             <thead class="table-light text-muted small">
                                 <tr>
                                     <th>Staff & Role</th>

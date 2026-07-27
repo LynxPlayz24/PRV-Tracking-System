@@ -14,6 +14,14 @@ function showDate($date) {
 function showVal($val) {
     return empty($val) ? '<span class="text-muted">-</span>' : htmlspecialchars($val);
 }
+function showMoney($val) {
+    if ($val === null || $val === '' || $val === false) return '<span class="text-muted">-</span>';
+    $clean = trim((string)$val);
+    if (is_numeric($clean)) {
+        return '<span class="fw-medium text-dark">RM ' . number_format((float)$clean, 2) . '</span>';
+    }
+    return str_starts_with(strtoupper($clean), 'RM') ? '<span class="fw-medium text-dark">' . htmlspecialchars($clean) . '</span>' : '<span class="fw-medium text-dark">RM ' . htmlspecialchars($clean) . '</span>';
+}
 ?>
 
 <div class="page-header animate-fade-in-up">
@@ -204,10 +212,10 @@ function showVal($val) {
                             
                             <tr><td colspan="2"><hr></td></tr>
                             <tr><td class="text-muted fw-bold" colspan="2">Honorarium Details</td></tr>
-                            <tr><td class="text-muted">Chairperson</td><td><?= showVal($viva['honorarium_chairperson'] ?? null) ?></td></tr>
-                            <tr><td class="text-muted">Internal Examiner</td><td><?= showVal($viva['honorarium_internal'] ?? null) ?></td></tr>
-                            <tr><td class="text-muted">External Examiner</td><td><?= showVal($viva['honorarium_external'] ?? null) ?></td></tr>
-                            <tr><td class="text-muted">Refreshment</td><td><?= showVal($viva['honorarium_refreshment'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Chairperson</td><td><?= showMoney($viva['honorarium_chairperson'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Internal Examiner</td><td><?= showMoney($viva['honorarium_internal'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">External Examiner</td><td><?= showMoney($viva['honorarium_external'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Refreshment</td><td><?= showMoney($viva['honorarium_refreshment'] ?? null) ?></td></tr>
                         </table>
                     </div>
 

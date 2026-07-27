@@ -340,22 +340,34 @@ $supervisors = $supervisors ?? [];
                         </div>
                         
                         <div class="col-12"><hr></div>
-                        <h6>Honorarium Payments</h6>
+                        <h6 class="text-secondary fw-bold mb-3"><i class="bi bi-cash-coin me-2"></i>Honorarium Payments</h6>
                         <div class="col-md-3">
                             <label class="form-label">Chairperson</label>
-                            <input type="text" class="form-control" name="honorarium_chairperson" value="<?= htmlspecialchars($viva['honorarium_chairperson'] ?? '') ?>">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_chairperson" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_chairperson'] ?? '')) ?>">
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Internal Examiner</label>
-                            <input type="text" class="form-control" name="honorarium_internal" value="<?= htmlspecialchars($viva['honorarium_internal'] ?? '') ?>">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_internal" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_internal'] ?? '')) ?>">
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">External Examiner</label>
-                            <input type="text" class="form-control" name="honorarium_external" value="<?= htmlspecialchars($viva['honorarium_external'] ?? '') ?>">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_external" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_external'] ?? '')) ?>">
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Refreshment</label>
-                            <input type="text" class="form-control" name="honorarium_refreshment" value="<?= htmlspecialchars($viva['honorarium_refreshment'] ?? '') ?>">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_refreshment" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_refreshment'] ?? '')) ?>">
+                            </div>
                         </div>
                         
                         <div class="col-12"><hr></div>

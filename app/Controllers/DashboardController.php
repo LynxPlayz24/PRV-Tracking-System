@@ -42,14 +42,15 @@ class DashboardController extends Controller
     {
         $actions = [];
 
-        // 1. Upcoming Viva Sessions (within 30 days)
+        // 1. Upcoming Viva Sessions (within 30 days, missing result)
         $this->db->query("
             SELECT s.student_id, s.name, s.matric_no, v.viva_id, v.viva_date 
             FROM students s
             JOIN viva_records v ON s.student_id = v.student_id
-            WHERE v.viva_date >= CURDATE() AND v.viva_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+            WHERE v.viva_date >= CURDATE() 
+              AND v.viva_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+              AND (v.viva_result IS NULL OR v.viva_result = '')
             ORDER BY v.viva_date ASC
-            LIMIT 10
         ");
         $vivas = $this->db->resultSet();
         foreach ($vivas as $viva) {
@@ -68,16 +69,41 @@ class DashboardController extends Controller
             ];
         }
 
-        // 2. Correction Deadlines (Overdue or Due Soon)
+        // 2. Overdue Viva Outcome (Viva date passed, but viva result still missing)
+        $this->db->query("
+            SELECT s.student_id, s.name, s.matric_no, v.viva_id, v.viva_date 
+            FROM students s
+            JOIN viva_records v ON s.student_id = v.student_id
+            WHERE v.viva_date < CURDATE()
+              AND (v.viva_result IS NULL OR v.viva_result = '')
+            ORDER BY v.viva_date DESC
+        ");
+        $pastVivas = $this->db->resultSet();
+        foreach ($pastVivas as $pviva) {
+            $key = 'pviva_' . $pviva['viva_id'] . '_' . $pviva['viva_date'];
+
+            $actions[] = [
+                'alert_key'  => $key,
+                'student_id' => $pviva['student_id'],
+                'name'       => $pviva['name'],
+                'matric_no'  => $pviva['matric_no'],
+                'type'       => 'Pending Viva Result',
+                'date'       => $pviva['viva_date'],
+                'badge'      => 'bg-danger text-white',
+                'icon'       => 'bi-journal-x',
+                'tab'        => 'viva'
+            ];
+        }
+
+        // 3. Correction Deadlines (Overdue or Due Soon, thesis not received yet)
         $this->db->query("
             SELECT s.student_id, s.name, s.matric_no, c.correction_id, c.correction_deadline 
             FROM students s
             JOIN corrections c ON s.student_id = c.student_id
             WHERE c.correction_deadline IS NOT NULL 
               AND c.correction_deadline < DATE_ADD(CURDATE(), INTERVAL 14 DAY)
-              AND c.corrected_thesis_received_date IS NULL
+              AND (c.corrected_thesis_received_date IS NULL OR c.corrected_thesis_received_date = '')
             ORDER BY c.correction_deadline ASC
-            LIMIT 10
         ");
         $corrections = $this->db->resultSet();
         foreach ($corrections as $corr) {
@@ -97,7 +123,7 @@ class DashboardController extends Controller
             ];
         }
 
-        // 3. Pending Honorarium Payments (Viva Completed but Honorarium pending / unpaid)
+        // 4. Pending Honorarium Payments (Viva Completed but any honorarium numeric RM amount is missing, text string, or 0)
         $this->db->query("
             SELECT s.student_id, s.name, s.matric_no, v.viva_id, v.viva_date,
                    v.honorarium_chairperson, v.honorarium_internal, v.honorarium_external
@@ -105,12 +131,11 @@ class DashboardController extends Controller
             JOIN viva_records v ON s.student_id = v.student_id
             WHERE v.viva_date IS NOT NULL AND v.viva_date <= CURDATE()
               AND (
-                  (v.honorarium_chairperson IS NOT NULL AND v.honorarium_chairperson != '' AND v.honorarium_chairperson != 'Paid') OR
-                  (v.honorarium_internal IS NOT NULL AND v.honorarium_internal != '' AND v.honorarium_internal != 'Paid') OR
-                  (v.honorarium_external IS NOT NULL AND v.honorarium_external != '' AND v.honorarium_external != 'Paid')
+                  v.honorarium_chairperson IS NULL OR v.honorarium_chairperson NOT REGEXP '^[0-9]+(\\\\.[0-9]+)?$' OR CAST(v.honorarium_chairperson AS DECIMAL(10,2)) <= 0 OR
+                  v.honorarium_internal IS NULL OR v.honorarium_internal NOT REGEXP '^[0-9]+(\\\\.[0-9]+)?$' OR CAST(v.honorarium_internal AS DECIMAL(10,2)) <= 0 OR
+                  v.honorarium_external IS NULL OR v.honorarium_external NOT REGEXP '^[0-9]+(\\\\.[0-9]+)?$' OR CAST(v.honorarium_external AS DECIMAL(10,2)) <= 0
               )
             ORDER BY v.viva_date DESC
-            LIMIT 10
         ");
         $honorariums = $this->db->resultSet();
         foreach ($honorariums as $hon) {
@@ -148,7 +173,7 @@ class DashboardController extends Controller
             JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN examiners e ON v.internal_examiner_id = e.examiner_id
             WHERE v.internal_examiner_email_date IS NOT NULL 
-              AND v.internal_examiner_status = 'Pending'
+              AND (v.internal_examiner_status = 'Pending' OR v.internal_examiner_status IS NULL OR v.internal_examiner_status = '')
               AND v.internal_examiner_email_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
@@ -178,7 +203,7 @@ class DashboardController extends Controller
             JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN examiners e ON v.external_examiner_id = e.examiner_id
             WHERE v.external_examiner_email_date IS NOT NULL 
-              AND v.external_examiner_status = 'Pending'
+              AND (v.external_examiner_status = 'Pending' OR v.external_examiner_status IS NULL OR v.external_examiner_status = '')
               AND v.external_examiner_email_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
@@ -261,7 +286,7 @@ class DashboardController extends Controller
         }
 
         usort($pending, fn($a, $b) => strtotime($a['sent_date']) - strtotime($b['sent_date']));
-        return array_slice($pending, 0, 10);
+        return $pending;
     }
 
     private function getStats(): array

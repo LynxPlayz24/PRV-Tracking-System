@@ -120,6 +120,16 @@ if (!function_exists('pdfVal')) {
         return empty($val) ? '<span class="text-muted">-</span>' : htmlspecialchars($val);
     }
 }
+if (!function_exists('pdfMoney')) {
+    function pdfMoney($val) {
+        if ($val === null || $val === '' || $val === false) return '<span class="text-muted">-</span>';
+        $clean = trim((string)$val);
+        if (is_numeric($clean)) {
+            return 'RM ' . number_format((float)$clean, 2);
+        }
+        return str_starts_with(strtoupper($clean), 'RM') ? htmlspecialchars($clean) : 'RM ' . htmlspecialchars($clean);
+    }
+}
 
 $viva = $student['viva_records'][0] ?? [];
 $corr = $student['correction'] ?? [];
@@ -415,19 +425,19 @@ $coSups = array_filter($student['supervisors'] ?? [], fn($s) => $s['role'] === '
     <table>
         <tr>
             <th>Chairperson</th>
-            <td><?= pdfVal($viva['honorarium_chairperson'] ?? null) ?></td>
+            <td><?= pdfMoney($viva['honorarium_chairperson'] ?? null) ?></td>
         </tr>
         <tr>
             <th>Internal Examiner</th>
-            <td><?= pdfVal($viva['honorarium_internal'] ?? null) ?></td>
+            <td><?= pdfMoney($viva['honorarium_internal'] ?? null) ?></td>
         </tr>
         <tr>
             <th>External Examiner</th>
-            <td><?= pdfVal($viva['honorarium_external'] ?? null) ?></td>
+            <td><?= pdfMoney($viva['honorarium_external'] ?? null) ?></td>
         </tr>
         <tr>
             <th>Refreshment</th>
-            <td><?= pdfVal($viva['honorarium_refreshment'] ?? null) ?></td>
+            <td><?= pdfMoney($viva['honorarium_refreshment'] ?? null) ?></td>
         </tr>
     </table>
     </div>

@@ -215,8 +215,25 @@ class ExportController extends Controller
         $addRow('Final Result', $corr['final_result'] ?? null);
         $row++;
 
-        // 6. Graduation & Approvals
-        $addHeader('6. Institutional Approvals & Graduation');
+        // 6. Honorarium Details
+        $formatMoney = function($val) {
+            if ($val === null || $val === '' || $val === false) return '-';
+            $clean = trim((string)$val);
+            if (is_numeric($clean)) {
+                return 'RM ' . number_format((float)$clean, 2);
+            }
+            return str_starts_with(strtoupper($clean), 'RM') ? $clean : 'RM ' . $clean;
+        };
+
+        $addHeader('6. Honorarium Details');
+        $addRow('Chairperson Honorarium', $formatMoney($viva['honorarium_chairperson'] ?? null));
+        $addRow('Internal Examiner Honorarium', $formatMoney($viva['honorarium_internal'] ?? null));
+        $addRow('External Examiner Honorarium', $formatMoney($viva['honorarium_external'] ?? null));
+        $addRow('Refreshment Honorarium', $formatMoney($viva['honorarium_refreshment'] ?? null));
+        $row++;
+
+        // 7. Graduation & Approvals
+        $addHeader('7. Institutional Approvals & Graduation');
         $addRow('Senate Status', $grad['senate_status'] ?? null);
         $addRow('Graduation Date', $grad['graduation_date'] ?? null);
 
