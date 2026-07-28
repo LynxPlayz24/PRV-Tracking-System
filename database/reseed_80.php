@@ -243,208 +243,193 @@ foreach ($statuses as $status => $count) {
         $externalId = rand(11, 20);
         $chairperson = 'Prof. Dr. ' . explode(' ', $names[($studentCount + 3) % count($names)])[0];
 
-        $vivaData = [
-            'student_id' => $studentId,
-            'internal_examiner_id' => null,
-            'external_examiner_id' => null,
-            'chairperson_name' => null,
-            'internal_examiner_status' => 'Pending',
-            'external_examiner_status' => 'Pending',
-            'viva_date' => null,
-            'viva_result' => null,
-            'honorarium_chairperson' => null,
-            'honorarium_internal' => null,
-            'honorarium_external' => null,
-            'honorarium_refreshment' => null
+        $statusLevels = [
+            'Thesis Submitted'      => 1,
+            'Examiner Assigned'     => 2,
+            'Viva Scheduled'        => 3,
+            'Viva Completed'        => 4,
+            'Corrections Submitted' => 5,
+            'Ready for Senate'      => 6,
+            'Graduated'             => 7
         ];
+        
+        $level = $statusLevels[$status] ?? 1;
 
-        $corrData = [
-            'student_id' => $studentId,
-            'correction_required' => 1,
-            'correction_deadline' => null,
-            'corrected_thesis_received_date' => null,
-            'supervisor_endorsement_date' => null,
-            'final_result' => null
-        ];
-
-        $gradData = [
-            'student_id' => $studentId,
-            'jil_status' => 'Pending',
-            'senate_status' => 'Pending',
-            'graduation_status' => 'Not Ready',
-            'graduation_date' => null
-        ];
-
-        // Custom logic per status to create realistic alerts vs clean state
-        if (in_array($status, ['Examiner Assigned', 'Viva Scheduled', 'Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated'])) {
-            $vivaData['internal_examiner_id'] = $internalId;
-            $vivaData['external_examiner_id'] = $externalId;
-            $vivaData['chairperson_name'] = $chairperson;
-            $vivaData['internal_examiner_email_date'] = date('Y-m-d', strtotime('-20 days'));
-            $vivaData['external_examiner_email_date'] = date('Y-m-d', strtotime('-20 days'));
+        if ($level >= 2) {
+            $vivaData = [
+                'student_id' => $studentId,
+                'internal_examiner_id' => $internalId,
+                'external_examiner_id' => $externalId,
+                'chairperson_name' => $chairperson,
+                'internal_examiner_email_date' => date('Y-m-d', strtotime('-20 days')),
+                'external_examiner_email_date' => date('Y-m-d', strtotime('-20 days')),
+                'internal_examiner_status' => ($status === 'Examiner Assigned' && $studentCount <= 4) ? 'Pending' : 'Confirmed',
+                'external_examiner_status' => ($status === 'Examiner Assigned' && $studentCount <= 4) ? 'Pending' : 'Confirmed',
+                'thesis_to_panel_soft_copy_date' => null,
+                'thesis_to_panel_hard_copy_date' => null,
+                'internal_examiner_report_date' => null,
+                'viva_date' => null,
+                'viva_result' => null,
+                'turnitin_percentage' => null,
+                'honorarium_chairperson' => null,
+                'honorarium_internal' => null,
+                'honorarium_external' => null,
+                'honorarium_refreshment' => null
+            ];
             
-            // To create 2 Staff Pending Confirmation alerts:
-            if ($status === 'Examiner Assigned' && $studentCount <= 4) {
-                $vivaData['internal_examiner_status'] = 'Pending';
-                $vivaData['external_examiner_status'] = 'Pending';
-            } else {
-                $vivaData['internal_examiner_status'] = 'Confirmed';
-                $vivaData['external_examiner_status'] = 'Confirmed';
-            }
-        }
+            if ($level >= 3) {
+                $vivaData['thesis_to_panel_soft_copy_date'] = date('Y-m-d', strtotime('-25 days'));
+                $vivaData['thesis_to_panel_hard_copy_date'] = date('Y-m-d', strtotime('-25 days'));
+                $vivaData['internal_examiner_report_date'] = date('Y-m-d', strtotime('-10 days'));
 
-        if (in_array($status, ['Viva Scheduled', 'Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated'])) {
-            $vivaData['thesis_to_panel_soft_copy_date'] = date('Y-m-d', strtotime('-25 days'));
-            $vivaData['thesis_to_panel_hard_copy_date'] = date('Y-m-d', strtotime('-25 days'));
-            $vivaData['internal_examiner_report_date'] = date('Y-m-d', strtotime('-10 days'));
-
-            // Staff Pending Report alert for 2 students:
-            if ($status === 'Viva Scheduled' && $studentCount % 4 === 0) {
-                $vivaData['internal_examiner_report_date'] = null; // Triggers alert!
-            }
-
-            if ($status === 'Viva Scheduled') {
-                // Mix of upcoming Vivas (next 15 days) and past Vivas missing result (last 10 days)
-                if ($i < 10) {
-                    // Upcoming Vivas (triggers Upcoming Viva alert)
-                    $vivaData['viva_date'] = date('Y-m-d', strtotime('+' . (3 + $i * 2) . ' days'));
-                    $vivaData['viva_result'] = null;
-                } else {
-                    // Past Vivas (triggers Overdue Viva Outcome alert)
-                    $vivaData['viva_date'] = date('Y-m-d', strtotime('-' . (2 + $i) . ' days'));
-                    $vivaData['viva_result'] = null;
+                if ($status === 'Viva Scheduled' && $studentCount % 4 === 0) {
+                    $vivaData['internal_examiner_report_date'] = null; // Triggers alert!
                 }
-            } else {
-                // Completed, Corrections, Senate, Graduated
-                $vivaData['viva_date'] = date('Y-m-d', strtotime('-' . (30 + $studentCount) . ' days'));
-                $vivaData['viva_result'] = ($studentCount % 3 === 0) ? 'Pass with Major Corrections' : 'Pass with Minor Corrections';
-                $vivaData['turnitin_percentage'] = rand(8, 18) . '%';
-            }
-        }
-
-        if (in_array($status, ['Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated'])) {
-            // Honorarium logic:
-            // For Viva Completed: 60% filled with RM amounts, 40% missing RM amounts (triggers Pending Honorarium alert!)
-            if ($status === 'Viva Completed' && $i >= 8) {
-                $vivaData['honorarium_chairperson'] = '0.00'; // Missing/0 triggers alert!
-                $vivaData['honorarium_internal']    = '0.00';
-                $vivaData['honorarium_external']    = '0.00';
-                $vivaData['honorarium_refreshment']  = '0.00';
-            } else {
-                $vivaData['honorarium_chairperson'] = '500.00';
-                $vivaData['honorarium_internal']    = '400.00';
-                $vivaData['honorarium_external']    = '600.00';
-                $vivaData['honorarium_refreshment']  = '150.00';
-            }
-        }
-
-        if (in_array($status, ['Corrections Submitted', 'Ready for Senate', 'Graduated'])) {
-            $deadline = date('Y-m-d', strtotime('-' . rand(5, 30) . ' days'));
-            $corrData['correction_deadline'] = $deadline;
-
-            if ($status === 'Corrections Submitted') {
-                // Some overdue corrections (triggers Overdue Correction alert)
-                if ($i < 4) {
-                    $corrData['correction_deadline'] = date('Y-m-d', strtotime('-' . (5 + $i * 3) . ' days'));
-                    $corrData['corrected_thesis_received_date'] = null; // Missing triggers alert!
-                } elseif ($i < 8) {
-                    // Due soon corrections (triggers Correction Due Soon alert)
-                    $corrData['correction_deadline'] = date('Y-m-d', strtotime('+' . (2 + $i) . ' days'));
-                    $corrData['corrected_thesis_received_date'] = null; // Missing triggers alert!
+                
+                if ($status === 'Viva Scheduled') {
+                    if ($i < 10) {
+                        $vivaData['viva_date'] = date('Y-m-d', strtotime('+' . (3 + $i * 2) . ' days'));
+                    } else {
+                        $vivaData['viva_date'] = date('Y-m-d', strtotime('-' . (2 + $i) . ' days'));
+                    }
                 } else {
-                    // Received > 7 days ago but supervisor endorsement missing (triggers Staff Supervisor Endorsement alert!)
-                    $corrData['corrected_thesis_received_date'] = date('Y-m-d', strtotime('-10 days'));
-                    $corrData['supervisor_endorsement_date'] = null; // Missing triggers staff alert!
+                    $vivaData['viva_date'] = date('Y-m-d', strtotime('-' . (30 + $studentCount) . ' days'));
+                    $vivaData['viva_result'] = ($studentCount % 3 === 0) ? 'Pass with Major Corrections' : 'Pass with Minor Corrections';
+                    $vivaData['turnitin_percentage'] = rand(8, 18) . '%';
+                    
+                    if ($status === 'Viva Completed' && $i >= 8) {
+                        $vivaData['honorarium_chairperson'] = '0.00'; // Missing/0 triggers alert!
+                        $vivaData['honorarium_internal']    = '0.00';
+                        $vivaData['honorarium_external']    = '0.00';
+                        $vivaData['honorarium_refreshment']  = '0.00';
+                    } else {
+                        $vivaData['honorarium_chairperson'] = '500.00';
+                        $vivaData['honorarium_internal']    = '400.00';
+                        $vivaData['honorarium_external']    = '600.00';
+                        $vivaData['honorarium_refreshment']  = '150.00';
+                    }
                 }
-            } else {
-                // Ready for Senate / Graduated
-                $corrData['corrected_thesis_received_date'] = date('Y-m-d', strtotime('-40 days'));
-                $corrData['supervisor_endorsement_date'] = date('Y-m-d', strtotime('-35 days'));
-                $corrData['final_result'] = 'Approved by Panel & Main Supervisor';
             }
+
+            // Save Viva Record
+            $db->query("INSERT INTO `viva_records` (
+                `student_id`, `internal_examiner_id`, `external_examiner_id`, `chairperson_name`,
+                `internal_examiner_email_date`, `internal_examiner_status`,
+                `external_examiner_email_date`, `external_examiner_status`,
+                `thesis_to_panel_soft_copy_date`, `thesis_to_panel_hard_copy_date`,
+                `internal_examiner_report_date`, `viva_date`, `viva_result`, `turnitin_percentage`,
+                `honorarium_chairperson`, `honorarium_internal`, `honorarium_external`, `honorarium_refreshment`
+            ) VALUES (
+                :sid, :ieid, :eeid, :chair,
+                :ie_email, :ie_stat,
+                :ee_email, :ee_stat,
+                :t_soft, :t_hard,
+                :ie_rpt, :v_date, :v_res, :turnitin,
+                :h_chair, :h_int, :h_ext, :h_ref
+            )");
+            $db->bind(':sid', $studentId);
+            $db->bind(':ieid', $vivaData['internal_examiner_id']);
+            $db->bind(':eeid', $vivaData['external_examiner_id']);
+            $db->bind(':chair', $vivaData['chairperson_name']);
+            $db->bind(':ie_email', $vivaData['internal_examiner_email_date'] ?? null);
+            $db->bind(':ie_stat', $vivaData['internal_examiner_status']);
+            $db->bind(':ee_email', $vivaData['external_examiner_email_date'] ?? null);
+            $db->bind(':ee_stat', $vivaData['external_examiner_status']);
+            $db->bind(':t_soft', $vivaData['thesis_to_panel_soft_copy_date'] ?? null);
+            $db->bind(':t_hard', $vivaData['thesis_to_panel_hard_copy_date'] ?? null);
+            $db->bind(':ie_rpt', $vivaData['internal_examiner_report_date'] ?? null);
+            $db->bind(':v_date', $vivaData['viva_date'] ?? null);
+            $db->bind(':v_res', $vivaData['viva_result'] ?? null);
+            $db->bind(':turnitin', $vivaData['turnitin_percentage'] ?? null);
+            $db->bind(':h_chair', $vivaData['honorarium_chairperson'] ?? null);
+            $db->bind(':h_int', $vivaData['honorarium_internal'] ?? null);
+            $db->bind(':h_ext', $vivaData['honorarium_external'] ?? null);
+            $db->bind(':h_ref', $vivaData['honorarium_refreshment'] ?? null);
+            $db->execute();
         }
 
-        if (in_array($status, ['Ready for Senate', 'Graduated'])) {
-            $gradData['senate_status'] = 'Approved';
-            $gradData['senate_meeting_date'] = date('Y-m-d', strtotime('-20 days'));
-            $gradData['senate_meeting_no'] = 'Meeting No. ' . (280 + $studentCount);
-            $gradData['jil_status'] = 'Approved';
-            $gradData['jil_meeting_date'] = date('Y-m-d', strtotime('-25 days'));
-            $gradData['jil_meeting_no'] = 'JIL/' . date('Y') . '/' . (100 + $studentCount);
+        if ($level >= 4) {
+            $corrData = [
+                'student_id' => $studentId,
+                'correction_required' => 1,
+                'correction_deadline' => date('Y-m-d', strtotime('-' . rand(5, 30) . ' days')),
+                'corrected_thesis_received_date' => null,
+                'supervisor_endorsement_date' => null,
+                'final_result' => null
+            ];
+            
+            if ($status === 'Viva Completed') {
+                $corrData['correction_deadline'] = date('Y-m-d', strtotime('+' . (10 + $i * 5) . ' days'));
+            }
+            
+            if ($level >= 5) {
+                if ($status === 'Corrections Submitted') {
+                    if ($i < 4) {
+                        $corrData['correction_deadline'] = date('Y-m-d', strtotime('-' . (5 + $i * 3) . ' days'));
+                    } elseif ($i < 8) {
+                        $corrData['correction_deadline'] = date('Y-m-d', strtotime('+' . (2 + $i) . ' days'));
+                    } else {
+                        $corrData['corrected_thesis_received_date'] = date('Y-m-d', strtotime('-10 days'));
+                    }
+                } else {
+                    $corrData['corrected_thesis_received_date'] = date('Y-m-d', strtotime('-40 days'));
+                    $corrData['supervisor_endorsement_date'] = date('Y-m-d', strtotime('-35 days'));
+                    $corrData['final_result'] = 'Approved by Panel & Main Supervisor';
+                }
+            }
+
+            // Save Corrections Record
+            $db->query("INSERT INTO `corrections` (
+                `student_id`, `correction_required`, `correction_deadline`,
+                `corrected_thesis_received_date`, `supervisor_endorsement_date`, `final_result`
+            ) VALUES (:sid, :req, :dead, :recv, :endorse, :final)");
+            $db->bind(':sid', $studentId);
+            $db->bind(':req', $corrData['correction_required']);
+            $db->bind(':dead', $corrData['correction_deadline']);
+            $db->bind(':recv', $corrData['corrected_thesis_received_date']);
+            $db->bind(':endorse', $corrData['supervisor_endorsement_date']);
+            $db->bind(':final', $corrData['final_result']);
+            $db->execute();
         }
 
-        if ($status === 'Graduated') {
-            $gradData['graduation_status'] = 'Graduated';
-            $gradData['graduation_date'] = date('Y-m-d', strtotime('-10 days'));
-            $gradData['gais_keyin_date'] = date('Y-m-d', strtotime('-15 days'));
+        if ($level >= 6) {
+            $gradData = [
+                'student_id' => $studentId,
+                'jil_status' => 'Approved',
+                'jil_meeting_date' => date('Y-m-d', strtotime('-25 days')),
+                'jil_meeting_no' => 'JIL/' . date('Y') . '/' . (100 + $studentCount),
+                'senate_status' => 'Approved',
+                'senate_meeting_date' => date('Y-m-d', strtotime('-20 days')),
+                'senate_meeting_no' => 'Meeting No. ' . (280 + $studentCount),
+                'graduation_status' => 'Not Ready',
+                'graduation_date' => null,
+                'gais_keyin_date' => null
+            ];
+            
+            if ($status === 'Graduated') {
+                $gradData['graduation_status'] = 'Graduated';
+                $gradData['graduation_date'] = date('Y-m-d', strtotime('-10 days'));
+                $gradData['gais_keyin_date'] = date('Y-m-d', strtotime('-15 days'));
+            }
+
+            // Save Graduation Record
+            $db->query("INSERT INTO `graduation` (
+                `student_id`, `jil_status`, `jil_meeting_date`, `jil_meeting_no`,
+                `senate_status`, `senate_meeting_date`, `senate_meeting_no`,
+                `graduation_status`, `graduation_date`, `gais_keyin_date`
+            ) VALUES (:sid, :jstat, :jdate, :jno, :sstat, :sdate, :sno, :gstat, :gdate, :gais)");
+            $db->bind(':sid', $studentId);
+            $db->bind(':jstat', $gradData['jil_status']);
+            $db->bind(':jdate', $gradData['jil_meeting_date'] ?? null);
+            $db->bind(':jno', $gradData['jil_meeting_no'] ?? null);
+            $db->bind(':sstat', $gradData['senate_status']);
+            $db->bind(':sdate', $gradData['senate_meeting_date'] ?? null);
+            $db->bind(':sno', $gradData['senate_meeting_no'] ?? null);
+            $db->bind(':gstat', $gradData['graduation_status']);
+            $db->bind(':gdate', $gradData['graduation_date'] ?? null);
+            $db->bind(':gais', $gradData['gais_keyin_date'] ?? null);
+            $db->execute();
         }
-
-        // Save Viva Record
-        $db->query("INSERT INTO `viva_records` (
-            `student_id`, `internal_examiner_id`, `external_examiner_id`, `chairperson_name`,
-            `internal_examiner_email_date`, `internal_examiner_status`,
-            `external_examiner_email_date`, `external_examiner_status`,
-            `thesis_to_panel_soft_copy_date`, `thesis_to_panel_hard_copy_date`,
-            `internal_examiner_report_date`, `viva_date`, `viva_result`, `turnitin_percentage`,
-            `honorarium_chairperson`, `honorarium_internal`, `honorarium_external`, `honorarium_refreshment`
-        ) VALUES (
-            :sid, :ieid, :eeid, :chair,
-            :ie_email, :ie_stat,
-            :ee_email, :ee_stat,
-            :t_soft, :t_hard,
-            :ie_rpt, :v_date, :v_res, :turnitin,
-            :h_chair, :h_int, :h_ext, :h_ref
-        )");
-        $db->bind(':sid', $studentId);
-        $db->bind(':ieid', $vivaData['internal_examiner_id']);
-        $db->bind(':eeid', $vivaData['external_examiner_id']);
-        $db->bind(':chair', $vivaData['chairperson_name']);
-        $db->bind(':ie_email', $vivaData['internal_examiner_email_date'] ?? null);
-        $db->bind(':ie_stat', $vivaData['internal_examiner_status']);
-        $db->bind(':ee_email', $vivaData['external_examiner_email_date'] ?? null);
-        $db->bind(':ee_stat', $vivaData['external_examiner_status']);
-        $db->bind(':t_soft', $vivaData['thesis_to_panel_soft_copy_date'] ?? null);
-        $db->bind(':t_hard', $vivaData['thesis_to_panel_hard_copy_date'] ?? null);
-        $db->bind(':ie_rpt', $vivaData['internal_examiner_report_date'] ?? null);
-        $db->bind(':v_date', $vivaData['viva_date'] ?? null);
-        $db->bind(':v_res', $vivaData['viva_result'] ?? null);
-        $db->bind(':turnitin', $vivaData['turnitin_percentage'] ?? null);
-        $db->bind(':h_chair', $vivaData['honorarium_chairperson'] ?? null);
-        $db->bind(':h_int', $vivaData['honorarium_internal'] ?? null);
-        $db->bind(':h_ext', $vivaData['honorarium_external'] ?? null);
-        $db->bind(':h_ref', $vivaData['honorarium_refreshment'] ?? null);
-        $db->execute();
-
-        // Save Corrections Record
-        $db->query("INSERT INTO `corrections` (
-            `student_id`, `correction_required`, `correction_deadline`,
-            `corrected_thesis_received_date`, `supervisor_endorsement_date`, `final_result`
-        ) VALUES (:sid, :req, :dead, :recv, :endorse, :final)");
-        $db->bind(':sid', $studentId);
-        $db->bind(':req', $corrData['correction_required']);
-        $db->bind(':dead', $corrData['correction_deadline']);
-        $db->bind(':recv', $corrData['corrected_thesis_received_date']);
-        $db->bind(':endorse', $corrData['supervisor_endorsement_date']);
-        $db->bind(':final', $corrData['final_result']);
-        $db->execute();
-
-        // Save Graduation Record
-        $db->query("INSERT INTO `graduation` (
-            `student_id`, `jil_status`, `jil_meeting_date`, `jil_meeting_no`,
-            `senate_status`, `senate_meeting_date`, `senate_meeting_no`,
-            `graduation_status`, `graduation_date`, `gais_keyin_date`
-        ) VALUES (:sid, :jstat, :jdate, :jno, :sstat, :sdate, :sno, :gstat, :gdate, :gais)");
-        $db->bind(':sid', $studentId);
-        $db->bind(':jstat', $gradData['jil_status']);
-        $db->bind(':jdate', $gradData['jil_meeting_date'] ?? null);
-        $db->bind(':jno', $gradData['jil_meeting_no'] ?? null);
-        $db->bind(':sstat', $gradData['senate_status']);
-        $db->bind(':sdate', $gradData['senate_meeting_date'] ?? null);
-        $db->bind(':sno', $gradData['senate_meeting_no'] ?? null);
-        $db->bind(':gstat', $gradData['graduation_status']);
-        $db->bind(':gdate', $gradData['graduation_date'] ?? null);
-        $db->bind(':gais', $gradData['gais_keyin_date'] ?? null);
-        $db->execute();
 
         // Add 1-2 Remarks for some students
         if ($studentCount % 3 === 0) {
