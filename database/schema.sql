@@ -231,14 +231,5 @@ CREATE TABLE IF NOT EXISTS `student_remarks` (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 10. ALERT_RESOLUTIONS TABLE
--- ============================================================
-CREATE TABLE IF NOT EXISTS `alert_resolutions` (
-    `id`           INT AUTO_INCREMENT PRIMARY KEY,
-    `alert_key`    VARCHAR(100) NOT NULL UNIQUE,
-    `resolved_by`  VARCHAR(150) DEFAULT NULL,
-    `resolved_at`  DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 COMMIT;
