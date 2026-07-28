@@ -472,11 +472,35 @@ class StudentController extends Controller
     }
 
     /**
-     * Validates that dates logically progress.
-     * Returns an error message string if invalid, or null if valid.
+     * Validates that dates logically progress in chronological order.
+     * Returns an error message string if invalid, or null if all checks pass.
      */
     private function validateLogicalDates(array $data): ?string
     {
+        $vivaDate             = !empty($data['viva_date']) ? strtotime($data['viva_date']) : null;
+        $draftSubmissionDate  = !empty($data['draft_submission_form_date']) ? strtotime($data['draft_submission_form_date']) : null;
+        $correctionDeadline   = !empty($data['correction_deadline']) ? strtotime($data['correction_deadline']) : null;
+        $graduationDate       = !empty($data['graduation_date']) ? strtotime($data['graduation_date']) : null;
+        $senateMeetingDate    = !empty($data['senate_meeting_date']) ? strtotime($data['senate_meeting_date']) : null;
+
+        // Rule 1: viva_date cannot be earlier than draft_submission_form_date
+        if ($vivaDate !== null && $draftSubmissionDate !== null && $vivaDate < $draftSubmissionDate) {
+            return 'Viva Date cannot be earlier than Draft Submission Form Date ('
+                . date('d M Y', $draftSubmissionDate) . ').';
+        }
+
+        // Rule 2: correction_deadline cannot be earlier than viva_date
+        if ($correctionDeadline !== null && $vivaDate !== null && $correctionDeadline < $vivaDate) {
+            return 'Correction Deadline cannot be earlier than Viva Date ('
+                . date('d M Y', $vivaDate) . ').';
+        }
+
+        // Rule 3: graduation_date cannot be earlier than senate_meeting_date
+        if ($graduationDate !== null && $senateMeetingDate !== null && $graduationDate < $senateMeetingDate) {
+            return 'Graduation Date cannot be earlier than Senate Meeting Date ('
+                . date('d M Y', $senateMeetingDate) . ').';
+        }
+
         return null;
     }
 }

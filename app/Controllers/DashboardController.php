@@ -167,14 +167,14 @@ class DashboardController extends Controller
         // 1. Internal Examiner Confirmation Pending
         $this->db->query("
             SELECT s.student_id, s.name AS student_name, s.matric_no, v.viva_id,
-                   v.internal_examiner_email_date AS sent_date,
+                   NULLIF(v.internal_examiner_email_date, '') AS sent_date,
                    e.examiner_name AS staff_name, e.phone AS staff_phone, e.email AS staff_email
             FROM students s 
             JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN examiners e ON v.internal_examiner_id = e.examiner_id
-            WHERE v.internal_examiner_email_date IS NOT NULL 
+            WHERE NULLIF(v.internal_examiner_email_date, '') IS NOT NULL
               AND (v.internal_examiner_status = 'Pending' OR v.internal_examiner_status IS NULL OR v.internal_examiner_status = '')
-              AND v.internal_examiner_email_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+              AND NULLIF(v.internal_examiner_email_date, '') <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_int_conf_' . $res['viva_id'];
@@ -197,14 +197,14 @@ class DashboardController extends Controller
         // 2. External Examiner Confirmation Pending
         $this->db->query("
             SELECT s.student_id, s.name AS student_name, s.matric_no, v.viva_id,
-                   v.external_examiner_email_date AS sent_date,
+                   NULLIF(v.external_examiner_email_date, '') AS sent_date,
                    e.examiner_name AS staff_name, e.phone AS staff_phone, e.email AS staff_email
             FROM students s 
             JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN examiners e ON v.external_examiner_id = e.examiner_id
-            WHERE v.external_examiner_email_date IS NOT NULL 
+            WHERE NULLIF(v.external_examiner_email_date, '') IS NOT NULL
               AND (v.external_examiner_status = 'Pending' OR v.external_examiner_status IS NULL OR v.external_examiner_status = '')
-              AND v.external_examiner_email_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+              AND NULLIF(v.external_examiner_email_date, '') <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_ext_conf_' . $res['viva_id'];
@@ -227,14 +227,14 @@ class DashboardController extends Controller
         // 3. Internal Examiner Report Pending
         $this->db->query("
             SELECT s.student_id, s.name AS student_name, s.matric_no, v.viva_id,
-                   COALESCE(v.thesis_to_panel_soft_copy_date, v.thesis_to_panel_hard_copy_date) AS sent_date,
+                   COALESCE(NULLIF(v.thesis_to_panel_soft_copy_date, ''), NULLIF(v.thesis_to_panel_hard_copy_date, '')) AS sent_date,
                    e.examiner_name AS staff_name, e.phone AS staff_phone, e.email AS staff_email
             FROM students s 
             JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN examiners e ON v.internal_examiner_id = e.examiner_id
-            WHERE (v.thesis_to_panel_soft_copy_date IS NOT NULL OR v.thesis_to_panel_hard_copy_date IS NOT NULL)
-              AND v.internal_examiner_report_date IS NULL
-              AND COALESCE(v.thesis_to_panel_soft_copy_date, v.thesis_to_panel_hard_copy_date) <= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+            WHERE (NULLIF(v.thesis_to_panel_soft_copy_date, '') IS NOT NULL OR NULLIF(v.thesis_to_panel_hard_copy_date, '') IS NOT NULL)
+              AND (v.internal_examiner_report_date IS NULL OR v.internal_examiner_report_date = '')
+              AND COALESCE(NULLIF(v.thesis_to_panel_soft_copy_date, ''), NULLIF(v.thesis_to_panel_hard_copy_date, '')) <= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_int_rpt_' . $res['viva_id'];
@@ -257,15 +257,15 @@ class DashboardController extends Controller
         // 4. Supervisor Endorsement Pending (Post-Viva)
         $this->db->query("
             SELECT s.student_id, s.name AS student_name, s.matric_no, c.correction_id,
-                   c.corrected_thesis_received_date AS sent_date,
+                   NULLIF(c.corrected_thesis_received_date, '') AS sent_date,
                    sup.supervisor_name AS staff_name, sup.phone AS staff_phone, sup.email AS staff_email
             FROM students s 
             JOIN corrections c ON s.student_id = c.student_id
             JOIN student_supervisors ss ON s.student_id = ss.student_id AND ss.role = 'main'
             JOIN supervisors sup ON ss.supervisor_id = sup.supervisor_id
-            WHERE c.corrected_thesis_received_date IS NOT NULL 
-              AND c.supervisor_endorsement_date IS NULL
-              AND c.corrected_thesis_received_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            WHERE NULLIF(c.corrected_thesis_received_date, '') IS NOT NULL
+              AND (c.supervisor_endorsement_date IS NULL OR c.supervisor_endorsement_date = '')
+              AND NULLIF(c.corrected_thesis_received_date, '') <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
             $key = 'staff_sv_end_' . $res['correction_id'];

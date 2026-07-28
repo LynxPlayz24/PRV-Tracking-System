@@ -69,13 +69,24 @@ class DocxTemplateEngine
      */
     private static function replaceVariablesInXml(string $xml, array $data): string
     {
-        // Step A: Clean XML tags that split placeholders like ${STUDENT_</w:t><w:t>NAME}
+        // Step A: Clean XML tags that split placeholders across Word's internal run tags.
+        // Handle {{KEY}} double-curly format (highest priority, process first)
+        $xml = preg_replace_callback('/\{\{.*?\}\}/s', function ($matches) {
+            return preg_replace('/<[^>]+>/', '', $matches[0]);
+        }, $xml);
+
+        // Handle ${KEY} dollar-curly format
         $xml = preg_replace_callback('/\$\{.*?\}/s', function ($matches) {
             return preg_replace('/<[^>]+>/', '', $matches[0]);
         }, $xml);
 
-        // Also handle alternative bracket format like [STUDENT_NAME] or {STUDENT_NAME} if present
+        // Handle single-curly {KEY} format (UPPERCASE only to avoid false positives on partial XML)
         $xml = preg_replace_callback('/\{[A-Z0-9_]+\}/s', function ($matches) {
+            return preg_replace('/<[^>]+>/', '', $matches[0]);
+        }, $xml);
+
+        // Handle bracket [KEY] format
+        $xml = preg_replace_callback('/\[[A-Z0-9_]+\]/s', function ($matches) {
             return preg_replace('/<[^>]+>/', '', $matches[0]);
         }, $xml);
 
@@ -87,15 +98,18 @@ class DocxTemplateEngine
             // Support newline breaks in text
             $escapedVal = str_replace(["\r\n", "\n", "\r"], '</w:t><w:br/><w:t>', $escapedVal);
 
-            // Replace various placeholder syntax formats
+            // Replace various placeholder syntax formats, most specific first
             $keysToReplace = [
+                '{{' . $key . '}}',
+                '{{' . strtoupper($key) . '}}',
+                '{{' . strtolower($key) . '}}',
                 '${' . $key . '}',
                 '${' . strtoupper($key) . '}',
                 '${' . strtolower($key) . '}',
-                '{' . $key . '}',
                 '{' . strtoupper($key) . '}',
-                '[' . $key . ']',
-                '[' . strtoupper($key) . ']'
+                '{' . $key . '}',
+                '[' . strtoupper($key) . ']',
+                '[' . $key . ']'
             ];
 
             foreach ($keysToReplace as $searchKey) {
