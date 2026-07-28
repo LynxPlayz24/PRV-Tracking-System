@@ -61,7 +61,6 @@ class App
         // ── Docx Templates ──
         $this->router->get('/docx-templates',          'DocxTemplateController', 'index');
         $this->router->post('/docx-templates/generate', 'DocxTemplateController', 'generate');
-        $this->router->get('/docx-templates/generate',  'DocxTemplateController', 'generate');
 
         // ── User Management (Admin) ──
         $this->router->get('/users',               'UserController', 'manage');

@@ -72,6 +72,33 @@ class ImportController extends Controller
             return;
         }
 
+        // H3: Enforce file size limit (10 MB max).
+        if ($_FILES['excel_file']['size'] > 10 * 1024 * 1024) {
+            $this->setFlash('danger', 'File too large. Maximum allowed size is 10 MB.');
+            $this->redirect($this->baseUrl() . '/import');
+            return;
+        }
+
+        // H3: Validate MIME type with finfo for defense-in-depth.
+        $allowedMimes = [
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/csv',
+            'text/plain',
+            'application/csv',
+            'application/octet-stream', // Some servers report xlsx as this
+        ];
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $detectedMime = finfo_file($finfo, $file);
+            finfo_close($finfo);
+            if (!in_array($detectedMime, $allowedMimes) && !str_contains($detectedMime, 'spreadsheet') && !str_contains($detectedMime, 'excel') && !str_contains($detectedMime, 'zip')) {
+                $this->setFlash('danger', 'File content does not match a valid Excel or CSV format (detected: ' . htmlspecialchars($detectedMime) . ').');
+                $this->redirect($this->baseUrl() . '/import');
+                return;
+            }
+        }
+
         try {
             $spreadsheet = IOFactory::load($file);
             $worksheet = $spreadsheet->getActiveSheet();
@@ -121,6 +148,7 @@ class ImportController extends Controller
                 $name = $this->getVal($row, $map['name']);
                 
                 if (empty($matricNo) || empty($name)) {
+                    $skipCount++; // M3: Count rows skipped due to missing required fields.
                     continue; 
                 }
 
@@ -170,6 +198,9 @@ class ImportController extends Controller
             }
 
             $msg = "Import completed! Added $successCount new students. Updated $updateCount existing students.";
+            if ($skipCount > 0) {
+                $msg .= " Skipped $skipCount rows with missing Matric No or Name.";
+            }
             $this->setFlash('success', $msg);
 
         } catch (Exception $e) {
@@ -374,7 +405,10 @@ class ImportController extends Controller
             'viva_date' => $this->getDateVal($row, $map['viva_date']),
             'viva_result' => $this->getVal($row, $map['viva_result']),
             'internal_examiner_report_date' => $this->getDateVal($row, $map['internal_examiner_report_date']),
-            'best_thesis_candidate' => $this->getVal($row, $map['best_thesis_candidate']) ? 1 : 0,
+            'best_thesis_candidate' => in_array(
+                strtolower(trim((string)($this->getVal($row, $map['best_thesis_candidate']) ?? ''))),
+                ['yes', 'ya', '1', 'true', '✓', 'iya', 'y']
+            ) ? 1 : 0, // M4: Use explicit allowlist instead of PHP truthiness (avoids "0" string = false edge-case)
             'honorarium_chairperson' => $this->getVal($row, $map['honorarium_chairperson']),
             'honorarium_internal' => $this->getVal($row, $map['honorarium_internal']),
             'honorarium_external' => $this->getVal($row, $map['honorarium_external']),

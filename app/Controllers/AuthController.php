@@ -45,6 +45,24 @@ class AuthController extends Controller
             return;
         }
 
+        // M7: Session-based rate limiting — block after 5 failed attempts for 15 minutes.
+        $attempts  = $_SESSION['login_attempts'] ?? 0;
+        $lockUntil = $_SESSION['login_lock_until'] ?? 0;
+
+        if ($lockUntil > time()) {
+            $remaining = ceil(($lockUntil - time()) / 60);
+            $this->setFlash('danger', "Too many failed login attempts. Please try again in {$remaining} minute(s).");
+            $this->redirect($this->baseUrl() . '/login');
+            return;
+        }
+
+        // Reset lockout state if the lockout window has passed.
+        if ($lockUntil && $lockUntil <= time()) {
+            $_SESSION['login_attempts']  = 0;
+            $_SESSION['login_lock_until'] = 0;
+            $attempts = 0;
+        }
+
         $username = trim($this->input('username', ''));
         $password = $this->input('password', '');
 
@@ -59,10 +77,23 @@ class AuthController extends Controller
         $user = $this->userModel->findByUsername($username);
 
         if (!$user || !password_verify($password, $user['password'])) {
-            $this->setFlash('danger', 'Invalid username or password.');
+            // M7: Increment attempt counter and enforce delay.
+            $_SESSION['login_attempts'] = $attempts + 1;
+            if ($_SESSION['login_attempts'] >= 5) {
+                $_SESSION['login_lock_until'] = time() + (15 * 60); // 15-minute lockout
+                $this->setFlash('danger', 'Too many failed login attempts. Account locked for 15 minutes.');
+            } else {
+                sleep(1); // Slow brute-force on every failed attempt
+                $remaining_attempts = 5 - $_SESSION['login_attempts'];
+                $this->setFlash('danger', "Invalid username or password. {$remaining_attempts} attempt(s) remaining.");
+            }
             $this->redirect($this->baseUrl() . '/login');
             return;
         }
+
+        // Successful login — clear rate limit state.
+        $_SESSION['login_attempts']   = 0;
+        $_SESSION['login_lock_until'] = 0;
 
         // Prevent session fixation
         session_regenerate_id(true);

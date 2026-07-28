@@ -19,22 +19,22 @@ class Graduation
         $existing = $this->db->single();
 
         $fields = [
-            'jil_status' => 'jil_status',
-            'senate_status' => 'senate_status',
-            'graduation_status' => 'graduation_status',
-            'graduation_date' => 'graduation_date',
-            'gais_keyin_date' => 'gais_keyin_date',
-            'jil_meeting_date' => 'jil_meeting_date',
-            'jil_meeting_no' => 'jil_meeting_no',
-            'senate_meeting_date' => 'senate_meeting_date',
-            'senate_meeting_no' => 'senate_meeting_no',
-            'thesis_certification_date' => 'thesis_certification_date',
-            'final_thesis_form_date' => 'final_thesis_form_date',
-            'hard_bound_copies_date' => 'hard_bound_copies_date',
-            'loose_copy_date' => 'loose_copy_date',
-            'cd_copies_date' => 'cd_copies_date',
-            'etd_form_date' => 'etd_form_date',
-            'sent_to_psb_date' => 'sent_to_psb_date'
+            'jil_status'                 => 'jil_status',
+            'senate_status'              => 'senate_status',
+            'graduation_status'          => 'graduation_status',
+            'graduation_date'            => 'graduation_date',
+            'gais_keyin_date'            => 'gais_keyin_date',
+            'jil_meeting_date'           => 'jil_meeting_date',
+            'jil_meeting_no'             => 'jil_meeting_no',    // H5: was missing, never saved
+            'senate_meeting_date'        => 'senate_meeting_date',
+            'senate_meeting_no'          => 'senate_meeting_no', // H5: was missing, never saved
+            'thesis_certification_date'  => 'thesis_certification_date',
+            'final_thesis_form_date'     => 'final_thesis_form_date',
+            'hard_bound_copies_date'     => 'hard_bound_copies_date',
+            'loose_copy_date'            => 'loose_copy_date',
+            'cd_copies_date'             => 'cd_copies_date',
+            'etd_form_date'              => 'etd_form_date',
+            'sent_to_psb_date'           => 'sent_to_psb_date'
         ];
 
         if ($existing) {

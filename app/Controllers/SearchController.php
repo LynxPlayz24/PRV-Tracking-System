@@ -66,10 +66,10 @@ class SearchController extends Controller
         $researchStatus= $this->param('research_status', '');
         $vivaYear      = $this->param('viva_year', '');
 
+        // H4: Use EXISTS subquery for supervisor matching to avoid JOIN fanout
+        // (JOIN approach caused multi-supervisor students to consume multiple result slots before GROUP BY).
         $sql = "SELECT s.student_id, s.matric_no, s.name, s.programme, s.school, s.degree_level, s.research_status 
                 FROM students s 
-                LEFT JOIN student_supervisors ss ON s.student_id = ss.student_id 
-                LEFT JOIN supervisors sup ON ss.supervisor_id = sup.supervisor_id
                 LEFT JOIN viva_records v ON s.student_id = v.student_id
                 WHERE 1=1 ";
         
@@ -82,7 +82,11 @@ class SearchController extends Controller
                         OR s.programme LIKE :q3 
                         OR s.school LIKE :q4 
                         OR s.thesis_title LIKE :q5
-                        OR sup.supervisor_name LIKE :q6
+                        OR EXISTS (
+                            SELECT 1 FROM student_supervisors ss2
+                            JOIN supervisors sup2 ON ss2.supervisor_id = sup2.supervisor_id
+                            WHERE ss2.student_id = s.student_id AND sup2.supervisor_name LIKE :q6
+                        )
                       )";
             $params[':q1'] = "%{$query}%";
             $params[':q2'] = "%{$query}%";

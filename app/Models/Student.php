@@ -89,7 +89,8 @@ class Student
         }
         $this->db->execute();
 
-        return count($ids);
+        // Return actual rows affected by DB, not the input count.
+        return $this->db->rowCount();
     }
 
     public function getAll(): array
@@ -185,6 +186,9 @@ class Student
         } else {
             $sql .= " ORDER BY name ASC ";
         }
+
+        // Safety cap: prevent OOM on large bulk exports (500 records max per query).
+        $sql .= " LIMIT 500";
 
         $this->db->query($sql);
         foreach ($params as $param => $val) {

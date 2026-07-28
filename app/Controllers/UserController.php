@@ -200,12 +200,8 @@ class UserController extends Controller
             return;
         }
 
-        // Execute delete directly via DB if UserModel lacks a delete method.
-        $db = \App\Core\Database::getInstance();
-        $db->query('DELETE FROM users WHERE user_id = :id');
-        $db->bind(':id', $userId);
-        
-        if ($db->execute()) {
+        // H2: Use the User model's delete() method instead of inlining raw SQL.
+        if ($this->userModel->delete($userId)) {
             $this->setFlash('success', 'User deleted successfully.');
         } else {
             $this->setFlash('danger', 'Failed to delete user.');

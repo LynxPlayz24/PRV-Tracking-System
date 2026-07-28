@@ -52,7 +52,8 @@ class Router
 
         // Try parameterized routes (e.g., /student/{id})
         foreach ($this->routes[$method] ?? [] as $routePath => $route) {
-            $pattern = preg_replace('/\{(\w+)\}/', '(\w+)', $routePath);
+            // M1: Use [^/]+ to match any non-slash character (supports hyphens, dots, etc.)
+            $pattern = preg_replace('/\{(\w+)\}/', '([^/]+)', $routePath);
             $pattern = '#^' . $pattern . '$#';
 
             if (preg_match($pattern, $uri, $matches)) {

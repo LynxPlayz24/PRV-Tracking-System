@@ -68,8 +68,15 @@ class DocxTemplateController extends Controller
     {
         Middleware::requireLogin();
 
-        $studentId = (int)$this->input('student_id', $_GET['student_id'] ?? 0);
-        $templateFilename = trim($this->input('template_filename', $_GET['template_filename'] ?? 'perakuan_kerja_tesis.docx'));
+        // H1: Validate CSRF token — prevents forged cross-site document generation.
+        if (!$this->validateCsrfToken()) {
+            $this->setFlash('danger', 'Invalid security token. Please try again.');
+            $this->redirect($this->baseUrl() . '/docx-templates');
+            return;
+        }
+
+        $studentId = (int)$this->input('student_id', 0);
+        $templateFilename = trim($this->input('template_filename', 'perakuan_kerja_tesis.docx'));
         if (str_ends_with(strtolower($templateFilename), '.doc') && !str_ends_with(strtolower($templateFilename), '.docx')) {
             $templateFilename .= 'x';
         }
@@ -151,7 +158,8 @@ class DocxTemplateController extends Controller
 
             header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
             header('Content-Disposition: attachment; filename="' . $downloadName . '"');
-            header('Content-Length: ' . strlen($binaryContent));
+            // M5: Use mb_strlen with '8bit' to get raw byte count, safe with mbstring overloading.
+            header('Content-Length: ' . mb_strlen($binaryContent, '8bit'));
             header('Cache-Control: max-age=0');
 
             echo $binaryContent;

@@ -93,33 +93,30 @@ class ProfileController extends Controller
             $hash = password_hash($password, PASSWORD_BCRYPT);
         }
 
-        // Update database
+        // Update name & email via direct query (User::updateProfile() also updates username
+        // which is not exposed in the profile form, so we use a targeted update here).
         $db = \App\Core\Database::getInstance();
-        
-        $sql = 'UPDATE users SET name = :name, email = :email';
-        $params = [
-            ':name' => $name,
-            ':email' => $email,
-            ':id' => $userId
-        ];
-
-        if ($hash) {
-            $sql .= ', password = :hash';
-            $params[':hash'] = $hash;
-        }
-
-        $sql .= ' WHERE user_id = :id';
+        $sql = 'UPDATE users SET name = :name, email = :email WHERE user_id = :id';
+        $params = [':name' => $name, ':email' => $email, ':id' => $userId];
 
         $db->query($sql);
         foreach ($params as $param => $val) {
             $db->bind($param, $val);
         }
 
-        if ($db->execute()) {
+        $nameEmailUpdated = $db->execute();
+
+        // M6: Use User model's updatePassword() for password changes instead of raw SQL.
+        $passwordUpdated = true;
+        if ($hash) {
+            $passwordUpdated = $this->userModel->updatePassword($userId, $password);
+        }
+
+        if ($nameEmailUpdated) {
             $_SESSION['user_name'] = $name;
 
             // Clear force password change flag if password was updated
-            if ($hash) {
+            if ($hash && $passwordUpdated) {
                 $this->userModel->clearForcePasswordChange($userId);
                 unset($_SESSION['force_password_change']);
             }

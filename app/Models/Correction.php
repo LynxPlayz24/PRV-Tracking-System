@@ -59,7 +59,11 @@ class Correction
             if ($val === '') $val = null;
             
             // Handle special cases.
-            if ($dbCol === 'correction_required') $val = empty($val) ? 0 : 1;
+            // M9: Always derive correction_required from whether a deadline exists,
+            // since the form never sends this field explicitly.
+            if ($dbCol === 'correction_required') {
+                $val = !empty($data['correction_deadline']) ? 1 : 0;
+            }
             if ($dbCol === 'verification_status') $val = $val ?? 'Pending';
             
             $this->db->bind(":$dbCol", $val);
