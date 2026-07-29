@@ -94,7 +94,10 @@ class Router
     private function getBasePath(): string
     {
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-        $basePath = dirname($scriptName);
-        return $basePath === '/' || $basePath === '\\' ? '' : $basePath;
+        $basePath = str_replace('\\', '/', dirname($scriptName));
+        if (substr($basePath, -7) === '/public') {
+            $basePath = substr($basePath, 0, -7);
+        }
+        return $basePath === '/' ? '' : $basePath;
     }
 }
