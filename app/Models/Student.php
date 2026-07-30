@@ -112,14 +112,16 @@ class Student
         $this->db->bind(':id', $studentId);
         $student['supervisors'] = $this->db->resultSet();
 
-        // Retrieve viva records and examiners.
-        $this->db->query('SELECT v.*, 
-                                 e_int.examiner_name as examiner_name, e_int.institution as institution, e_int.email as examiner_email,
-                                 e_ext.examiner_name as external_examiner_name, e_ext.institution as external_institution, e_ext.email as external_email
-                          FROM viva_records v 
-                          LEFT JOIN examiners e_int ON v.internal_examiner_id = e_int.examiner_id 
-                          LEFT JOIN examiners e_ext ON v.external_examiner_id = e_ext.examiner_id 
-                          WHERE v.student_id = :id ORDER BY v.viva_date DESC');
+        // Retrieve examiners.
+        $this->db->query('SELECT e.*, se.role, se.email_date, se.status, se.report_date 
+                          FROM examiners e 
+                          JOIN student_examiners se ON e.examiner_id = se.examiner_id 
+                          WHERE se.student_id = :id ORDER BY se.role ASC, e.examiner_name ASC');
+        $this->db->bind(':id', $studentId);
+        $student['examiners'] = $this->db->resultSet();
+
+        // Retrieve viva records.
+        $this->db->query('SELECT * FROM viva_records WHERE student_id = :id ORDER BY viva_date DESC');
         $this->db->bind(':id', $studentId);
         $student['viva_records'] = $this->db->resultSet();
 
@@ -151,28 +153,57 @@ class Student
         $params = [];
 
         if (!empty($filters['month'])) {
-            $sql .= " AND MONTH(viva_date) = :month ";
-            $params[':month'] = (int)$filters['month'];
+            $sql .= " AND MONTH(viva_date) = ? ";
+            $params[] = (int)$filters['month'];
         }
 
         if (!empty($filters['year'])) {
-            $sql .= " AND YEAR(viva_date) = :year ";
-            $params[':year'] = (int)$filters['year'];
+            $sql .= " AND YEAR(viva_date) = ? ";
+            $params[] = (int)$filters['year'];
         }
 
         if (!empty($filters['school'])) {
-            $sql .= " AND school = :school ";
-            $params[':school'] = $filters['school'];
+            if (is_array($filters['school'])) {
+                $inClause = implode(',', array_fill(0, count($filters['school']), '?'));
+                $sql .= " AND school IN ($inClause) ";
+                $params = array_merge($params, array_values($filters['school']));
+            } else {
+                $sql .= " AND school = ? ";
+                $params[] = $filters['school'];
+            }
+        }
+
+        if (!empty($filters['programme'])) {
+            if (is_array($filters['programme'])) {
+                $inClause = implode(',', array_fill(0, count($filters['programme']), '?'));
+                $sql .= " AND programme IN ($inClause) ";
+                $params = array_merge($params, array_values($filters['programme']));
+            } else {
+                $sql .= " AND programme = ? ";
+                $params[] = $filters['programme'];
+            }
         }
 
         if (!empty($filters['degree_level'])) {
-            $sql .= " AND degree_level = :degree_level ";
-            $params[':degree_level'] = $filters['degree_level'];
+            if (is_array($filters['degree_level'])) {
+                $inClause = implode(',', array_fill(0, count($filters['degree_level']), '?'));
+                $sql .= " AND degree_level IN ($inClause) ";
+                $params = array_merge($params, array_values($filters['degree_level']));
+            } else {
+                $sql .= " AND degree_level = ? ";
+                $params[] = $filters['degree_level'];
+            }
         }
 
         if (!empty($filters['research_status'])) {
-            $sql .= " AND research_status = :research_status ";
-            $params[':research_status'] = $filters['research_status'];
+            if (is_array($filters['research_status'])) {
+                $inClause = implode(',', array_fill(0, count($filters['research_status']), '?'));
+                $sql .= " AND research_status IN ($inClause) ";
+                $params = array_merge($params, array_values($filters['research_status']));
+            } else {
+                $sql .= " AND research_status = ? ";
+                $params[] = $filters['research_status'];
+            }
         }
 
         // Sorting
@@ -191,10 +222,7 @@ class Student
         $sql .= " LIMIT 500";
 
         $this->db->query($sql);
-        foreach ($params as $param => $val) {
-            $this->db->bind($param, $val);
-        }
-        return $this->db->resultSet();
+        return $this->db->resultSet($params);
     }
 
     /**
@@ -213,5 +241,14 @@ class Student
     {
         $this->db->query("SELECT DISTINCT YEAR(viva_date) as yr FROM viva_records WHERE viva_date IS NOT NULL ORDER BY yr DESC");
         return array_column($this->db->resultSet(), 'yr');
+    }
+
+    /**
+     * Get list of unique programmes
+     */
+    public function getProgrammes(): array
+    {
+        $this->db->query("SELECT DISTINCT programme FROM students WHERE programme IS NOT NULL AND programme != '' ORDER BY programme ASC");
+        return array_column($this->db->resultSet(), 'programme');
     }
 }

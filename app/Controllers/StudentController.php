@@ -149,6 +149,27 @@ class StudentController extends Controller
             if ($supId) $this->supervisorModel->assignToStudent($studentId, (int)$supId, 'co');
         }
 
+        // 2B. Assign Examiners
+        $internalExaminers = $_POST['internal_examiners'] ?? [];
+        $externalExaminers = $_POST['external_examiners'] ?? [];
+        
+        foreach ($internalExaminers as $exId) {
+            if ($exId) {
+                $emailDate = $_POST['internal_examiner_email_date'][$exId] ?? null;
+                $status = $_POST['internal_examiner_status'][$exId] ?? 'Pending';
+                $reportDate = $_POST['internal_examiner_report_date'][$exId] ?? null;
+                $this->examinerModel->assignToStudent($studentId, (int)$exId, 'Internal', $emailDate, $status, $reportDate);
+            }
+        }
+        foreach ($externalExaminers as $exId) {
+            if ($exId) {
+                $emailDate = $_POST['external_examiner_email_date'][$exId] ?? null;
+                $status = $_POST['external_examiner_status'][$exId] ?? 'Pending';
+                $reportDate = $_POST['external_examiner_report_date'][$exId] ?? null;
+                $this->examinerModel->assignToStudent($studentId, (int)$exId, 'External', $emailDate, $status, $reportDate);
+            }
+        }
+
         // 3. Create Viva Record
         $this->vivaModel->createOrUpdate($studentId, $_POST);
 
@@ -293,6 +314,28 @@ class StudentController extends Controller
         }
         foreach ($coSupervisors as $supId) {
             if ($supId) $this->supervisorModel->assignToStudent($studentId, (int)$supId, 'co');
+        }
+
+        // 2B. Update Examiners (Remove all, then add)
+        $this->examinerModel->removeAllFromStudent($studentId);
+        $internalExaminers = $_POST['internal_examiners'] ?? [];
+        $externalExaminers = $_POST['external_examiners'] ?? [];
+        
+        foreach ($internalExaminers as $exId) {
+            if ($exId) {
+                $emailDate = $_POST['internal_examiner_email_date'][$exId] ?? null;
+                $status = $_POST['internal_examiner_status'][$exId] ?? 'Pending';
+                $reportDate = $_POST['internal_examiner_report_date'][$exId] ?? null;
+                $this->examinerModel->assignToStudent($studentId, (int)$exId, 'Internal', $emailDate, $status, $reportDate);
+            }
+        }
+        foreach ($externalExaminers as $exId) {
+            if ($exId) {
+                $emailDate = $_POST['external_examiner_email_date'][$exId] ?? null;
+                $status = $_POST['external_examiner_status'][$exId] ?? 'Pending';
+                $reportDate = $_POST['external_examiner_report_date'][$exId] ?? null;
+                $this->examinerModel->assignToStudent($studentId, (int)$exId, 'External', $emailDate, $status, $reportDate);
+            }
         }
 
         // 3. Update related records

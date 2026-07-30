@@ -26,7 +26,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                     <!-- Select Student -->
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Choose Student <span class="text-danger">*</span></label>
-                        <select class="form-select form-select-lg" name="student_id" id="studentSelect" required onchange="onStudentChange(this.value)">
+                        <select class="form-select select2-search form-select-lg" name="student_id" id="studentSelect" required onchange="onStudentChange(this.value)">
                             <option value="">-- Search / Select Student --</option>
                             <?php foreach ($students as $st): ?>
                                 <option value="<?= $st['student_id'] ?>" <?= ($selectedStudent && $selectedStudent['student_id'] == $st['student_id']) ? 'selected' : '' ?>>

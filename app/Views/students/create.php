@@ -139,7 +139,7 @@ $supervisors = $supervisors ?? [];
                         <div class="col-12"><hr></div>
                         <div class="col-md-6">
                             <label class="form-label">Main Supervisor(s)</label>
-                            <select class="form-select" name="main_supervisors[]" multiple size="4">
+                            <select class="form-select select2-multiple" name="main_supervisors[]" multiple size="4">
                                 <?php foreach($supervisors as $sup): ?>
                                     <option value="<?= $sup['supervisor_id'] ?>" <?= in_array($sup['supervisor_id'], $mainSups) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($sup['supervisor_name']) ?>
@@ -150,7 +150,7 @@ $supervisors = $supervisors ?? [];
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Co-Supervisor(s)</label>
-                            <select class="form-select" name="co_supervisors[]" multiple size="4">
+                            <select class="form-select select2-multiple" name="co_supervisors[]" multiple size="4">
                                 <?php foreach($supervisors as $sup): ?>
                                     <option value="<?= $sup['supervisor_id'] ?>" <?= in_array($sup['supervisor_id'], $coSups) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($sup['supervisor_name']) ?>
@@ -191,47 +191,41 @@ $supervisors = $supervisors ?? [];
                 <div class="card-body">
                     <h5 class="card-title text-primary mb-4">Examination Panel & Viva-Voce</h5>
                     <div class="row g-3">
+                        <?php
+                            $intExamIds = [];
+                            $extExamIds = [];
+                            if (isset($student['examiners'])) {
+                                foreach ($student['examiners'] as $ex) {
+                                    if ($ex['role'] === 'Internal') $intExamIds[] = $ex['examiner_id'];
+                                    if ($ex['role'] === 'External') $extExamIds[] = $ex['examiner_id'];
+                                }
+                            } else {
+                                if (!empty($viva['internal_examiner_id'])) $intExamIds[] = $viva['internal_examiner_id'];
+                                if (!empty($viva['external_examiner_id'])) $extExamIds[] = $viva['external_examiner_id'];
+                            }
+                        ?>
                         <div class="col-md-6">
-                            <label class="form-label">Internal Examiner</label>
-                            <select class="form-select" name="internal_examiner_id">
-                                <option value="">Select Internal Examiner...</option>
+                            <label class="form-label">Internal Examiner(s)</label>
+                            <select class="form-select select2-multiple" name="internal_examiners[]" id="internal_examiners" multiple data-placeholder="Select Internal Examiners">
                                 <?php foreach($examiners as $ex): ?>
-                                    <option value="<?= $ex['examiner_id'] ?>" <?= ($viva['internal_examiner_id'] ?? '') == $ex['examiner_id'] ? 'selected' : '' ?>>
+                                    <option value="<?= $ex['examiner_id'] ?>" data-name="<?= htmlspecialchars($ex['examiner_name']) ?>" <?= in_array($ex['examiner_id'], $intExamIds) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($ex['examiner_name']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">External Examiner</label>
-                            <select class="form-select" name="external_examiner_id">
-                                <option value="">Select External Examiner...</option>
+                            <label class="form-label">External Examiner(s)</label>
+                            <select class="form-select select2-multiple" name="external_examiners[]" id="external_examiners" multiple data-placeholder="Select External Examiners">
                                 <?php foreach($examiners as $ex): ?>
-                                    <option value="<?= $ex['examiner_id'] ?>" <?= ($viva['external_examiner_id'] ?? '') == $ex['examiner_id'] ? 'selected' : '' ?>>
+                                    <option value="<?= $ex['examiner_id'] ?>" data-name="<?= htmlspecialchars($ex['examiner_name']) ?>" <?= in_array($ex['examiner_id'], $extExamIds) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($ex['examiner_name']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Internal Examiner Confirmation Email</label>
-                            <div class="input-group">
-                                <input type="date" class="form-control" name="internal_examiner_email_date" value="<?= htmlspecialchars($viva['internal_examiner_email_date'] ?? '') ?>">
-                                <select class="form-select" name="internal_examiner_status" style="max-width: 140px;">
-                                    <option value="Pending" <?= ($viva['internal_examiner_status'] ?? 'Pending') === 'Pending' ? 'selected' : '' ?>>Pending</option>
-                                    <option value="Confirmed" <?= ($viva['internal_examiner_status'] ?? '') === 'Confirmed' ? 'selected' : '' ?>>Confirmed</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">External Examiner Confirmation Email</label>
-                            <div class="input-group">
-                                <input type="date" class="form-control" name="external_examiner_email_date" value="<?= htmlspecialchars($viva['external_examiner_email_date'] ?? '') ?>">
-                                <select class="form-select" name="external_examiner_status" style="max-width: 140px;">
-                                    <option value="Pending" <?= ($viva['external_examiner_status'] ?? 'Pending') === 'Pending' ? 'selected' : '' ?>>Pending</option>
-                                    <option value="Confirmed" <?= ($viva['external_examiner_status'] ?? '') === 'Confirmed' ? 'selected' : '' ?>>Confirmed</option>
-                                </select>
-                            </div>
+                        <div class="col-12" id="dynamic_examiner_fields_container">
+                            <!-- Dynamic Examiner Fields (Email, Status, Report Date) will be rendered here -->
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Panel Appointment Letter</label>
@@ -298,8 +292,7 @@ $supervisors = $supervisors ?? [];
                             </script>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Internal Examiner Report Received</label>
-                            <input type="date" class="form-control" name="internal_examiner_report_date" value="<?= htmlspecialchars($viva['internal_examiner_report_date'] ?? '') ?>">
+                            <!-- static internal examiner report date removed, now dynamic -->
                         </div>
                     </div>
                 </div>
@@ -709,5 +702,104 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => window.scrollTo(0, 0), 100);
         }
     }
+
+    // Dynamic Examiner Fields logic
+    const studentExaminers = <?= json_encode($student['examiners'] ?? []) ?>;
+    const internalSelect = $('#internal_examiners');
+    const externalSelect = $('#external_examiners');
+    const container = document.getElementById('dynamic_examiner_fields_container');
+
+    function renderExaminerFields() {
+        container.innerHTML = '<div class="row g-3 mt-2 border-top pt-3"></div>';
+        const row = container.querySelector('.row');
+        let hasExaminers = false;
+
+        const renderField = (id, name, type) => {
+            hasExaminers = true;
+            let existingData = studentExaminers.find(e => e.examiner_id == id) || {};
+            let emailDate = existingData.email_date || '';
+            let status = existingData.status || 'Pending';
+            let reportDate = existingData.report_date || '';
+            
+            const prefix = type === 'Internal' ? 'internal_examiner' : 'external_examiner';
+            
+            row.innerHTML += `
+                <div class="col-12 mb-3 p-3 bg-light rounded border">
+                    <h6 class="text-secondary fw-bold mb-3"><i class="bi bi-person-badge me-2"></i>${type} Examiner: ${name}</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Confirmation Email</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" name="${prefix}_email_date[${id}]" value="${emailDate}">
+                                <select class="form-select" name="${prefix}_status[${id}]" style="max-width: 140px;">
+                                    <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Confirmed" ${status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Report Received Date</label>
+                            <input type="date" class="form-control" name="${prefix}_report_date[${id}]" value="${reportDate}">
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const intSelected = internalSelect.select2('data');
+        intSelected.forEach(opt => {
+            renderField(opt.id, opt.element ? (opt.element.getAttribute('data-name') || opt.text) : opt.text, 'Internal');
+        });
+
+        const extSelected = externalSelect.select2('data');
+        extSelected.forEach(opt => {
+            renderField(opt.id, opt.element ? (opt.element.getAttribute('data-name') || opt.text) : opt.text, 'External');
+        });
+
+        if (!hasExaminers) {
+            container.innerHTML = '';
+        }
+    }
+
+    if (internalSelect.length && externalSelect.length) {
+        internalSelect.on('change', renderExaminerFields);
+        externalSelect.on('change', renderExaminerFields);
+        
+        // Initial render
+        renderExaminerFields();
+    }
+
+    // Alert Resolution Navigation Highlighting
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlightField = urlParams.get('highlight');
+    if (highlightField) {
+        setTimeout(() => {
+            let field = document.querySelector(`[name="${highlightField}"]`);
+            if (!field) {
+                // For dynamic array fields like internal_examiner_report_date[12]
+                field = document.querySelector(`[name^="${highlightField}"]`);
+            }
+            if (field) {
+                field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                field.classList.add('highlight-field-pulse');
+                field.focus();
+                
+                setTimeout(() => {
+                    field.classList.remove('highlight-field-pulse');
+                }, 3000);
+            }
+        }, 500); // Wait for tabs to initialize
+    }
 });
 </script>
+<style>
+@keyframes pulseHighlight {
+    0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); border-color: #0d6efd; }
+    70% { box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); border-color: #0d6efd; }
+    100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+}
+.highlight-field-pulse {
+    animation: pulseHighlight 1.5s infinite;
+    background-color: #f8fbff;
+}
+</style>

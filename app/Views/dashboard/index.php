@@ -49,6 +49,8 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     </div>
 </div>
 
+
+
 <style>
 .dashboard-alert-scroll {
     max-height: 540px;
@@ -185,7 +187,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                             <span class="badge bg-secondary rounded-pill small"><?= $days ?> days ago</span>
                                         </td>
                                         <td class="text-end">
-                                            <a href="<?= $baseUrl ?>/students/edit/<?= $p['student_id'] ?>#<?= $p['tab'] ?? '' ?>" class="btn btn-sm btn-outline-primary px-3">
+                                            <a href="<?= $baseUrl ?>/students/edit/<?= $p['student_id'] ?><?= !empty($p['highlight']) ? '?highlight=' . urlencode($p['highlight']) : '' ?>#<?= $p['tab'] ?? '' ?>" class="btn btn-sm btn-outline-primary px-3">
                                                 <i class="bi bi-pencil-square me-1"></i> Update Record
                                             </a>
                                         </td>
@@ -199,3 +201,5 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
         </div>
     </div>
 </div>
+
+

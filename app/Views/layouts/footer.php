@@ -12,6 +12,9 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Chart.js (loaded on all pages, lightweight) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="<?= $baseUrl ?>/assets/js/searchable-select.js?v=<?= time() ?>"></script>
 
     <!-- Sidebar Toggle Script -->
     <script>
@@ -78,7 +81,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
 
     <?php if (isset($extraScripts)): ?>
         <?php foreach ((array)$extraScripts as $script): ?>
-            <script src="<?= $baseUrl ?>/assets/js/<?= $script ?>"></script>
+            <script src="<?= $baseUrl ?>/assets/js/<?= $script ?>?v=<?= time() ?>"></script>
         <?php endforeach; ?>
     <?php endif; ?>
 

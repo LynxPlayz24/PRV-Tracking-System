@@ -29,23 +29,33 @@ class ExportController extends Controller
         Middleware::requireLogin();
 
         $filters = [
-            'month'           => trim($_GET['month'] ?? ''),
-            'year'            => trim($_GET['year'] ?? ''),
-            'school'          => trim($_GET['school'] ?? ''),
-            'degree_level'    => trim($_GET['degree_level'] ?? ''),
-            'research_status' => trim($_GET['research_status'] ?? ''),
-            'sort_viva'       => trim($_GET['sort_viva'] ?? ''),
+            'month'           => isset($_GET['month']) ? (is_array($_GET['month']) ? $_GET['month'] : trim($_GET['month'])) : '',
+            'year'            => isset($_GET['year']) ? (is_array($_GET['year']) ? $_GET['year'] : trim($_GET['year'])) : '',
+            'school'          => isset($_GET['school']) ? (is_array($_GET['school']) ? $_GET['school'] : trim($_GET['school'])) : '',
+            'programme'       => isset($_GET['programme']) ? (is_array($_GET['programme']) ? $_GET['programme'] : trim($_GET['programme'])) : '',
+            'degree_level'    => isset($_GET['degree_level']) ? (is_array($_GET['degree_level']) ? $_GET['degree_level'] : trim($_GET['degree_level'])) : '',
+            'research_status' => isset($_GET['research_status']) ? (is_array($_GET['research_status']) ? $_GET['research_status'] : trim($_GET['research_status'])) : '',
+            'sort_viva'       => isset($_GET['sort_viva']) ? trim($_GET['sort_viva']) : '',
         ];
 
-        $students  = $this->studentModel->getFiltered($filters);
-        $schools   = $this->studentModel->getSchools();
-        $vivaYears = $this->studentModel->getVivaYears();
+        // Ensure arrays don't contain empty string if multi-select was cleared but hidden inputs sent empty
+        foreach ($filters as $k => $v) {
+            if (is_array($v)) {
+                $filters[$k] = array_filter($v, fn($val) => trim($val) !== '');
+            }
+        }
+
+        $students   = $this->studentModel->getFiltered($filters);
+        $schools    = $this->studentModel->getSchools();
+        $programmes = $this->studentModel->getProgrammes();
+        $vivaYears  = $this->studentModel->getVivaYears();
 
         $data = [
             'pageTitle'   => 'Export Data',
             'currentPage' => 'export',
             'students'    => $students,
             'schools'     => $schools,
+            'programmes'  => $programmes,
             'vivaYears'   => $vivaYears,
             'filters'     => $filters
         ];
@@ -475,5 +485,133 @@ class ExportController extends Controller
         
         $writer->save('php://output');
         exit;
+    }
+
+    /**
+     * API for Live Preview of Custom Export
+     */
+    public function apiPreview(): void
+    {
+        Middleware::requireLogin();
+        header('Content-Type: application/json');
+
+        $fields = $_POST['fields'] ?? [];
+        if (empty($fields)) {
+            echo json_encode(['error' => 'No fields selected.']);
+            return;
+        }
+
+        $filters = $this->parseFiltersFromPost();
+        $students = $this->studentModel->getFiltered($filters);
+        
+        // Take top 3 for preview
+        $previewData = [];
+        $limit = min(3, count($students));
+        for ($i = 0; $i < $limit; $i++) {
+            $row = [];
+            $fullDetails = $this->studentModel->getFullDetails($students[$i]['student_id']);
+            foreach ($fields as $f) {
+                $row[$f] = $this->extractFieldValue($fullDetails, $f);
+            }
+            $previewData[] = $row;
+        }
+
+        echo json_encode([
+            'headers' => array_map(fn($f) => ucwords(str_replace('_', ' ', $f)), $fields),
+            'data'    => $previewData
+        ]);
+    }
+
+    /**
+     * Export Custom Fields to Excel
+     */
+    public function exportCustom(): void
+    {
+        Middleware::requireLogin();
+        $fields = $_POST['fields'] ?? [];
+        if (empty($fields)) {
+            $this->setFlash('danger', 'Please select at least one field to export.');
+            $this->redirect($this->baseUrl() . '/export');
+            return;
+        }
+
+        $filters = $this->parseFiltersFromPost();
+        $students = $this->studentModel->getFiltered($filters);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Custom Export');
+
+        // Headers
+        $colIndex = 'A';
+        foreach ($fields as $field) {
+            $header = ucwords(str_replace('_', ' ', $field));
+            $sheet->setCellValue($colIndex . '1', $header);
+            $sheet->getStyle($colIndex . '1')->getFont()->setBold(true);
+            $sheet->getColumnDimension($colIndex)->setAutoSize(true);
+            $colIndex++;
+        }
+
+        // Data
+        $row = 2;
+        foreach ($students as $st) {
+            $fullDetails = $this->studentModel->getFullDetails($st['student_id']);
+            $colIndex = 'A';
+            foreach ($fields as $field) {
+                $sheet->setCellValue($colIndex . $row, $this->extractFieldValue($fullDetails, $field));
+                $colIndex++;
+            }
+            $row++;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'PRVTS_Custom_Export_' . date('Ymd_His') . '.xlsx';
+        
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="'. $filename .'"');
+        header('Cache-Control: max-age=0');
+        
+        $writer->save('php://output');
+        exit;
+    }
+
+    private function parseFiltersFromPost(): array
+    {
+        $filters = [
+            'month'           => isset($_POST['month']) ? (is_array($_POST['month']) ? $_POST['month'] : trim($_POST['month'])) : '',
+            'year'            => isset($_POST['year']) ? (is_array($_POST['year']) ? $_POST['year'] : trim($_POST['year'])) : '',
+            'school'          => isset($_POST['school']) ? (is_array($_POST['school']) ? $_POST['school'] : trim($_POST['school'])) : '',
+            'programme'       => isset($_POST['programme']) ? (is_array($_POST['programme']) ? $_POST['programme'] : trim($_POST['programme'])) : '',
+            'degree_level'    => isset($_POST['degree_level']) ? (is_array($_POST['degree_level']) ? $_POST['degree_level'] : trim($_POST['degree_level'])) : '',
+            'research_status' => isset($_POST['research_status']) ? (is_array($_POST['research_status']) ? $_POST['research_status'] : trim($_POST['research_status'])) : '',
+            'sort_viva'       => isset($_POST['sort_viva']) ? trim($_POST['sort_viva']) : '',
+        ];
+
+        foreach ($filters as $k => $v) {
+            if (is_array($v)) {
+                $filters[$k] = array_filter($v, fn($val) => trim($val) !== '');
+            }
+        }
+        return $filters;
+    }
+
+    private function extractFieldValue(array|false $student, string $field): string
+    {
+        if (!$student) return '';
+        switch ($field) {
+            case 'matric_no': return $student['matric_no'] ?? '';
+            case 'name': return $student['name'] ?? '';
+            case 'programme': return $student['programme'] ?? '';
+            case 'school': return $student['school'] ?? '';
+            case 'degree_level': return $student['degree_level'] ?? '';
+            case 'viva_date': return $student['viva_records'][0]['viva_date'] ?? '';
+            case 'viva_result': return $student['viva_records'][0]['viva_result'] ?? '';
+            case 'research_status': return $student['research_status'] ?? '';
+            default: return '';
+        }
     }
 }

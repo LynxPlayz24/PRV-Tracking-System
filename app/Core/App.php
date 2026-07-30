@@ -29,7 +29,10 @@ class App
         // ── Dashboard (Admin) ──
         $this->router->get('/',                     'DashboardController', 'index');
         $this->router->get('/dashboard',            'DashboardController', 'index');
-        $this->router->get('/dashboard/chart-data', 'DashboardController', 'chartData');
+
+        // ── Analytics (Admin) ──
+        $this->router->get('/analytics',            'AnalyticsController', 'index');
+        $this->router->get('/analytics/chart-data', 'AnalyticsController', 'chartData');
 
         // ── Search ──
         $this->router->get('/search',          'SearchController', 'index');
@@ -57,6 +60,8 @@ class App
         $this->router->post('/export/excel',       'ExportController', 'exportExcel');
         $this->router->get('/export/pdf/{id}',     'ExportController', 'exportSinglePdf');
         $this->router->get('/export/excel/{id}',   'ExportController', 'exportSingleExcel');
+        $this->router->post('/export/preview',     'ExportController', 'apiPreview');
+        $this->router->post('/export/custom',      'ExportController', 'exportCustom');
 
         // ── Docx Templates ──
         $this->router->get('/docx-templates',          'DocxTemplateController', 'index');

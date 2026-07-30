@@ -164,97 +164,73 @@ class DashboardController extends Controller
     {
         $pending = [];
         
-        // 1. Internal Examiner Confirmation Pending
+        // 1. Examiner Confirmation Pending
         $this->db->query("
-            SELECT s.student_id, s.name AS student_name, s.matric_no, v.viva_id,
-                   NULLIF(v.internal_examiner_email_date, '') AS sent_date,
+            SELECT s.student_id, s.name AS student_name, s.matric_no, 
+                   se.examiner_id, se.role, se.email_date AS sent_date,
                    e.examiner_name AS staff_name, e.phone AS staff_phone, e.email AS staff_email
             FROM students s 
-            JOIN viva_records v ON s.student_id = v.student_id
-            LEFT JOIN examiners e ON v.internal_examiner_id = e.examiner_id
-            WHERE NULLIF(v.internal_examiner_email_date, '') IS NOT NULL
-              AND (v.internal_examiner_status = 'Pending' OR v.internal_examiner_status IS NULL OR v.internal_examiner_status = '')
-              AND NULLIF(v.internal_examiner_email_date, '') <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            JOIN student_examiners se ON s.student_id = se.student_id
+            JOIN examiners e ON se.examiner_id = e.examiner_id
+            WHERE se.email_date IS NOT NULL
+              AND se.status = 'Pending'
+              AND se.email_date <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
-            $key = 'staff_int_conf_' . $res['viva_id'];
+            $key = 'staff_conf_' . $res['student_id'] . '_' . $res['examiner_id'];
+            $prefix = strtolower($res['role']) . '_examiner_status';
 
             $pending[] = [
                 'alert_key'    => $key,
                 'student_id'   => $res['student_id'],
                 'student_name' => $res['student_name'],
                 'matric_no'    => $res['matric_no'],
-                'staff_name'   => $res['staff_name'] ?: 'Internal Examiner',
+                'staff_name'   => $res['staff_name'] ?: $res['role'] . ' Examiner',
                 'staff_phone'  => $res['staff_phone'] ?: '',
                 'staff_email'  => $res['staff_email'] ?: '',
-                'role'         => 'Internal Examiner',
+                'role'         => $res['role'] . ' Examiner',
                 'task'         => 'Pending Examiner Confirmation',
                 'sent_date'    => $res['sent_date'],
-                'tab'          => 'viva'
+                'tab'          => 'viva',
+                'highlight'    => $prefix . '[' . $res['examiner_id'] . ']'
             ];
         }
 
-        // 2. External Examiner Confirmation Pending
+        // 2. Examiner Report Pending
         $this->db->query("
-            SELECT s.student_id, s.name AS student_name, s.matric_no, v.viva_id,
-                   NULLIF(v.external_examiner_email_date, '') AS sent_date,
-                   e.examiner_name AS staff_name, e.phone AS staff_phone, e.email AS staff_email
-            FROM students s 
-            JOIN viva_records v ON s.student_id = v.student_id
-            LEFT JOIN examiners e ON v.external_examiner_id = e.examiner_id
-            WHERE NULLIF(v.external_examiner_email_date, '') IS NOT NULL
-              AND (v.external_examiner_status = 'Pending' OR v.external_examiner_status IS NULL OR v.external_examiner_status = '')
-              AND NULLIF(v.external_examiner_email_date, '') <= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-        ");
-        foreach ($this->db->resultSet() as $res) {
-            $key = 'staff_ext_conf_' . $res['viva_id'];
-
-            $pending[] = [
-                'alert_key'    => $key,
-                'student_id'   => $res['student_id'],
-                'student_name' => $res['student_name'],
-                'matric_no'    => $res['matric_no'],
-                'staff_name'   => $res['staff_name'] ?: 'External Examiner',
-                'staff_phone'  => $res['staff_phone'] ?: '',
-                'staff_email'  => $res['staff_email'] ?: '',
-                'role'         => 'External Examiner',
-                'task'         => 'Pending Examiner Confirmation',
-                'sent_date'    => $res['sent_date'],
-                'tab'          => 'viva'
-            ];
-        }
-
-        // 3. Internal Examiner Report Pending
-        $this->db->query("
-            SELECT s.student_id, s.name AS student_name, s.matric_no, v.viva_id,
+            SELECT s.student_id, s.name AS student_name, s.matric_no, 
+                   se.examiner_id, se.role,
                    COALESCE(NULLIF(v.thesis_to_panel_soft_copy_date, ''), NULLIF(v.thesis_to_panel_hard_copy_date, '')) AS sent_date,
                    e.examiner_name AS staff_name, e.phone AS staff_phone, e.email AS staff_email
             FROM students s 
+            JOIN student_examiners se ON s.student_id = se.student_id
+            JOIN examiners e ON se.examiner_id = e.examiner_id
             JOIN viva_records v ON s.student_id = v.student_id
-            LEFT JOIN examiners e ON v.internal_examiner_id = e.examiner_id
             WHERE (NULLIF(v.thesis_to_panel_soft_copy_date, '') IS NOT NULL OR NULLIF(v.thesis_to_panel_hard_copy_date, '') IS NOT NULL)
-              AND (v.internal_examiner_report_date IS NULL OR v.internal_examiner_report_date = '')
+              AND (se.report_date IS NULL)
               AND COALESCE(NULLIF(v.thesis_to_panel_soft_copy_date, ''), NULLIF(v.thesis_to_panel_hard_copy_date, '')) <= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
         ");
         foreach ($this->db->resultSet() as $res) {
-            $key = 'staff_int_rpt_' . $res['viva_id'];
+            $key = 'staff_rpt_' . $res['student_id'] . '_' . $res['examiner_id'];
+            $prefix = strtolower($res['role']) . '_examiner_report_date';
 
             $pending[] = [
                 'alert_key'    => $key,
                 'student_id'   => $res['student_id'],
                 'student_name' => $res['student_name'],
                 'matric_no'    => $res['matric_no'],
-                'staff_name'   => $res['staff_name'] ?: 'Internal Examiner',
+                'staff_name'   => $res['staff_name'] ?: $res['role'] . ' Examiner',
                 'staff_phone'  => $res['staff_phone'] ?: '',
                 'staff_email'  => $res['staff_email'] ?: '',
-                'role'         => 'Internal Examiner',
-                'task'         => 'Waiting for Examiner Evaluation Report',
+                'role'         => $res['role'] . ' Examiner',
+                'task'         => 'Pending Examiner Report',
                 'sent_date'    => $res['sent_date'],
-                'tab'          => 'viva'
+                'tab'          => 'viva',
+                'highlight'    => $prefix . '[' . $res['examiner_id'] . ']'
             ];
         }
 
-        // 4. Supervisor Endorsement Pending (Post-Viva)
+        // 3. Supervisor Endorsement Pending (Post-Viva)
         $this->db->query("
             SELECT s.student_id, s.name AS student_name, s.matric_no, c.correction_id,
                    NULLIF(c.corrected_thesis_received_date, '') AS sent_date,
@@ -350,71 +326,5 @@ class DashboardController extends Controller
         $stats['pending_viva'] = $this->db->single()['cnt'] ?? 0;
 
         return $stats;
-    }
-
-    /**
-     * API endpoint for chart data
-     */
-    public function chartData(): void
-    {
-        Middleware::requireAdmin();
-
-        $data = [
-            'school_distribution' => $this->getSchoolDistribution(),
-            'degree_distribution' => $this->getDegreeDistribution(),
-            'status_distribution' => $this->getStatusDistribution()
-        ];
-
-        $this->jsonResponse($data);
-    }
-
-    private function getSchoolDistribution(): array
-    {
-        $this->db->query('SELECT school, COUNT(*) as count FROM students GROUP BY school ORDER BY count DESC');
-        $results = $this->db->resultSet();
-        
-        $labels = [];
-        $data = [];
-        
-        foreach ($results as $row) {
-            $school = $row['school'] ?: 'Unassigned';
-            $school = str_replace('School of ', '', $school);
-            $labels[] = $school;
-            $data[] = $row['count'];
-        }
-        
-        return ['labels' => $labels, 'data' => $data];
-    }
-
-    private function getDegreeDistribution(): array
-    {
-        $this->db->query('SELECT degree_level, COUNT(*) as count FROM students GROUP BY degree_level');
-        $results = $this->db->resultSet();
-        
-        $labels = [];
-        $data = [];
-        
-        foreach ($results as $row) {
-            $labels[] = $row['degree_level'];
-            $data[] = $row['count'];
-        }
-        
-        return ['labels' => $labels, 'data' => $data];
-    }
-
-    private function getStatusDistribution(): array
-    {
-        $this->db->query('SELECT research_status, COUNT(*) as count FROM students GROUP BY research_status');
-        $results = $this->db->resultSet();
-        
-        $labels = [];
-        $data = [];
-        
-        foreach ($results as $row) {
-            $labels[] = $row['research_status'];
-            $data[] = $row['count'];
-        }
-        
-        return ['labels' => $labels, 'data' => $data];
     }
 }

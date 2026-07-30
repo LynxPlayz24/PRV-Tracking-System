@@ -17,11 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let debounceTimer;
 
     // Base API URL
-    const basePath = window.location.pathname.includes('/public/') 
-        ? window.location.pathname.substring(0, window.location.pathname.indexOf('/public/') + 7) 
-        : '/';
-    const apiUrl = basePath.endsWith('/') ? `${basePath}search/live` : `${basePath}/search/live`;
-    const studentUrl = basePath.endsWith('/') ? `${basePath}student/` : `${basePath}/student/`;
+    const basePath = window.APP_URL || '';
+    const apiUrl = `${basePath}/search/live`;
+    const studentUrl = `${basePath}/student/`;
 
     // Fetch and render results
     const fetchResults = async () => {

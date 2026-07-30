@@ -24,6 +24,10 @@ $current = $currentPage ?? '';
             <i class="bi bi-grid-1x2-fill"></i>
             <span>Dashboard</span>
         </a>
+        <a href="<?= $baseUrl ?>/analytics" class="nav-link <?= $current === 'analytics' ? 'active' : '' ?>">
+            <i class="bi bi-graph-up-arrow"></i>
+            <span>Analytics</span>
+        </a>
     </div>
 
     <div class="nav-section">
