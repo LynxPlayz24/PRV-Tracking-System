@@ -1,7 +1,6 @@
 # Public .htaccess - Route all requests through index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /PRV_Tracking_System/public/
 
     # If the request is for an existing file or directory, serve it directly
     RewriteCond %{REQUEST_FILENAME} !-f
