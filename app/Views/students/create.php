@@ -426,6 +426,14 @@ $supervisors = $supervisors ?? [];
                             <input type="date" class="form-control" name="abstract_received_date" value="<?= htmlspecialchars($corr['abstract_received_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-4">
+                            <label class="form-label">COLGIS JIL Meeting Date</label>
+                            <input type="date" class="form-control" name="colgis_jil_meeting_date" value="<?= htmlspecialchars($corr['colgis_jil_meeting_date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">COLGIS JIL Meeting No.</label>
+                            <input type="text" class="form-control" name="colgis_jil_meeting_no" value="<?= htmlspecialchars($corr['colgis_jil_meeting_no'] ?? '') ?>" placeholder="e.g. Bil. 5/2026">
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">Sent to Internal Examiner</label>
                             <input type="date" class="form-control" name="sent_to_internal_date" value="<?= htmlspecialchars($corr['sent_to_internal_date'] ?? '') ?>">
                         </div>

@@ -208,6 +208,8 @@ function showMoney($val) {
                             <tr><td class="text-muted">Sent to Supervisor</td><td><?= showDate($corr['sent_to_supervisor_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Endorsement from Exam.</td><td><?= showDate($corr['endorsement_from_examiner_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Abstract Received</td><td><?= showDate($corr['abstract_received_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">COLGIS JIL Meeting Date</td><td><?= showDate($corr['colgis_jil_meeting_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">COLGIS JIL Meeting No.</td><td><?= showVal($corr['colgis_jil_meeting_no'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Final Result</td><td><strong class="text-success"><?= showVal($corr['final_result'] ?? null) ?></strong></td></tr>
                             
                             <tr><td colspan="2"><hr></td></tr>

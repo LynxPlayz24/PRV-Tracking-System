@@ -503,9 +503,10 @@ class ExportController extends Controller
         }
 
         echo json_encode([
-            'headers' => array_map(fn($f) => ucwords(str_replace('_', ' ', $f)), $fields),
-            'fields'  => array_values($fields),
-            'data'    => $previewData
+            'headers'       => array_map(fn($f) => ucwords(str_replace('_', ' ', $f)), $fields),
+            'fields'        => array_values($fields),
+            'data'          => $previewData,
+            'total_matches' => count($students)
         ]);
     }
 

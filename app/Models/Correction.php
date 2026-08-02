@@ -37,6 +37,8 @@ class Correction
             'sent_to_supervisor_date' => 'sent_to_supervisor_date',
             'endorsement_from_examiner_date' => 'endorsement_from_examiner_date',
             'abstract_received_date' => 'abstract_received_date',
+            'colgis_jil_meeting_date' => 'colgis_jil_meeting_date',
+            'colgis_jil_meeting_no' => 'colgis_jil_meeting_no',
             'final_result' => 'final_result'
         ];
 
