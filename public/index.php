@@ -11,6 +11,13 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();
 
+// Dynamic APP_URL detection for LAN/network access
+if (isset($_SERVER['HTTP_HOST'])) {
+    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+    $_ENV['APP_URL'] = "{$scheme}://{$_SERVER['HTTP_HOST']}{$scriptDir}";
+}
+
 // Error display: controlled by APP_DEBUG in .env
 $debug = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
 ini_set('display_errors', $debug ? '1' : '0');
