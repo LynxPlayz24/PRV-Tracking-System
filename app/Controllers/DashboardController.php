@@ -158,6 +158,32 @@ class DashboardController extends Controller
             ];
         }
 
+        // 5. Missing Corrected Thesis Received (deadline passed, no thesis received)
+        $this->db->query("
+            SELECT s.student_id, s.name, s.matric_no, c.correction_id, c.correction_deadline
+            FROM students s
+            JOIN corrections c ON s.student_id = c.student_id
+            WHERE c.correction_deadline IS NOT NULL
+              AND c.correction_deadline < CURDATE()
+              AND (c.corrected_thesis_received_date IS NULL OR c.corrected_thesis_received_date = '')
+            ORDER BY c.correction_deadline ASC
+        ");
+        foreach ($this->db->resultSet() as $row) {
+            $key = 'no_thesis_' . $row['correction_id'];
+            $actions[] = [
+                'alert_key'  => $key,
+                'student_id' => $row['student_id'],
+                'name'       => $row['name'],
+                'matric_no'  => $row['matric_no'],
+                'type'       => 'Corrected Thesis Not Received',
+                'date'       => $row['correction_deadline'],
+                'badge'      => 'bg-danger text-white',
+                'icon'       => 'bi-file-earmark-x',
+                'tab'        => 'postviva',
+                'highlight'  => 'corrected_thesis_received_date'
+            ];
+        }
+
         return $actions;
     }
 
@@ -262,6 +288,38 @@ class DashboardController extends Controller
                 'task'         => 'Waiting for Supervisor Endorsement',
                 'sent_date'    => $res['sent_date'],
                 'tab'          => 'postviva'
+            ];
+        }
+
+        // 4. Examiner Endorsement Pending (sent to examiners 14+ days ago, no endorsement_from_examiner_date)
+        $this->db->query("
+            SELECT s.student_id, s.name AS student_name, s.matric_no, c.correction_id,
+                   se.examiner_id, se.role,
+                   COALESCE(NULLIF(c.sent_to_internal_date,''), NULLIF(c.sent_to_external_date,'')) AS sent_date,
+                   e.examiner_name AS staff_name, e.phone AS staff_phone, e.email AS staff_email
+            FROM students s
+            JOIN corrections c ON s.student_id = c.student_id
+            JOIN student_examiners se ON s.student_id = se.student_id
+            JOIN examiners e ON se.examiner_id = e.examiner_id
+            WHERE (NULLIF(c.sent_to_internal_date,'') IS NOT NULL OR NULLIF(c.sent_to_external_date,'') IS NOT NULL)
+              AND (c.endorsement_from_examiner_date IS NULL OR c.endorsement_from_examiner_date = '')
+              AND COALESCE(NULLIF(c.sent_to_internal_date,''), NULLIF(c.sent_to_external_date,'')) <= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+        ");
+        foreach ($this->db->resultSet() as $res) {
+            $key = 'staff_ex_end_' . $res['correction_id'] . '_' . $res['examiner_id'];
+            $pending[] = [
+                'alert_key'    => $key,
+                'student_id'   => $res['student_id'],
+                'student_name' => $res['student_name'],
+                'matric_no'    => $res['matric_no'],
+                'staff_name'   => $res['staff_name'] ?: $res['role'] . ' Examiner',
+                'staff_phone'  => $res['staff_phone'] ?: '',
+                'staff_email'  => $res['staff_email'] ?: '',
+                'role'         => $res['role'] . ' Examiner',
+                'task'         => 'Waiting for Examiner Endorsement',
+                'sent_date'    => $res['sent_date'],
+                'tab'          => 'postviva',
+                'highlight'    => 'endorsement_from_examiner_date'
             ];
         }
 

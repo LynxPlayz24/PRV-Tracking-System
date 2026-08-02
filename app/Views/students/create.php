@@ -258,7 +258,7 @@ $supervisors = $supervisors ?? [];
                                 $chairpersons = $chairpersons ?? [];
                                 $currentChairName = htmlspecialchars($viva['chairperson_name'] ?? '');
                             ?>
-                            <select class="form-select select2" name="chairperson_name" id="chairpersonSelect">
+                            <select class="form-select select2-tags" name="chairperson_name" id="chairpersonSelect">
                                 <option value="">— Select or type a name —</option>
                                 <?php if (!empty($supervisors)): ?>
                                 <optgroup label="Supervisors">

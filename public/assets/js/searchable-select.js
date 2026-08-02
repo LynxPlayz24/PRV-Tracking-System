@@ -16,5 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
             allowClear: true,
             closeOnSelect: false
         });
+
+        // Single select with free-type (taggable, single choice)
+        $('.select2-tags').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            tags: true,
+            allowClear: true,
+            placeholder: 'Select or type a name'
+        });
     }
 });

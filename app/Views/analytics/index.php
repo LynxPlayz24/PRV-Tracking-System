@@ -383,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (month) params.month = month;
         if (year)  params.year  = year;
 
-        document.getElementById('panelRolesLoading').style.display = '';
         document.getElementById('panelRolesContainer').innerHTML =
             '<div class="col-12 text-center py-4 text-muted" id="panelRolesLoading"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading panel roles...</div>';
 

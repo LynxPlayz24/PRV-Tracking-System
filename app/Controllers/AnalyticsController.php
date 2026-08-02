@@ -168,7 +168,7 @@ class AnalyticsController extends Controller
               AND ss.role = 'main'
             GROUP BY sup.supervisor_id
             ORDER BY total DESC
-            LIMIT 5
+            LIMIT 3
         ");
         $topSupervisors = $this->db->resultSet($params);
 
@@ -183,7 +183,7 @@ class AnalyticsController extends Controller
               AND ss.role = 'co'
             GROUP BY sup.supervisor_id
             ORDER BY total DESC
-            LIMIT 5
+            LIMIT 3
         ");
         $topCoSupervisors = $this->db->resultSet($params);
 
@@ -196,7 +196,7 @@ class AnalyticsController extends Controller
               AND v.chairperson_name IS NOT NULL AND v.chairperson_name != ''
             GROUP BY v.chairperson_name
             ORDER BY total DESC
-            LIMIT 5
+            LIMIT 3
         ");
         $topChairpersons = $this->db->resultSet($params);
 
@@ -210,7 +210,7 @@ class AnalyticsController extends Controller
             $dateWhere
             GROUP BY e.examiner_id
             ORDER BY total DESC
-            LIMIT 5
+            LIMIT 3
         ");
         $topExaminers = $this->db->resultSet($params);
 
