@@ -10,6 +10,7 @@ use App\Models\VivaRecord;
 use App\Models\Correction;
 use App\Models\Graduation;
 use App\Models\Remark;
+use App\Models\Chairperson;
 
 class StudentController extends Controller
 {
@@ -20,16 +21,18 @@ class StudentController extends Controller
     private Correction $correctionModel;
     private Graduation $graduationModel;
     private Remark $remarkModel;
+    private Chairperson $chairpersonModel;
 
     public function __construct()
     {
-        $this->studentModel = new Student();
+        $this->studentModel    = new Student();
         $this->supervisorModel = new Supervisor();
-        $this->examinerModel = new Examiner();
-        $this->vivaModel = new VivaRecord();
+        $this->examinerModel   = new Examiner();
+        $this->vivaModel       = new VivaRecord();
         $this->correctionModel = new Correction();
         $this->graduationModel = new Graduation();
-        $this->remarkModel = new Remark();
+        $this->remarkModel     = new Remark();
+        $this->chairpersonModel = new Chairperson();
     }
 
     /**
@@ -74,10 +77,11 @@ class StudentController extends Controller
         $this->generateCsrfToken();
 
         $data = [
-            'pageTitle'   => 'Add New Student',
-            'currentPage' => 'create',
-            'supervisors' => $this->supervisorModel->getAll(),
-            'examiners'   => $this->examinerModel->getAll()
+            'pageTitle'    => 'Add New Student',
+            'currentPage'  => 'create',
+            'supervisors'  => $this->supervisorModel->getAll(),
+            'examiners'    => $this->examinerModel->getAll(),
+            'chairpersons' => $this->chairpersonModel->getAll()
         ];
 
         $this->view('layouts.header', $data);
@@ -245,12 +249,13 @@ class StudentController extends Controller
         $this->generateCsrfToken();
 
         $data = [
-            'pageTitle'   => 'Edit Student',
-            'currentPage' => 'manage',
-            'student'     => $student,
-            'supervisors' => $this->supervisorModel->getAll(),
-            'examiners'   => $this->examinerModel->getAll(),
-            'remarks'     => $this->remarkModel->getForStudent($studentId)
+            'pageTitle'    => 'Edit Student',
+            'currentPage'  => 'manage',
+            'student'      => $student,
+            'supervisors'  => $this->supervisorModel->getAll(),
+            'examiners'    => $this->examinerModel->getAll(),
+            'remarks'      => $this->remarkModel->getForStudent($studentId),
+            'chairpersons' => $this->chairpersonModel->getAll()
         ];
 
         $this->view('layouts.header', $data);

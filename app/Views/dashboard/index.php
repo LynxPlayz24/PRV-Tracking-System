@@ -120,7 +120,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                         </td>
                                         <td><span class="text-dark fw-medium small"><?= date('d M Y', strtotime($action['date'])) ?></span></td>
                                         <td class="text-end">
-                                            <a href="<?= $baseUrl ?>/students/edit/<?= $action['student_id'] ?>#<?= $action['tab'] ?? '' ?>" class="btn btn-sm btn-outline-primary px-3">
+                                            <a href="<?= $baseUrl ?>/students/edit/<?= $action['student_id'] ?>?highlight=<?= urlencode($action['highlight'] ?? '') ?>#<?= $action['tab'] ?? '' ?>" class="btn btn-sm btn-outline-primary px-3">
                                                 <i class="bi bi-pencil-square me-1"></i> Update Record
                                             </a>
                                         </td>

@@ -5,16 +5,19 @@ use App\Core\Controller;
 use App\Core\Middleware;
 use App\Models\Supervisor;
 use App\Models\Examiner;
+use App\Models\Chairperson;
 
 class StaffController extends Controller
 {
     private Supervisor $supervisorModel;
     private Examiner $examinerModel;
+    private Chairperson $chairpersonModel;
 
     public function __construct()
     {
         $this->supervisorModel = new Supervisor();
         $this->examinerModel = new Examiner();
+        $this->chairpersonModel = new Chairperson();
     }
 
     public function manage(): void
@@ -24,10 +27,11 @@ class StaffController extends Controller
         $this->generateCsrfToken();
 
         $data = [
-            'pageTitle'   => 'Academic Staff',
-            'currentPage' => 'staff',
-            'supervisors' => $this->supervisorModel->getAll(),
-            'examiners'   => $this->examinerModel->getAll(),
+            'pageTitle'     => 'Academic Staff',
+            'currentPage'   => 'staff',
+            'supervisors'   => $this->supervisorModel->getAll(),
+            'examiners'     => $this->examinerModel->getAll(),
+            'chairpersons'  => $this->chairpersonModel->getAll(),
         ];
 
         $this->view('layouts.header', $data);
@@ -206,5 +210,90 @@ class StaffController extends Controller
         }
 
         $this->redirect($this->baseUrl() . '/staff#examiners');
+    }
+
+    // --- CHAIRPERSONS ---
+
+    public function storeChairperson(): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->setFlash('danger', 'Invalid request.');
+            $this->redirect($this->baseUrl() . '/staff');
+            return;
+        }
+
+        $data = [
+            'chairperson_name' => trim($this->input('chairperson_name', '')),
+            'email'            => trim($this->input('email', '')),
+            'phone'            => trim($this->input('phone', '')),
+            'department'       => trim($this->input('department', '')),
+        ];
+
+        if (empty($data['chairperson_name'])) {
+            $this->setFlash('danger', 'Chairperson name is required.');
+            $this->redirect($this->baseUrl() . '/staff');
+            return;
+        }
+
+        if ($this->chairpersonModel->create($data)) {
+            $this->setFlash('success', 'Chairperson added successfully.');
+        } else {
+            $this->setFlash('danger', 'Failed to add chairperson.');
+        }
+
+        $this->redirect($this->baseUrl() . '/staff#chairpersons');
+    }
+
+    public function updateChairperson(string $id): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->setFlash('danger', 'Invalid request.');
+            $this->redirect($this->baseUrl() . '/staff');
+            return;
+        }
+
+        $data = [
+            'chairperson_name' => trim($this->input('chairperson_name', '')),
+            'email'            => trim($this->input('email', '')),
+            'phone'            => trim($this->input('phone', '')),
+            'department'       => trim($this->input('department', '')),
+        ];
+
+        if (empty($data['chairperson_name'])) {
+            $this->setFlash('danger', 'Chairperson name is required.');
+            $this->redirect($this->baseUrl() . '/staff');
+            return;
+        }
+
+        if ($this->chairpersonModel->update((int)$id, $data)) {
+            $this->setFlash('success', 'Chairperson updated successfully.');
+        } else {
+            $this->setFlash('danger', 'Failed to update chairperson.');
+        }
+
+        $this->redirect($this->baseUrl() . '/staff#chairpersons');
+    }
+
+    public function deleteChairperson(string $id): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->setFlash('danger', 'Invalid request.');
+            $this->redirect($this->baseUrl() . '/staff');
+            return;
+        }
+
+        if ($this->chairpersonModel->delete((int)$id)) {
+            $this->setFlash('success', 'Chairperson deleted successfully.');
+        } else {
+            $this->setFlash('danger', 'Failed to delete chairperson.');
+        }
+
+        $this->redirect($this->baseUrl() . '/staff#chairpersons');
     }
 }

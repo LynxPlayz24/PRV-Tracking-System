@@ -24,6 +24,12 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                 <span class="badge bg-secondary ms-2 rounded-pill"><?= count($examiners ?? []) ?></span>
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-medium px-4" id="chairpersons-tab" data-bs-toggle="tab" data-bs-target="#chairpersons" type="button" role="tab">
+                <i class="bi bi-person-workspace me-2"></i>Chairpersons
+                <span class="badge bg-secondary ms-2 rounded-pill"><?= count($chairpersons ?? []) ?></span>
+            </button>
+        </li>
     </ul>
 
     <!-- Tabs Content -->
@@ -258,6 +264,113 @@ $csrf = $_SESSION['csrf_token'] ?? '';
             <?php endif; ?>
         </div>
 
+        <!-- ==============================
+             CHAIRPERSONS TAB
+             ============================== -->
+        <div class="tab-pane fade" id="chairpersons" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="position-relative flex-grow-1" style="max-width: 360px;">
+                        <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 14px;"></i>
+                        <input type="text" class="form-control ps-5" id="searchChairpersons" placeholder="Search chairpersons by name, email, department..." autocomplete="off">
+                    </div>
+                    <button class="btn btn-uum text-nowrap" data-bs-toggle="modal" data-bs-target="#addChairpersonModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Chairperson
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-muted fw-semibold">
+                                <tr>
+                                    <th class="px-4 py-3 border-0 text-nowrap">Name</th>
+                                    <th class="py-3 border-0 text-nowrap">Email</th>
+                                    <th class="py-3 border-0 text-nowrap">Phone Number</th>
+                                    <th class="py-3 border-0 text-nowrap">Department</th>
+                                    <th class="px-4 py-3 border-0 text-nowrap text-end" style="width: 110px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($chairpersons)): ?>
+                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No chairpersons found.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach($chairpersons as $ch): ?>
+                                    <tr>
+                                        <td class="px-4 fw-semibold text-dark"><?= htmlspecialchars($ch['chairperson_name']) ?></td>
+                                        <td><?= htmlspecialchars($ch['email'] ?: '-') ?></td>
+                                        <td class="text-nowrap">
+                                            <?php if (!empty($ch['phone'])): ?>
+                                                <a href="tel:<?= htmlspecialchars($ch['phone']) ?>" class="text-decoration-none text-dark">
+                                                    <i class="bi bi-telephone me-1 text-primary"></i><?= htmlspecialchars($ch['phone']) ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?= htmlspecialchars($ch['department'] ?: '-') ?></td>
+                                        <td class="px-4 text-end text-nowrap">
+                                            <div class="d-inline-flex gap-1 align-items-center justify-content-end">
+                                                <button class="btn btn-sm btn-outline-primary" title="Edit"
+                                                    data-bs-toggle="modal" data-bs-target="#editChairpersonModal<?= $ch['chairperson_id'] ?>">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <form action="<?= $baseUrl ?>/staff/chairpersons/delete/<?= $ch['chairperson_id'] ?>" method="POST" class="d-inline mb-0" onsubmit="return confirm('Delete this chairperson permanently?');">
+                                                    <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Chairperson Modals -->
+            <?php if (!empty($chairpersons)): ?>
+                <?php foreach($chairpersons as $ch): ?>
+                <div class="modal fade" id="editChairpersonModal<?= $ch['chairperson_id'] ?>" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <form action="<?= $baseUrl ?>/staff/chairpersons/update/<?= $ch['chairperson_id'] ?>" method="POST" class="modal-content bg-white">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Chairperson</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                                <div class="mb-3">
+                                    <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="chairperson_name" value="<?= htmlspecialchars($ch['chairperson_name']) ?>" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($ch['email'] ?? '') ?>">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" name="phone" value="<?= htmlspecialchars($ch['phone'] ?? '') ?>" placeholder="e.g. +60 12-345 6789">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" name="department" value="<?= htmlspecialchars($ch['department'] ?? '') ?>">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-uum">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
     </div>
 </div>
 
@@ -342,6 +455,41 @@ $csrf = $_SESSION['csrf_token'] ?? '';
     </div>
 </div>
 
+<!-- Add Chairperson Modal -->
+<div class="modal fade" id="addChairpersonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="<?= $baseUrl ?>/staff/chairpersons/store" method="POST" class="modal-content bg-white">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Chairperson</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                <div class="mb-3">
+                    <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="chairperson_name" required placeholder="e.g. Prof. Dr. Ahmad">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" placeholder="e.g. chair@uum.edu.my">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" name="phone" placeholder="e.g. +60 12-345 6789">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Department</label>
+                    <input type="text" class="form-control" name="department" placeholder="e.g. School of Government">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-uum">Save Chairperson</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     let hash = window.location.hash;
@@ -371,5 +519,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     setupSearch('searchSupervisors', '#supervisors table');
     setupSearch('searchExaminers', '#examiners table');
+    setupSearch('searchChairpersons', '#chairpersons table');
 });
 </script>

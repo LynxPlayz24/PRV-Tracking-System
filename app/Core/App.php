@@ -82,6 +82,9 @@ class App
         $this->router->post('/staff/examiners/store',      'StaffController', 'storeExaminer');
         $this->router->post('/staff/examiners/update/{id}',   'StaffController', 'updateExaminer');
         $this->router->post('/staff/examiners/delete/{id}',   'StaffController', 'deleteExaminer');
+        $this->router->post('/staff/chairpersons/store',    'StaffController', 'storeChairperson');
+        $this->router->post('/staff/chairpersons/update/{id}', 'StaffController', 'updateChairperson');
+        $this->router->post('/staff/chairpersons/delete/{id}', 'StaffController', 'deleteChairperson');
 
         // ── Profile ──
         $this->router->get('/profile',         'ProfileController', 'index');

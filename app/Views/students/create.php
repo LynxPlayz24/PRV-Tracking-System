@@ -253,8 +253,44 @@ $supervisors = $supervisors ?? [];
                             <input type="date" class="form-control" name="viva_date" value="<?= htmlspecialchars($viva['viva_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Chairperson Name</label>
-                            <input type="text" class="form-control" name="chairperson_name" value="<?= htmlspecialchars($viva['chairperson_name'] ?? '') ?>">
+                            <label class="form-label">Chairperson</label>
+                            <?php
+                                $chairpersons = $chairpersons ?? [];
+                                $currentChairName = htmlspecialchars($viva['chairperson_name'] ?? '');
+                            ?>
+                            <select class="form-select select2" name="chairperson_name" id="chairpersonSelect">
+                                <option value="">— Select or type a name —</option>
+                                <?php if (!empty($supervisors)): ?>
+                                <optgroup label="Supervisors">
+                                    <?php foreach($supervisors as $sup): ?>
+                                    <option value="<?= htmlspecialchars($sup['supervisor_name']) ?>"
+                                        <?= ($currentChairName === htmlspecialchars($sup['supervisor_name'])) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($sup['supervisor_name']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <?php endif; ?>
+                                <?php if (!empty($chairpersons)): ?>
+                                <optgroup label="Chairpersons">
+                                    <?php foreach($chairpersons as $ch): ?>
+                                    <option value="<?= htmlspecialchars($ch['chairperson_name']) ?>"
+                                        <?= ($currentChairName === htmlspecialchars($ch['chairperson_name'])) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($ch['chairperson_name']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <?php endif; ?>
+                                <?php
+                                // If existing value not in either list, add it as a standalone option
+                                $allNames = array_merge(
+                                    array_column($supervisors, 'supervisor_name'),
+                                    array_column($chairpersons, 'chairperson_name')
+                                );
+                                if ($currentChairName && !in_array($viva['chairperson_name'] ?? '', $allNames)):
+                                ?>
+                                <option value="<?= $currentChairName ?>" selected><?= $currentChairName ?></option>
+                                <?php endif; ?>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Viva Result</label>
@@ -769,26 +805,70 @@ document.addEventListener('DOMContentLoaded', function() {
         renderExaminerFields();
     }
 
-    // Alert Resolution Navigation Highlighting
+    // Alert Resolution Navigation: tab switch + field highlight
     const urlParams = new URLSearchParams(window.location.search);
     const highlightField = urlParams.get('highlight');
     if (highlightField) {
+        // Wait for Select2 + tab init to complete
         setTimeout(() => {
-            let field = document.querySelector(`[name="${highlightField}"]`);
-            if (!field) {
-                // For dynamic array fields like internal_examiner_report_date[12]
-                field = document.querySelector(`[name^="${highlightField}"]`);
+            // 1. Activate target tab from URL hash first (fallback if hash scroll hasn't fired)
+            if (window.location.hash) {
+                const hashTab = document.querySelector(`button[data-bs-target="${window.location.hash}"]`);
+                if (hashTab && !hashTab.classList.contains('active')) {
+                    hashTab.click();
+                }
             }
-            if (field) {
+
+            // 2. Find the target field (input, select, textarea)
+            const findField = () => {
+                // Exact name match
+                let f = document.querySelector(`[name="${CSS.escape(highlightField)}"]`);
+                if (!f) f = document.querySelector(`[id="${CSS.escape(highlightField)}"]`);
+                // Prefix match for dynamic array fields like internal_examiner_report_date[12]
+                if (!f) f = document.querySelector(`[name^="${CSS.escape(highlightField)}"]`);
+                return f;
+            };
+
+            const applyHighlight = () => {
+                const field = findField();
+                if (!field) return;
+
+                // If field is inside a hidden tab pane, switch to that tab first
+                const tabPane = field.closest('.tab-pane');
+                if (tabPane && !tabPane.classList.contains('show')) {
+                    const tabId = tabPane.id;
+                    const tabTrigger = document.querySelector(`[data-bs-target="#${tabId}"]`);
+                    if (tabTrigger) {
+                        tabTrigger.click();
+                        setTimeout(() => scrollAndPulse(field), 200);
+                        return;
+                    }
+                }
+                scrollAndPulse(field);
+            };
+
+            const scrollAndPulse = (field) => {
                 field.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 field.classList.add('highlight-field-pulse');
-                field.focus();
-                
-                setTimeout(() => {
+                if (field.tagName !== 'SELECT') {
+                    field.focus();
+                }
+                // Remove pulse on first user interaction with the field
+                const removeOnInteract = () => {
                     field.classList.remove('highlight-field-pulse');
-                }, 3000);
-            }
-        }, 500); // Wait for tabs to initialize
+                    field.removeEventListener('click', removeOnInteract);
+                    field.removeEventListener('focus', removeOnInteract);
+                    field.removeEventListener('change', removeOnInteract);
+                };
+                field.addEventListener('click', removeOnInteract);
+                field.addEventListener('focus', removeOnInteract);
+                field.addEventListener('change', removeOnInteract);
+                // Auto-remove after 6 seconds
+                setTimeout(() => field.classList.remove('highlight-field-pulse'), 6000);
+            };
+
+            applyHighlight();
+        }, 600);
     }
 });
 </script>

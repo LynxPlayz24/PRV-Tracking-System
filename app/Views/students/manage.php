@@ -47,6 +47,13 @@ $csrf = $_SESSION['csrf_token'] ?? '';
 
 <div class="card shadow-sm border-0 animate-fade-in-up stagger-1">
     <div class="card-body p-0">
+        <!-- Live Search Bar -->
+        <div class="px-4 pt-4 pb-3 border-bottom">
+            <div class="position-relative" style="max-width: 420px;">
+                <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 14px;"></i>
+                <input type="text" id="liveSearchInput" class="form-control ps-5" placeholder="Search by name, matric ID, or school..." autocomplete="off">
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" id="manageTable">
                 <thead class="table-light text-muted fw-semibold">
@@ -75,7 +82,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                             <td class="font-monospace text-muted"><?= htmlspecialchars($s['matric_no']) ?></td>
                             <td class="fw-medium"><?= htmlspecialchars($s['name']) ?></td>
                             <td><div class="text-truncate" style="max-width:250px;" title="<?= htmlspecialchars($s['programme']) ?>"><?= htmlspecialchars($s['programme'] ?: '-') ?></div></td>
-                            <td><?= htmlspecialchars($s['research_status']) ?></td>
+                            <td data-school="<?= htmlspecialchars(strtolower($s['school'] ?? '')) ?>"><?= htmlspecialchars($s['research_status']) ?></td>
                             <td class="px-4 text-end">
                                 <a href="<?= $baseUrl ?>/student/<?= $s['student_id'] ?>" class="btn btn-sm btn-outline-info me-1" title="View"><i class="bi bi-eye"></i></a>
                                 <a href="<?= $baseUrl ?>/students/edit/<?= $s['student_id'] ?>" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="bi bi-pencil"></i></a>
@@ -157,5 +164,21 @@ document.addEventListener('DOMContentLoaded', function() {
         bulkDeleteIds.value = ids.join(',');
         bulkDeleteForm.submit();
     });
+
+    // Live search filter
+    const liveSearch = document.getElementById('liveSearchInput');
+    if (liveSearch) {
+        liveSearch.addEventListener('input', function() {
+            const q = this.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#manageTable tbody tr');
+            rows.forEach(function(row) {
+                if (row.querySelector('td[colspan]')) { row.style.display = ''; return; }
+                const matric = (row.cells[1] ? row.cells[1].textContent : '').toLowerCase();
+                const name   = (row.cells[2] ? row.cells[2].textContent : '').toLowerCase();
+                const school = (row.cells[3] ? (row.cells[3].getAttribute('data-school') || '') : '').toLowerCase();
+                row.style.display = (!q || matric.includes(q) || name.includes(q) || school.includes(q)) ? '' : 'none';
+            });
+        });
+    }
 });
 </script>

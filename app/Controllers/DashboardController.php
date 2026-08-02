@@ -65,7 +65,8 @@ class DashboardController extends Controller
                 'date'       => $viva['viva_date'],
                 'badge'      => 'bg-info text-dark',
                 'icon'       => 'bi-calendar-event',
-                'tab'        => 'viva'
+                'tab'        => 'viva',
+                'highlight'  => 'viva_date'
             ];
         }
 
@@ -91,7 +92,8 @@ class DashboardController extends Controller
                 'date'       => $pviva['viva_date'],
                 'badge'      => 'bg-danger text-white',
                 'icon'       => 'bi-journal-x',
-                'tab'        => 'viva'
+                'tab'        => 'viva',
+                'highlight'  => 'viva_result'
             ];
         }
 
@@ -101,7 +103,7 @@ class DashboardController extends Controller
             FROM students s
             JOIN corrections c ON s.student_id = c.student_id
             WHERE c.correction_deadline IS NOT NULL 
-              AND c.correction_deadline < DATE_ADD(CURDATE(), INTERVAL 14 DAY)
+              AND c.correction_deadline < DATE_ADD(CURDATE(), INTERVAL 1 MONTH)
               AND (c.corrected_thesis_received_date IS NULL OR c.corrected_thesis_received_date = '')
             ORDER BY c.correction_deadline ASC
         ");
@@ -119,7 +121,8 @@ class DashboardController extends Controller
                 'date'       => $corr['correction_deadline'],
                 'badge'      => $isOverdue ? 'bg-danger text-white' : 'bg-warning text-dark',
                 'icon'       => $isOverdue ? 'bi-exclamation-triangle-fill' : 'bi-clock-history',
-                'tab'        => 'postviva'
+                'tab'        => 'postviva',
+                'highlight'  => 'corrected_thesis_received_date'
             ];
         }
 
@@ -150,7 +153,8 @@ class DashboardController extends Controller
                 'date'       => $hon['viva_date'],
                 'badge'      => 'bg-success text-white',
                 'icon'       => 'bi-cash-coin',
-                'tab'        => 'postviva'
+                'tab'        => 'postviva',
+                'highlight'  => 'honorarium_chairperson'
             ];
         }
 
