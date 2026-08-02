@@ -411,6 +411,14 @@ $coSups = array_filter($student['supervisors'] ?? [], fn($s) => $s['role'] === '
             <td><?= pdfDate($corr['abstract_received_date'] ?? null) ?></td>
         </tr>
         <tr>
+            <th>COLGIS JIL Meeting Date</th>
+            <td><?= pdfDate($corr['colgis_jil_meeting_date'] ?? null) ?></td>
+        </tr>
+        <tr>
+            <th>COLGIS JIL Meeting No.</th>
+            <td><?= pdfVal($corr['colgis_jil_meeting_no'] ?? null) ?></td>
+        </tr>
+        <tr>
             <th>Final Result</th>
             <td><strong class="text-success"><?= pdfVal($corr['final_result'] ?? null) ?></strong></td>
         </tr>

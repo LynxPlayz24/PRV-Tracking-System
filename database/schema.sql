@@ -194,6 +194,8 @@ CREATE TABLE IF NOT EXISTS `corrections` (
     `sent_to_supervisor_date`  DATE DEFAULT NULL,
     `endorsement_from_examiner_date` DATE DEFAULT NULL,
     `abstract_received_date`   DATE DEFAULT NULL,
+    `colgis_jil_meeting_date`  DATE DEFAULT NULL,
+    `colgis_jil_meeting_no`    VARCHAR(100) DEFAULT NULL,
     `final_result`             VARCHAR(200) DEFAULT NULL,
 
     INDEX `idx_corr_student` (`student_id`),
