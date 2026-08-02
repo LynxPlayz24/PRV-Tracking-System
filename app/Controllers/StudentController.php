@@ -183,6 +183,9 @@ class StudentController extends Controller
         // 5. Create Graduation Record
         $this->graduationModel->createOrUpdate($studentId, $_POST);
 
+        // 6. Sync Research Status automatically
+        $this->syncStudentResearchStatus($studentId, $_POST);
+
         $this->setFlash('success', 'Student added successfully.');
         $this->redirect($this->baseUrl() . '/student/' . $studentId);
     }
@@ -347,6 +350,9 @@ class StudentController extends Controller
         $this->vivaModel->createOrUpdate($studentId, $_POST);
         $this->correctionModel->createOrUpdate($studentId, $_POST);
         $this->graduationModel->createOrUpdate($studentId, $_POST);
+
+        // Sync Research Status automatically
+        $this->syncStudentResearchStatus($studentId, $_POST);
 
         $this->setFlash('success', 'Student updated successfully.');
         $this->redirect($this->baseUrl() . '/student/' . $studentId);

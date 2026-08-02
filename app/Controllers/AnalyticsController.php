@@ -47,53 +47,72 @@ class AnalyticsController extends Controller
 
         // Total Students
         $this->db->query('SELECT COUNT(*) as cnt FROM students');
-        $stats['total_students'] = $this->db->single()['cnt'] ?? 0;
+        $stats['total_students'] = (int)($this->db->single()['cnt'] ?? 0);
 
-        // Graduated (graduation_date is set)
+        // Graduated (graduation_date is set or research_status = 'Graduated')
         $this->db->query("
             SELECT COUNT(*) as cnt 
             FROM students s 
-            JOIN graduation g ON s.student_id = g.student_id 
-            WHERE g.graduation_date IS NOT NULL
+            LEFT JOIN graduation g ON s.student_id = g.student_id 
+            WHERE s.research_status = 'Graduated'
+               OR (g.graduation_date IS NOT NULL AND g.graduation_date != '' AND g.graduation_date != '0000-00-00')
         ");
-        $stats['graduated'] = $this->db->single()['cnt'] ?? 0;
+        $stats['graduated'] = (int)($this->db->single()['cnt'] ?? 0);
 
-        // Ready for Senate (final_result exists but not graduated)
+        // Ready for Senate (final_result or senate_meeting_date is set, but not graduated)
         $this->db->query("
             SELECT COUNT(*) as cnt 
             FROM students s 
-            JOIN corrections c ON s.student_id = c.student_id
-            LEFT JOIN graduation g ON s.student_id = g.student_id
-            WHERE c.final_result IS NOT NULL AND c.final_result != ''
-              AND (g.graduation_date IS NULL)
-        ");
-        $stats['ready_for_senate'] = $this->db->single()['cnt'] ?? 0;
-
-        // Awaiting Corrections (viva_date passed but no final result yet)
-        $this->db->query("
-            SELECT COUNT(*) as cnt 
-            FROM students s 
-            JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN corrections c ON s.student_id = c.student_id
             LEFT JOIN graduation g ON s.student_id = g.student_id
-            WHERE v.viva_date IS NOT NULL AND v.viva_date <= CURDATE()
-              AND (c.final_result IS NULL OR c.final_result = '')
-              AND (g.graduation_date IS NULL)
+            WHERE (
+                s.research_status = 'Ready for Senate'
+                OR (c.final_result IS NOT NULL AND c.final_result != '')
+                OR (g.senate_meeting_date IS NOT NULL AND g.senate_meeting_date != '' AND g.senate_meeting_date != '0000-00-00')
+            )
+            AND (g.graduation_date IS NULL OR g.graduation_date = '' OR g.graduation_date = '0000-00-00')
+            AND s.research_status != 'Graduated'
         ");
-        $stats['awaiting_corrections'] = $this->db->single()['cnt'] ?? 0;
+        $stats['ready_for_senate'] = (int)($this->db->single()['cnt'] ?? 0);
 
-        // Pending Viva (viva_date null or in the future)
+        // Awaiting Corrections
         $this->db->query("
             SELECT COUNT(*) as cnt 
             FROM students s 
             LEFT JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN corrections c ON s.student_id = c.student_id
             LEFT JOIN graduation g ON s.student_id = g.student_id
-            WHERE (v.viva_date IS NULL OR v.viva_date > CURDATE())
-              AND (c.final_result IS NULL OR c.final_result = '')
-              AND (g.graduation_date IS NULL)
+            WHERE (
+                s.research_status IN ('Viva Completed', 'Corrections Submitted')
+                OR (v.viva_date IS NOT NULL AND v.viva_date != '' AND v.viva_date <= CURDATE())
+                OR (v.viva_result IS NOT NULL AND v.viva_result != '')
+            )
+            AND (c.final_result IS NULL OR c.final_result = '')
+            AND (g.senate_meeting_date IS NULL OR g.senate_meeting_date = '' OR g.senate_meeting_date = '0000-00-00')
+            AND (g.graduation_date IS NULL OR g.graduation_date = '' OR g.graduation_date = '0000-00-00')
+            AND s.research_status NOT IN ('Ready for Senate', 'Graduated')
         ");
-        $stats['pending_viva'] = $this->db->single()['cnt'] ?? 0;
+        $stats['awaiting_corrections'] = (int)($this->db->single()['cnt'] ?? 0);
+
+        // Pending Viva
+        $this->db->query("
+            SELECT COUNT(*) as cnt 
+            FROM students s 
+            LEFT JOIN viva_records v ON s.student_id = v.student_id
+            LEFT JOIN corrections c ON s.student_id = c.student_id
+            LEFT JOIN graduation g ON s.student_id = g.student_id
+            WHERE (
+                s.research_status IN ('Thesis Submitted', 'Examiner Assigned', 'Viva Scheduled')
+                OR (v.viva_date IS NULL OR v.viva_date = '' OR v.viva_date > CURDATE())
+            )
+            AND (c.final_result IS NULL OR c.final_result = '')
+            AND (g.senate_meeting_date IS NULL OR g.senate_meeting_date = '' OR g.senate_meeting_date = '0000-00-00')
+            AND (g.graduation_date IS NULL OR g.graduation_date = '' OR g.graduation_date = '0000-00-00')
+            AND (v.viva_result IS NULL OR v.viva_result = '')
+            AND (v.viva_date IS NULL OR v.viva_date = '' OR v.viva_date > CURDATE())
+            AND s.research_status NOT IN ('Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated')
+        ");
+        $stats['pending_viva'] = (int)($this->db->single()['cnt'] ?? 0);
 
         // Financial & Operational Metrics
         $this->db->query("
