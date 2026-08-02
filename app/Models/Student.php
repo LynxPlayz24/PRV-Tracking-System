@@ -153,13 +153,25 @@ class Student
         $params = [];
 
         if (!empty($filters['month'])) {
-            $sql .= " AND MONTH(viva_date) = ? ";
-            $params[] = (int)$filters['month'];
+            if (is_array($filters['month'])) {
+                $inClause = implode(',', array_fill(0, count($filters['month']), '?'));
+                $sql .= " AND MONTH(viva_date) IN ($inClause) ";
+                $params = array_merge($params, array_map('intval', array_values($filters['month'])));
+            } else {
+                $sql .= " AND MONTH(viva_date) = ? ";
+                $params[] = (int)$filters['month'];
+            }
         }
 
         if (!empty($filters['year'])) {
-            $sql .= " AND YEAR(viva_date) = ? ";
-            $params[] = (int)$filters['year'];
+            if (is_array($filters['year'])) {
+                $inClause = implode(',', array_fill(0, count($filters['year']), '?'));
+                $sql .= " AND YEAR(viva_date) IN ($inClause) ";
+                $params = array_merge($params, array_map('intval', array_values($filters['year'])));
+            } else {
+                $sql .= " AND YEAR(viva_date) = ? ";
+                $params[] = (int)$filters['year'];
+            }
         }
 
         if (!empty($filters['school'])) {

@@ -273,14 +273,7 @@ class ExportController extends Controller
     {
         Middleware::requireLogin();
 
-        $filters = [
-            'month'           => trim($this->input('month', '')),
-            'year'            => trim($this->input('year', '')),
-            'school'          => trim($this->input('school', '')),
-            'degree_level'    => trim($this->input('degree_level', '')),
-            'research_status' => trim($this->input('research_status', '')),
-            'sort_viva'       => trim($this->input('sort_viva', '')),
-        ];
+        $filters = $this->parseFiltersFromPost();
 
         $basicStudents = $this->studentModel->getFiltered($filters);
 
@@ -324,14 +317,7 @@ class ExportController extends Controller
     {
         Middleware::requireLogin();
 
-        $filters = [
-            'month'           => trim($this->input('month', '')),
-            'year'            => trim($this->input('year', '')),
-            'school'          => trim($this->input('school', '')),
-            'degree_level'    => trim($this->input('degree_level', '')),
-            'research_status' => trim($this->input('research_status', '')),
-            'sort_viva'       => trim($this->input('sort_viva', '')),
-        ];
+        $filters = $this->parseFiltersFromPost();
 
         $basicStudents = $this->studentModel->getFiltered($filters);
 
@@ -518,6 +504,7 @@ class ExportController extends Controller
 
         echo json_encode([
             'headers' => array_map(fn($f) => ucwords(str_replace('_', ' ', $f)), $fields),
+            'fields'  => array_values($fields),
             'data'    => $previewData
         ]);
     }

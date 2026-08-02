@@ -41,6 +41,13 @@ class Router
             $uri = substr($uri, strlen($basePath)) ?: '/';
         }
 
+        // Normalize /public prefix if present in URI
+        if ($uri === '/public') {
+            $uri = '/';
+        } elseif (strpos($uri, '/public/') === 0) {
+            $uri = substr($uri, 7) ?: '/';
+        }
+
         $method = strtoupper($method);
 
         // Try exact match first

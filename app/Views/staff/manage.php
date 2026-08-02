@@ -13,13 +13,15 @@ $csrf = $_SESSION['csrf_token'] ?? '';
     <!-- Tabs Navigation -->
     <ul class="nav nav-tabs mb-4" id="staffTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active fw-medium" id="supervisors-tab" data-bs-toggle="tab" data-bs-target="#supervisors" type="button" role="tab">
+            <button class="nav-link active fw-medium px-4" id="supervisors-tab" data-bs-toggle="tab" data-bs-target="#supervisors" type="button" role="tab">
                 <i class="bi bi-person-badge me-2"></i>Supervisors
+                <span class="badge bg-secondary ms-2 rounded-pill"><?= count($supervisors ?? []) ?></span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-medium" id="examiners-tab" data-bs-toggle="tab" data-bs-target="#examiners" type="button" role="tab">
+            <button class="nav-link fw-medium px-4" id="examiners-tab" data-bs-toggle="tab" data-bs-target="#examiners" type="button" role="tab">
                 <i class="bi bi-briefcase me-2"></i>Examiners
+                <span class="badge bg-secondary ms-2 rounded-pill"><?= count($examiners ?? []) ?></span>
             </button>
         </li>
     </ul>
@@ -31,37 +33,37 @@ $csrf = $_SESSION['csrf_token'] ?? '';
              SUPERVISORS TAB
              ============================== -->
         <div class="tab-pane fade show active" id="supervisors" role="tabpanel">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="position-relative" style="min-width: 280px;">
-                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 12px;"></i>
-                    <input type="text" class="form-control ps-5" id="searchSupervisors" placeholder="Search supervisors..." autocomplete="off">
-                </div>
-                <button class="btn btn-uum" data-bs-toggle="modal" data-bs-target="#addSupervisorModal">
-                    <i class="bi bi-plus-lg me-1"></i> Add Supervisor
-                </button>
-            </div>
             <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="position-relative flex-grow-1" style="max-width: 360px;">
+                        <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 14px;"></i>
+                        <input type="text" class="form-control ps-5" id="searchSupervisors" placeholder="Search supervisors by name, email, department..." autocomplete="off">
+                    </div>
+                    <button class="btn btn-uum text-nowrap" data-bs-toggle="modal" data-bs-target="#addSupervisorModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Supervisor
+                    </button>
+                </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light text-muted fw-semibold">
                                 <tr>
-                                    <th class="px-4 py-3 border-0">Name</th>
-                                    <th class="py-3 border-0">Email</th>
-                                    <th class="py-3 border-0">Phone Number</th>
-                                    <th class="py-3 border-0">Department</th>
-                                    <th class="px-4 py-3 border-0 text-end">Actions</th>
+                                    <th class="px-4 py-3 border-0 text-nowrap">Name</th>
+                                    <th class="py-3 border-0 text-nowrap">Email</th>
+                                    <th class="py-3 border-0 text-nowrap">Phone Number</th>
+                                    <th class="py-3 border-0 text-nowrap">Department</th>
+                                    <th class="px-4 py-3 border-0 text-nowrap text-end" style="width: 110px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($supervisors)): ?>
-                                    <tr><td colspan="5" class="text-center py-4 text-muted">No supervisors found.</td></tr>
+                                    <tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No supervisors found.</td></tr>
                                 <?php else: ?>
                                     <?php foreach($supervisors as $sup): ?>
                                     <tr>
-                                        <td class="px-4 fw-medium"><?= htmlspecialchars($sup['supervisor_name']) ?></td>
+                                        <td class="px-4 fw-semibold text-dark"><?= htmlspecialchars($sup['supervisor_name']) ?></td>
                                         <td><?= htmlspecialchars($sup['email'] ?: '-') ?></td>
-                                        <td>
+                                        <td class="text-nowrap">
                                             <?php if (!empty($sup['phone'])): ?>
                                                 <a href="tel:<?= htmlspecialchars($sup['phone']) ?>" class="text-decoration-none text-dark">
                                                     <i class="bi bi-telephone me-1 text-primary"></i><?= htmlspecialchars($sup['phone']) ?>
@@ -71,17 +73,19 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                                             <?php endif; ?>
                                         </td>
                                         <td><?= htmlspecialchars($sup['department'] ?: '-') ?></td>
-                                        <td class="px-4 text-end">
-                                            <button class="btn btn-sm btn-outline-primary me-1" title="Edit" 
-                                                data-bs-toggle="modal" data-bs-target="#editSupervisorModal<?= $sup['supervisor_id'] ?>">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <form action="<?= $baseUrl ?>/staff/supervisors/delete/<?= $sup['supervisor_id'] ?>" method="POST" class="d-inline-block" onsubmit="return confirm('Delete this supervisor permanently?');">
-                                                <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                                    <i class="bi bi-trash"></i>
+                                        <td class="px-4 text-end text-nowrap">
+                                            <div class="d-inline-flex gap-1 align-items-center justify-content-end">
+                                                <button class="btn btn-sm btn-outline-primary" title="Edit" 
+                                                    data-bs-toggle="modal" data-bs-target="#editSupervisorModal<?= $sup['supervisor_id'] ?>">
+                                                    <i class="bi bi-pencil"></i>
                                                 </button>
-                                            </form>
+                                                <form action="<?= $baseUrl ?>/staff/supervisors/delete/<?= $sup['supervisor_id'] ?>" method="POST" class="d-inline mb-0" onsubmit="return confirm('Delete this supervisor permanently?');">
+                                                    <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
@@ -136,45 +140,45 @@ $csrf = $_SESSION['csrf_token'] ?? '';
              EXAMINERS TAB
              ============================== -->
         <div class="tab-pane fade" id="examiners" role="tabpanel">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="position-relative" style="min-width: 280px;">
-                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 12px;"></i>
-                    <input type="text" class="form-control ps-5" id="searchExaminers" placeholder="Search examiners..." autocomplete="off">
-                </div>
-                <button class="btn btn-uum" data-bs-toggle="modal" data-bs-target="#addExaminerModal">
-                    <i class="bi bi-plus-lg me-1"></i> Add Examiner
-                </button>
-            </div>
             <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="position-relative flex-grow-1" style="max-width: 360px;">
+                        <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 14px;"></i>
+                        <input type="text" class="form-control ps-5" id="searchExaminers" placeholder="Search examiners by name, email, institution..." autocomplete="off">
+                    </div>
+                    <button class="btn btn-uum text-nowrap" data-bs-toggle="modal" data-bs-target="#addExaminerModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Examiner
+                    </button>
+                </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light text-muted fw-semibold">
                                 <tr>
-                                    <th class="px-4 py-3 border-0">Name</th>
-                                    <th class="py-3 border-0">Classification</th>
-                                    <th class="py-3 border-0">Email</th>
-                                    <th class="py-3 border-0">Phone Number</th>
-                                    <th class="py-3 border-0">Institution</th>
-                                    <th class="px-4 py-3 border-0 text-end">Actions</th>
+                                    <th class="px-4 py-3 border-0 text-nowrap">Name</th>
+                                    <th class="py-3 border-0 text-nowrap">Classification</th>
+                                    <th class="py-3 border-0 text-nowrap">Email</th>
+                                    <th class="py-3 border-0 text-nowrap">Phone Number</th>
+                                    <th class="py-3 border-0 text-nowrap">Institution</th>
+                                    <th class="px-4 py-3 border-0 text-nowrap text-end" style="width: 110px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($examiners)): ?>
-                                    <tr><td colspan="6" class="text-center py-4 text-muted">No examiners found.</td></tr>
+                                    <tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No examiners found.</td></tr>
                                 <?php else: ?>
                                     <?php foreach($examiners as $ex): ?>
                                     <tr>
-                                        <td class="px-4 fw-medium"><?= htmlspecialchars($ex['examiner_name']) ?></td>
-                                        <td>
+                                        <td class="px-4 fw-semibold text-dark"><?= htmlspecialchars($ex['examiner_name']) ?></td>
+                                        <td class="text-nowrap">
                                             <?php if (($ex['classification'] ?? 'Internal') === 'External'): ?>
-                                                <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-building me-1"></i>External</span>
+                                                <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-2.5 py-1.5 rounded-pill"><i class="bi bi-building me-1"></i>External</span>
                                             <?php else: ?>
-                                                <span class="badge bg-primary px-2 py-1"><i class="bi bi-house-door me-1"></i>Internal</span>
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1.5 rounded-pill"><i class="bi bi-house-door me-1"></i>Internal</span>
                                             <?php endif; ?>
                                         </td>
                                         <td><?= htmlspecialchars($ex['email'] ?: '-') ?></td>
-                                        <td>
+                                        <td class="text-nowrap">
                                             <?php if (!empty($ex['phone'])): ?>
                                                 <a href="tel:<?= htmlspecialchars($ex['phone']) ?>" class="text-decoration-none text-dark">
                                                     <i class="bi bi-telephone me-1 text-primary"></i><?= htmlspecialchars($ex['phone']) ?>
@@ -184,17 +188,19 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                                             <?php endif; ?>
                                         </td>
                                         <td><?= htmlspecialchars($ex['institution'] ?: '-') ?></td>
-                                        <td class="px-4 text-end">
-                                            <button class="btn btn-sm btn-outline-primary me-1" title="Edit" 
-                                                data-bs-toggle="modal" data-bs-target="#editExaminerModal<?= $ex['examiner_id'] ?>">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <form action="<?= $baseUrl ?>/staff/examiners/delete/<?= $ex['examiner_id'] ?>" method="POST" class="d-inline-block" onsubmit="return confirm('Delete this examiner permanently?');">
-                                                <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                                    <i class="bi bi-trash"></i>
+                                        <td class="px-4 text-end text-nowrap">
+                                            <div class="d-inline-flex gap-1 align-items-center justify-content-end">
+                                                <button class="btn btn-sm btn-outline-primary" title="Edit" 
+                                                    data-bs-toggle="modal" data-bs-target="#editExaminerModal<?= $ex['examiner_id'] ?>">
+                                                    <i class="bi bi-pencil"></i>
                                                 </button>
-                                            </form>
+                                                <form action="<?= $baseUrl ?>/staff/examiners/delete/<?= $ex['examiner_id'] ?>" method="POST" class="d-inline mb-0" onsubmit="return confirm('Delete this examiner permanently?');">
+                                                    <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

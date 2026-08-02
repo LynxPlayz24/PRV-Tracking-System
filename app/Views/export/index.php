@@ -40,7 +40,7 @@ $availableFields = [
                         <label class="form-label small fw-semibold text-muted mb-1">School / Department</label>
                         <select name="school[]" class="form-select select2-multiple" multiple data-placeholder="Select Schools">
                             <?php foreach($schools as $sch): ?>
-                                <option value="<?= htmlspecialchars($sch) ?>" <?= in_array($sch, $filters['school'] ?? []) ? 'selected' : '' ?>><?= htmlspecialchars($sch) ?></option>
+                                <option value="<?= htmlspecialchars($sch) ?>" <?= in_array($sch, (array)$filters['school']) ? 'selected' : '' ?>><?= htmlspecialchars($sch) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -49,7 +49,7 @@ $availableFields = [
                         <label class="form-label small fw-semibold text-muted mb-1">Programme</label>
                         <select name="programme[]" class="form-select select2-multiple" multiple data-placeholder="Select Programmes">
                             <?php foreach($programmes as $prog): ?>
-                                <option value="<?= htmlspecialchars($prog) ?>" <?= in_array($prog, $filters['programme'] ?? []) ? 'selected' : '' ?>><?= htmlspecialchars($prog) ?></option>
+                                <option value="<?= htmlspecialchars($prog) ?>" <?= in_array($prog, (array)$filters['programme']) ? 'selected' : '' ?>><?= htmlspecialchars($prog) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -57,9 +57,9 @@ $availableFields = [
                     <div class="mb-3">
                         <label class="form-label small fw-semibold text-muted mb-1">Degree Level</label>
                         <select name="degree_level[]" class="form-select select2-multiple" multiple data-placeholder="Select Levels">
-                            <option value="Masters" <?= in_array('Masters', $filters['degree_level'] ?? []) ? 'selected' : '' ?>>Masters</option>
-                            <option value="PhD" <?= in_array('PhD', $filters['degree_level'] ?? []) ? 'selected' : '' ?>>PhD</option>
-                            <option value="DBA" <?= in_array('DBA', $filters['degree_level'] ?? []) ? 'selected' : '' ?>>DBA</option>
+                            <option value="Masters" <?= in_array('Masters', (array)$filters['degree_level']) ? 'selected' : '' ?>>Masters</option>
+                            <option value="PhD" <?= in_array('PhD', (array)$filters['degree_level']) ? 'selected' : '' ?>>PhD</option>
+                            <option value="DBA" <?= in_array('DBA', (array)$filters['degree_level']) ? 'selected' : '' ?>>DBA</option>
                         </select>
                     </div>
                     
@@ -69,7 +69,7 @@ $availableFields = [
                             <?php 
                             $statuses = ['Graduated', 'Ready for Senate', 'Corrections Submitted', 'Viva Completed', 'Viva Scheduled', 'Examiner Assigned', 'Thesis Submitted'];
                             foreach($statuses as $st): ?>
-                                <option value="<?= $st ?>" <?= in_array($st, $filters['research_status'] ?? []) ? 'selected' : '' ?>><?= $st ?></option>
+                                <option value="<?= $st ?>" <?= in_array($st, (array)$filters['research_status']) ? 'selected' : '' ?>><?= $st ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -79,7 +79,7 @@ $availableFields = [
                             <label class="form-label small fw-semibold text-muted mb-1">Viva Month</label>
                             <select name="month[]" class="form-select select2-multiple" multiple data-placeholder="Months">
                                 <?php foreach($monthNames as $num => $mName): ?>
-                                    <option value="<?= $num ?>" <?= in_array($num, $filters['month'] ?? []) ? 'selected' : '' ?>><?= substr($mName, 0, 3) ?></option>
+                                    <option value="<?= $num ?>" <?= in_array($num, (array)$filters['month']) ? 'selected' : '' ?>><?= substr($mName, 0, 3) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -87,7 +87,7 @@ $availableFields = [
                             <label class="form-label small fw-semibold text-muted mb-1">Viva Year</label>
                             <select name="year[]" class="form-select select2-multiple" multiple data-placeholder="Years">
                                 <?php foreach($vivaYears as $yr): ?>
-                                    <option value="<?= $yr ?>" <?= in_array($yr, $filters['year'] ?? []) ? 'selected' : '' ?>><?= $yr ?></option>
+                                    <option value="<?= $yr ?>" <?= in_array($yr, (array)$filters['year']) ? 'selected' : '' ?>><?= $yr ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -229,9 +229,9 @@ function submitStandardExport(type) {
     const filtersForm = document.getElementById('reportBuilderForm');
     const formData = new FormData(filtersForm);
     
-    // Create hidden inputs for each filter
+    // Create hidden inputs for each filter (skip custom fields[])
     for (let [key, value] of formData.entries()) {
-        if (key !== 'fields[]') { // don't send custom fields to standard export
+        if (key !== 'fields[]') {
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = key;
@@ -315,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch('<?= $baseUrl ?>/export/preview', {
             method: 'POST',
+            credentials: 'same-origin',
             body: formData
         })
         .then(response => response.json())
@@ -337,8 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             data.data.forEach(row => {
                 html += '<tr>';
-                data.headers.forEach(h => {
-                    const key = h.toLowerCase().replace(/ /g, '_');
+                data.fields.forEach(key => {
                     html += `<td class="text-truncate" style="max-width:200px;">${row[key] || '-'}</td>`;
                 });
                 html += '</tr>';
