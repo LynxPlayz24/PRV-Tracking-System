@@ -14,8 +14,9 @@ class Supervisor
 
     public function getAll(): array
     {
-        $this->db->query('SELECT * FROM supervisors ORDER BY supervisor_name ASC');
-        return $this->db->resultSet();
+        $this->db->query('SELECT * FROM supervisors');
+        $rows = $this->db->resultSet();
+        return \App\Helpers\NameHelper::sortByName($rows, 'supervisor_name');
     }
 
     public function assignToStudent(int $studentId, int $supervisorId, string $role = 'co'): bool

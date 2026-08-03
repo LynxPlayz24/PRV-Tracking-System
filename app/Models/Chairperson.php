@@ -14,8 +14,9 @@ class Chairperson
 
     public function getAll(): array
     {
-        $this->db->query('SELECT * FROM chairpersons ORDER BY chairperson_name ASC');
-        return $this->db->resultSet();
+        $this->db->query('SELECT * FROM chairpersons');
+        $rows = $this->db->resultSet();
+        return \App\Helpers\NameHelper::sortByName($rows, 'chairperson_name');
     }
 
     public function getById(int $id): array|false

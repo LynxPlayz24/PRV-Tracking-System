@@ -83,11 +83,30 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     <!-- Action Required Table -->
     <div class="col-lg-6">
         <div class="card h-100 shadow-sm border-0">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>Action Required Alerts
-                </h5>
-                <span class="badge bg-secondary"><?= count($actions) ?> active</span>
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>Action Required Alerts
+                    </h5>
+                    <span class="badge bg-secondary" id="action-alerts-badge"><?= count($actions) ?> active</span>
+                </div>
+                <?php if (!empty($actions)): ?>
+                    <?php
+                    $alertTypes = array_values(array_unique(array_column($actions, 'type')));
+                    sort($alertTypes);
+                    ?>
+                    <div class="d-flex align-items-center gap-2">
+                        <select class="form-select form-select-sm shadow-none border-secondary-subtle" id="actionAlertFilter" style="font-size: 0.85rem; max-width: 220px;">
+                            <option value="all">All Alert Types (<?= count($actions) ?>)</option>
+                            <?php foreach ($alertTypes as $t): ?>
+                                <?php 
+                                $typeCount = count(array_filter($actions, fn($a) => $a['type'] === $t));
+                                ?>
+                                <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?> (<?= $typeCount ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="card-body">
                 <?php if (empty($actions)): ?>
@@ -97,7 +116,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                     </div>
                 <?php else: ?>
                     <div class="table-responsive dashboard-alert-scroll">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0" id="actionAlertsTable">
                             <thead class="table-light text-muted small">
                                 <tr>
                                     <th>Student</th>
@@ -108,7 +127,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                             </thead>
                             <tbody>
                                 <?php foreach ($actions as $action): ?>
-                                    <tr id="alert-row-<?= md5($action['alert_key']) ?>">
+                                    <tr id="alert-row-<?= md5($action['alert_key']) ?>" data-alert-type="<?= htmlspecialchars($action['type']) ?>">
                                         <td>
                                             <div class="fw-bold text-dark"><?= htmlspecialchars($action['name']) ?></div>
                                             <div class="small text-muted"><?= htmlspecialchars($action['matric_no']) ?></div>
@@ -128,6 +147,10 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
+                            <div id="no-matching-alerts" class="text-center text-muted py-4 d-none">
+                                <i class="bi bi-funnel-fill text-muted fs-3 mb-2 d-block"></i>
+                                No alerts matching selected filter.
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -201,5 +224,44 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterSelect = document.getElementById('actionAlertFilter');
+    const table = document.getElementById('actionAlertsTable');
+    const badge = document.getElementById('action-alerts-badge');
+    const noMatching = document.getElementById('no-matching-alerts');
+
+    if (filterSelect && table) {
+        filterSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            const rows = table.querySelectorAll('tbody tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const rowType = row.getAttribute('data-alert-type');
+                if (selectedType === 'all' || rowType === selectedType) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (badge) {
+                badge.textContent = visibleCount + ' active';
+            }
+
+            if (noMatching) {
+                if (visibleCount === 0) {
+                    noMatching.classList.remove('d-none');
+                } else {
+                    noMatching.classList.add('d-none');
+                }
+            }
+        });
+    }
+});
+</script>
 
 

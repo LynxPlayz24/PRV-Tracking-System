@@ -14,8 +14,9 @@ class Examiner
 
     public function getAll(): array
     {
-        $this->db->query('SELECT * FROM examiners ORDER BY examiner_name ASC');
-        return $this->db->resultSet();
+        $this->db->query('SELECT * FROM examiners');
+        $rows = $this->db->resultSet();
+        return \App\Helpers\NameHelper::sortByName($rows, 'examiner_name');
     }
 
     public function getById(int $id): array|false
