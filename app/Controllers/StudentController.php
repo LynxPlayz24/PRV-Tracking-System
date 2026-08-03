@@ -625,34 +625,4 @@ class StudentController extends Controller
 
         return null;
     }
-
-    /**
-     * Automatically sync student's research status based on progression dates and results.
-     */
-    private function syncStudentResearchStatus(int $studentId, array $data): void
-    {
-        $explicitStatus = $data['research_status'] ?? null;
-
-        $status = $explicitStatus;
-
-        if (!empty($data['graduation_date'])) {
-            $status = 'Graduated';
-        } elseif (!empty($data['senate_meeting_date']) || !empty($data['final_result'])) {
-            $status = 'Ready for Senate';
-        } elseif (!empty($data['corrected_thesis_received_date'])) {
-            $status = 'Corrections Submitted';
-        } elseif (!empty($data['viva_result']) || (!empty($data['viva_date']) && strtotime($data['viva_date']) <= time())) {
-            if ($explicitStatus !== 'Graduated' && $explicitStatus !== 'Ready for Senate') {
-                $status = 'Viva Completed';
-            }
-        }
-
-        if ($status) {
-            $db = \App\Core\Database::getInstance();
-            $db->query('UPDATE students SET research_status = :status WHERE student_id = :id');
-            $db->bind(':status', $status);
-            $db->bind(':id', $studentId);
-            $db->execute();
-        }
-    }
 }
