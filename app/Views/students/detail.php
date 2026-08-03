@@ -184,6 +184,27 @@ function showMoney($val) {
                             <tr><td class="text-muted">Internal Report Received</td><td><?= showDate($viva['internal_examiner_report_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Best Thesis Candidate</td><td><?= !empty($viva['best_thesis_candidate']) ? '<span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>Yes</span>' : 'No' ?></td></tr>
                         </table>
+
+                        <?php if (!empty($viva['reviva_date']) || !empty($viva['reviva_result'])): ?>
+                        <hr>
+                        <h6 class="text-warning mt-3 mb-3"><i class="bi bi-arrow-repeat me-2"></i>Re-viva Session & Outcome</h6>
+                        <table class="table table-borderless table-sm">
+                            <?php if (!empty($viva['reviva_internal_examiner_name'])): ?>
+                            <tr><td class="text-muted" style="width: 35%;">Re-viva Internal Examiner</td><td><strong><?= showVal($viva['reviva_internal_examiner_name'] ?? null) ?></strong></td></tr>
+                            <?php endif; ?>
+                            <?php if (!empty($viva['reviva_external_examiner_name'])): ?>
+                            <tr><td class="text-muted">Re-viva External Examiner</td><td><strong><?= showVal($viva['reviva_external_examiner_name'] ?? null) ?></strong></td></tr>
+                            <?php endif; ?>
+                            <tr><td class="text-muted">Panel Appointment Letter</td><td><?= showDate($viva['reviva_panel_appointment_letter_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Thesis to Panel (Hard)</td><td><?= showDate($viva['reviva_thesis_to_panel_hard_copy_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Thesis to Panel (Soft)</td><td><?= showDate($viva['reviva_thesis_to_panel_soft_copy_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Confirm Date Email</td><td><?= showDate($viva['reviva_confirm_date_email_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Invitation Letter</td><td><?= showDate($viva['reviva_invitation_letter_date'] ?? null) ?></td></tr>
+                            <tr><td class="text-muted">Chairperson</td><td><strong><?= showVal($viva['reviva_chairperson_name'] ?? null) ?></strong></td></tr>
+                            <tr><td class="text-muted">Re-viva Date</td><td><strong class="text-primary"><?= showDate($viva['reviva_date'] ?? null) ?></strong></td></tr>
+                            <tr><td class="text-muted">Re-viva Result</td><td><strong class="text-success"><?= showVal($viva['reviva_result'] ?? null) ?></strong></td></tr>
+                        </table>
+                        <?php endif; ?>
                     </div>
 
                     <!-- CORRECTIONS TAB -->

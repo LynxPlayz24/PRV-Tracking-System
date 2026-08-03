@@ -296,8 +296,9 @@ $supervisors = $supervisors ?? [];
                             <label class="form-label">Viva Result</label>
                             <?php 
                                 $currentResult = htmlspecialchars($viva['viva_result'] ?? '');
-                                $presetOptions = ['Pass', 'Pass with Minor Correction', 'Pass with Major Correction', 'Fail'];
+                                $presetOptions = ['Pass', 'Pass with Minor Correction', 'Pass with Major Correction', 'Fail', 'Re-viva'];
                                 $isCustom = $currentResult && !in_array($currentResult, $presetOptions);
+                                $isReviva = ($currentResult === 'Re-viva');
                             ?>
                             <select class="form-select mb-2" id="vivaResultSelect" onchange="toggleCustomVivaResult()">
                                 <option value="">Select Result...</option>
@@ -312,10 +313,150 @@ $supervisors = $supervisors ?? [];
                                    placeholder="Enter custom viva result">
 
                             <script>
+                            var _revivaSelect2Inited = false;
                             function toggleCustomVivaResult() {
                                 const select = document.getElementById('vivaResultSelect');
                                 const input = document.getElementById('vivaResultInput');
+                                const revivaBlock = document.getElementById('revivaFormBlock');
                                 
+                                if (select.value === 'Re-viva') {
+                                    input.style.display = 'none';
+                                    input.value = 'Re-viva';
+                                    revivaBlock.style.display = 'block';
+                                    if (!_revivaSelect2Inited && typeof $ !== 'undefined' && $.fn.select2) {
+                                        $('#reviva_internal_examiners').select2({ placeholder: 'Select Internal Examiners', width: '100%' });
+                                        $('#reviva_external_examiners').select2({ placeholder: 'Select External Examiners', width: '100%' });
+                                        $('#revivaChairpersonSelect').select2({ placeholder: 'Select or type a name', tags: true, width: '100%' });
+                                        _revivaSelect2Inited = true;
+                                    }
+                                } else if (select.value === 'custom') {
+                                    input.style.display = 'block';
+                                    input.value = '';
+                                    input.focus();
+                                    revivaBlock.style.display = 'none';
+                                } else {
+                                    input.style.display = 'none';
+                                    input.value = select.value;
+                                    revivaBlock.style.display = 'none';
+                                }
+                            }
+                            </script>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- static internal examiner report date removed, now dynamic -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Re-viva Form Block (shown only when Viva Result = Re-viva) -->
+            <?php
+                $revivaIntIds = !empty($viva['reviva_internal_examiner_id']) ? [$viva['reviva_internal_examiner_id']] : [];
+                $revivaExtIds = !empty($viva['reviva_external_examiner_id']) ? [$viva['reviva_external_examiner_id']] : [];
+                $revivaChairName = htmlspecialchars($viva['reviva_chairperson_name'] ?? '');
+                $currentRevivaResult = htmlspecialchars($viva['reviva_result'] ?? '');
+                $revivaResultOptions = ['Pass', 'Pass with Minor Correction', 'Pass with Major Correction', 'Fail'];
+                $isRevivaCustom = $currentRevivaResult && !in_array($currentRevivaResult, $revivaResultOptions);
+            ?>
+            <div id="revivaFormBlock" class="card shadow-sm border-warning border mb-4" style="<?= $isReviva ? '' : 'display:none;' ?>">
+                <div class="card-body">
+                    <h5 class="card-title text-warning mb-4"><i class="bi bi-arrow-repeat me-2"></i>Re-viva Session</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Internal Examiner(s)</label>
+                            <select class="form-select select2-multiple" name="reviva_internal_examiners[]" id="reviva_internal_examiners" multiple data-placeholder="Select Internal Examiners">
+                                <?php foreach($examiners as $ex): ?>
+                                    <option value="<?= $ex['examiner_id'] ?>" <?= in_array($ex['examiner_id'], $revivaIntIds) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($ex['examiner_name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">External Examiner(s)</label>
+                            <select class="form-select select2-multiple" name="reviva_external_examiners[]" id="reviva_external_examiners" multiple data-placeholder="Select External Examiners">
+                                <?php foreach($examiners as $ex): ?>
+                                    <option value="<?= $ex['examiner_id'] ?>" <?= in_array($ex['examiner_id'], $revivaExtIds) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($ex['examiner_name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Panel Appointment Letter</label>
+                            <input type="date" class="form-control" name="reviva_panel_appointment_letter_date" value="<?= htmlspecialchars($viva['reviva_panel_appointment_letter_date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Thesis to Panel (Hard Copy)</label>
+                            <input type="date" class="form-control" name="reviva_thesis_to_panel_hard_copy_date" value="<?= htmlspecialchars($viva['reviva_thesis_to_panel_hard_copy_date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Thesis to Panel (Soft Copy)</label>
+                            <input type="date" class="form-control" name="reviva_thesis_to_panel_soft_copy_date" value="<?= htmlspecialchars($viva['reviva_thesis_to_panel_soft_copy_date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Confirm Date Email</label>
+                            <input type="date" class="form-control" name="reviva_confirm_date_email_date" value="<?= htmlspecialchars($viva['reviva_confirm_date_email_date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Invitation Letter</label>
+                            <input type="date" class="form-control" name="reviva_invitation_letter_date" value="<?= htmlspecialchars($viva['reviva_invitation_letter_date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Re-viva Date</label>
+                            <input type="date" class="form-control" name="reviva_date" value="<?= htmlspecialchars($viva['reviva_date'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chairperson</label>
+                            <select class="form-select select2-tags" name="reviva_chairperson_name" id="revivaChairpersonSelect">
+                                <option value="">— Select or type a name —</option>
+                                <?php if (!empty($supervisors)): ?>
+                                <optgroup label="Supervisors">
+                                    <?php foreach($supervisors as $sup): ?>
+                                    <option value="<?= htmlspecialchars($sup['supervisor_name']) ?>"
+                                        <?= ($revivaChairName === htmlspecialchars($sup['supervisor_name'])) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($sup['supervisor_name']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <?php endif; ?>
+                                <?php if (!empty($chairpersons)): ?>
+                                <optgroup label="Chairpersons">
+                                    <?php foreach($chairpersons as $ch): ?>
+                                    <option value="<?= htmlspecialchars($ch['chairperson_name']) ?>"
+                                        <?= ($revivaChairName === htmlspecialchars($ch['chairperson_name'])) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($ch['chairperson_name']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <?php endif; ?>
+                                <?php
+                                $allRevivaNames = array_merge(
+                                    array_column($supervisors, 'supervisor_name'),
+                                    array_column($chairpersons, 'chairperson_name')
+                                );
+                                if ($revivaChairName && !in_array($viva['reviva_chairperson_name'] ?? '', $allRevivaNames)):
+                                ?>
+                                <option value="<?= $revivaChairName ?>" selected><?= $revivaChairName ?></option>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Re-viva Result</label>
+                            <select class="form-select mb-2" id="revivaResultSelect" onchange="toggleCustomRevivaResult()">
+                                <option value="">Select Result...</option>
+                                <?php foreach($revivaResultOptions as $opt): ?>
+                                    <option value="<?= $opt ?>" <?= ($currentRevivaResult === $opt) ? 'selected' : '' ?>><?= $opt ?></option>
+                                <?php endforeach; ?>
+                                <option value="custom" <?= $isRevivaCustom ? 'selected' : '' ?>>Other (Custom)...</option>
+                            </select>
+                            <input type="text" class="form-control" name="reviva_result" id="revivaResultInput"
+                                   value="<?= $currentRevivaResult ?>"
+                                   style="<?= $isRevivaCustom ? '' : 'display:none;' ?>"
+                                   placeholder="Enter custom re-viva result">
+                            <script>
+                            function toggleCustomRevivaResult() {
+                                const select = document.getElementById('revivaResultSelect');
+                                const input = document.getElementById('revivaResultInput');
                                 if (select.value === 'custom') {
                                     input.style.display = 'block';
                                     input.value = '';
@@ -326,9 +467,6 @@ $supervisors = $supervisors ?? [];
                                 }
                             }
                             </script>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- static internal examiner report date removed, now dynamic -->
                         </div>
                     </div>
                 </div>
@@ -451,7 +589,36 @@ $supervisors = $supervisors ?? [];
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Final Result (After Correction)</label>
-                            <input type="text" class="form-control" name="final_result" value="<?= htmlspecialchars($corr['final_result'] ?? '') ?>">
+                            <?php
+                                $currentFinalResult = htmlspecialchars($corr['final_result'] ?? '');
+                                $finalPresetOptions = ['Pass', 'Fail'];
+                                $isFinalCustom = $currentFinalResult && !in_array($currentFinalResult, $finalPresetOptions);
+                            ?>
+                            <select class="form-select mb-2" id="finalResultSelect" onchange="toggleCustomFinalResult()">
+                                <option value="">Select Result...</option>
+                                <?php foreach($finalPresetOptions as $opt): ?>
+                                    <option value="<?= $opt ?>" <?= ($currentFinalResult === $opt) ? 'selected' : '' ?>><?= $opt ?></option>
+                                <?php endforeach; ?>
+                                <option value="custom" <?= $isFinalCustom ? 'selected' : '' ?>>Other (Custom)...</option>
+                            </select>
+                            <input type="text" class="form-control" name="final_result" id="finalResultInput"
+                                   value="<?= $currentFinalResult ?>"
+                                   style="<?= $isFinalCustom ? '' : 'display:none;' ?>"
+                                   placeholder="Enter custom final result">
+                            <script>
+                            function toggleCustomFinalResult() {
+                                const select = document.getElementById('finalResultSelect');
+                                const input = document.getElementById('finalResultInput');
+                                if (select.value === 'custom') {
+                                    input.style.display = 'block';
+                                    input.value = '';
+                                    input.focus();
+                                } else {
+                                    input.style.display = 'none';
+                                    input.value = select.value;
+                                }
+                            }
+                            </script>
                         </div>
                     </div>
                 </div>

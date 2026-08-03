@@ -346,6 +346,10 @@ class StudentController extends Controller
             }
         }
 
+        // Map re-viva examiner arrays to scalar IDs for viva_records columns
+        $_POST['reviva_internal_examiner_id'] = !empty($_POST['reviva_internal_examiners'][0]) ? (int)$_POST['reviva_internal_examiners'][0] : null;
+        $_POST['reviva_external_examiner_id'] = !empty($_POST['reviva_external_examiners'][0]) ? (int)$_POST['reviva_external_examiners'][0] : null;
+
         // 3. Update related records
         $this->vivaModel->createOrUpdate($studentId, $_POST);
         $this->correctionModel->createOrUpdate($studentId, $_POST);

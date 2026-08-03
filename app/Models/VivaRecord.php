@@ -43,7 +43,18 @@ class VivaRecord
             'honorarium_chairperson' => 'honorarium_chairperson',
             'honorarium_internal' => 'honorarium_internal',
             'honorarium_external' => 'honorarium_external',
-            'honorarium_refreshment' => 'honorarium_refreshment'
+            'honorarium_refreshment' => 'honorarium_refreshment',
+            // Re-viva fields
+            'reviva_internal_examiner_id' => 'reviva_internal_examiner_id',
+            'reviva_external_examiner_id' => 'reviva_external_examiner_id',
+            'reviva_panel_appointment_letter_date' => 'reviva_panel_appointment_letter_date',
+            'reviva_thesis_to_panel_hard_copy_date' => 'reviva_thesis_to_panel_hard_copy_date',
+            'reviva_thesis_to_panel_soft_copy_date' => 'reviva_thesis_to_panel_soft_copy_date',
+            'reviva_confirm_date_email_date' => 'reviva_confirm_date_email_date',
+            'reviva_invitation_letter_date' => 'reviva_invitation_letter_date',
+            'reviva_date' => 'reviva_date',
+            'reviva_chairperson_name' => 'reviva_chairperson_name',
+            'reviva_result' => 'reviva_result',
         ];
 
         if ($existing) {
