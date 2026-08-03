@@ -526,6 +526,62 @@ class StudentController extends Controller
     }
 
     /**
+     * Derives research_status from saved viva/correction/graduation data
+     * and updates the student record if the derived stage is higher than current.
+     */
+    private function syncStudentResearchStatus(int $studentId, array $post): void
+    {
+        $order = [
+            'Thesis Submitted'    => 1,
+            'Examiner Assigned'   => 2,
+            'Viva Scheduled'      => 3,
+            'Viva Completed'      => 4,
+            'Corrections Submitted' => 5,
+            'Ready for Senate'    => 6,
+            'Graduated'           => 7,
+        ];
+
+        $current = $this->studentModel->findById($studentId)['research_status'] ?? 'Thesis Submitted';
+
+        // Derive status from data signals
+        $graduationDate   = $post['graduation_date'] ?? '';
+        $senateMeetingDate = $post['senate_meeting_date'] ?? '';
+        $finalResult      = $post['final_result'] ?? '';
+        $correctedThesis  = $post['corrected_thesis_received_date'] ?? '';
+        $vivaResult       = $post['viva_result'] ?? '';
+        $vivaDate         = $post['viva_date'] ?? '';
+
+        if (!empty($graduationDate) && $graduationDate !== '0000-00-00') {
+            $derived = 'Graduated';
+        } elseif (!empty($senateMeetingDate) && $senateMeetingDate !== '0000-00-00') {
+            $derived = 'Ready for Senate';
+        } elseif (!empty($finalResult)) {
+            $derived = 'Ready for Senate';
+        } elseif (!empty($correctedThesis)) {
+            $derived = 'Corrections Submitted';
+        } elseif (!empty($vivaResult)) {
+            $derived = 'Viva Completed';
+        } elseif (!empty($vivaDate) && strtotime($vivaDate) <= time()) {
+            $derived = 'Viva Completed';
+        } else {
+            // Nothing to upgrade — keep current
+            return;
+        }
+
+        // Only update if derived is a higher stage than current
+        $currentRank = $order[$current] ?? 1;
+        $derivedRank = $order[$derived] ?? 1;
+
+        if ($derivedRank > $currentRank) {
+            $student = $this->studentModel->findById($studentId);
+            if ($student) {
+                $student['research_status'] = $derived;
+                $this->studentModel->update($studentId, $student);
+            }
+        }
+    }
+
+    /**
      * Validates that dates logically progress in chronological order.
      * Returns an error message string if invalid, or null if all checks pass.
      */
