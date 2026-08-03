@@ -1,230 +1,280 @@
 <?php
 /**
- * Automated script to merge duplicate Examiners and Supervisors into single primary records.
+ * Strict & Intelligent Academic Name Deduplication Engine
  */
 
-$pdo = new PDO('mysql:host=localhost;dbname=prvts_db;charset=utf8mb4', 'root', '');
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+require_once __DIR__ . '/../../vendor/autoload.php';
 
-function normalizeName(string $name): string {
-    $clean = preg_replace('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', '', $name);
-    $clean = preg_replace('/01\d[\d\s\-]{6,}/', '', $clean);
-    $clean = preg_replace('/\b\d+[\)\.]\s*/', '', $clean);
+$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__, 2));
+$dotenv->load();
+
+use App\Core\Database;
+
+$db = Database::getInstance();
+
+echo "=========================================================\n";
+echo " STRICT ACADEMIC NAME DEDUPLICATION & MERGER\n";
+echo "=========================================================\n\n";
+
+/**
+ * Extract clean name tokens (ignoring titles and bin/binti)
+ */
+function getCoreTokens(string $name): array {
+    $n = mb_strtoupper(trim($name), 'UTF-8');
+    $n = str_replace(["’", "‘", "`", "'", ".", ",", "(", ")", "-"], " ", $n);
+    
     $titles = [
-        'assoc. prof. sr. dr.', 'assoc. prof. dr.', 'prof. madya dr.', 'prof. dato\' dr.',
-        'prof. datin dr.', 'prof. dr.', 'assoc. prof.', 'prof. madya', 'prof. dato\'',
-        'prof. datin', 'prof.', 'assoc prof', 'prof madya', 'dr.', 'dr', 'ts.', 'ir.',
-        'hj.', 'hjh.', 'dato\'', 'datin', 'sr.'
+        'ASSOC PROF', 'ASSOC', 'PROFESSOR', 'PROF MADYA', 'PROF DATO', 'PROF DR', 'PROF TPR', 'PROF', 'MADYA',
+        'DATO', 'DATUK', 'DATIN', 'SR', 'IR', 'TS', 'TPR', 'HJ', 'HAJI', 'HJH', 'HAJAH', 'BIN', 'BINTI', 'BT', 'B',
+        'AL', 'A/L', 'A/P', 'DEAN', 'CHAIRPERSON', 'PMGR'
     ];
-    $clean = strtolower($clean);
-    foreach ($titles as $t) {
-        $clean = str_replace($t, '', $clean);
+    
+    $tokens = preg_split('/\s+/', $n);
+    $filtered = [];
+    foreach ($tokens as $t) {
+        $tClean = trim($t);
+        if (empty($tClean)) continue;
+        if (in_array($tClean, $titles)) continue;
+        $filtered[] = $tClean;
     }
-    $clean = preg_replace('/[^a-z0-9\s]/', '', $clean);
-    $clean = preg_replace('/\s+/', ' ', $clean);
-    return trim($clean);
+    
+    return array_values($filtered);
 }
 
-echo "=== STARTING AUTOMATED DEDUPLICATION ===\n\n";
-
-$pdo->beginTransaction();
-
-try {
-    // ----------------------------------------------------
-    // 1. DEDUPLICATE EXAMINERS
-    // ----------------------------------------------------
-    echo "--- Deduplicating Examiners ---\n";
-    $exStmt = $pdo->query("SELECT e.*, 
-        (SELECT COUNT(*) FROM student_examiners se WHERE se.examiner_id = e.examiner_id) AS student_count
-        FROM examiners e ORDER BY examiner_id ASC");
-    $examiners = $exStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $exGroups = [];
-    foreach ($examiners as $ex) {
-        $norm = normalizeName($ex['examiner_name']);
-        if ($norm === '') $norm = strtolower(trim($ex['examiner_name']));
-        $exGroups[$norm][] = $ex;
+/**
+ * Compare two sets of core tokens to determine if they represent the SAME person
+ */
+function isSamePerson(array $tokens1, array $tokens2): bool {
+    if (empty($tokens1) || empty($tokens2)) return false;
+    
+    // Normalize collapsed characters (consecutive duplicates like R/RR or S/SS)
+    $c1 = array_map(fn($t) => preg_replace('/(.)\1+/', '$1', $t), $tokens1);
+    $c2 = array_map(fn($t) => preg_replace('/(.)\1+/', '$1', $t), $tokens2);
+    
+    // Sort tokens alphabetically
+    $s1 = $c1; sort($s1);
+    $s2 = $c2; sort($s2);
+    
+    // Exact normalized token match
+    if (implode(' ', $s1) === implode(' ', $s2)) {
+        return true;
     }
-
-    $mergedExCount = 0;
-    $deletedExIds = [];
-
-    foreach ($exGroups as $norm => $group) {
-        if (count($group) < 2) continue;
-
-        // Rank group members: highest student count first, then non-empty email/inst, lowest ID
-        usort($group, function($a, $b) {
-            if ($a['student_count'] !== $b['student_count']) {
-                return $b['student_count'] <=> $a['student_count'];
-            }
-            $scoreA = (!empty($a['email']) ? 2 : 0) + (!empty($a['institution']) ? 1 : 0);
-            $scoreB = (!empty($b['email']) ? 2 : 0) + (!empty($b['institution']) ? 1 : 0);
-            if ($scoreA !== $scoreB) {
-                return $scoreB <=> $scoreA;
-            }
-            return $a['examiner_id'] <=> $b['examiner_id'];
-        });
-
-        $winner = $group[0];
-        $winnerId = (int)$winner['examiner_id'];
-        $duplicates = array_slice($group, 1);
-
-        echo "Group '{$norm}': Primary ID {$winnerId} [{$winner['examiner_name']}]\n";
-
-        // Consolidate email/inst/phone into winner if missing
-        $updateFields = [];
-        $params = [];
-        foreach ($duplicates as $dup) {
-            $dupId = (int)$dup['examiner_id'];
-            $deletedExIds[] = $dupId;
-            echo "  -> Merging Duplicate ID {$dupId} [{$dup['examiner_name']}]\n";
-
-            if (empty($winner['email']) && !empty($dup['email'])) {
-                $winner['email'] = $dup['email'];
-                $updateFields['email'] = $dup['email'];
-            }
-            if (empty($winner['institution']) && !empty($dup['institution'])) {
-                $winner['institution'] = $dup['institution'];
-                $updateFields['institution'] = $dup['institution'];
-            }
-            if (empty($winner['phone']) && !empty($dup['phone'])) {
-                $winner['phone'] = $dup['phone'];
-                $updateFields['phone'] = $dup['phone'];
-            }
-
-            // Update student_examiners
-            $seStmt = $pdo->prepare("SELECT student_id, role, email_date, status, report_date FROM student_examiners WHERE examiner_id = ?");
-            $seStmt->execute([$dupId]);
-            $seRows = $seStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($seRows as $se) {
-                $check = $pdo->prepare("SELECT COUNT(*) FROM student_examiners WHERE student_id = ? AND examiner_id = ?");
-                $check->execute([$se['student_id'], $winnerId]);
-                if ($check->fetchColumn() == 0) {
-                    $upd = $pdo->prepare("UPDATE student_examiners SET examiner_id = ? WHERE student_id = ? AND examiner_id = ?");
-                    $upd->execute([$winnerId, $se['student_id'], $dupId]);
+    
+    // If one is a subset of the other (e.g. ['AMINURRAASYID', 'YATIBAN'] vs ['AMINURRAASYID', 'BIN', 'YATIBAN'])
+    $minCount = min(count($c1), count($c2));
+    $intersect = array_intersect($c1, $c2);
+    if ($minCount >= 2 && count($intersect) >= $minCount) {
+        return true;
+    }
+    
+    // Check token-by-token fuzzy match if count is equal
+    if (count($c1) === count($c2) && count($c1) >= 2) {
+        $mismatches = 0;
+        for ($k = 0; $k < count($c1); $k++) {
+            $w1 = $c1[$k];
+            $w2 = $c2[$k];
+            if ($w1 !== $w2) {
+                if (levenshtein($w1, $w2) <= 2 && min(strlen($w1), strlen($w2)) > 4) {
+                    // Small typo in a long word (e.g. AMINURAASYID vs AMINURRAASYID)
+                    continue;
                 } else {
-                    $del = $pdo->prepare("DELETE FROM student_examiners WHERE student_id = ? AND examiner_id = ?");
-                    $del->execute([$se['student_id'], $dupId]);
+                    $mismatches++;
                 }
             }
-
-            // Update viva_records references
-            $pdo->prepare("UPDATE viva_records SET internal_examiner_id = ? WHERE internal_examiner_id = ?")->execute([$winnerId, $dupId]);
-            $pdo->prepare("UPDATE viva_records SET external_examiner_id = ? WHERE external_examiner_id = ?")->execute([$winnerId, $dupId]);
-            $pdo->prepare("UPDATE viva_records SET reviva_internal_examiner_id = ? WHERE reviva_internal_examiner_id = ?")->execute([$winnerId, $dupId]);
-            $pdo->prepare("UPDATE viva_records SET reviva_external_examiner_id = ? WHERE reviva_external_examiner_id = ?")->execute([$winnerId, $dupId]);
-
-            // Delete duplicate examiner
-            $pdo->prepare("DELETE FROM examiners WHERE examiner_id = ?")->execute([$dupId]);
-            $mergedExCount++;
         }
-
-        if (!empty($updateFields)) {
-            $sets = [];
-            foreach ($updateFields as $k => $v) {
-                $sets[] = "$k = :$k";
-            }
-            $updateFields['id'] = $winnerId;
-            $pdo->prepare("UPDATE examiners SET " . implode(', ', $sets) . " WHERE examiner_id = :id")->execute($updateFields);
-        }
+        if ($mismatches === 0) return true;
     }
-    echo "Total Examiners Merged & Deleted: {$mergedExCount}\n\n";
-
-    // ----------------------------------------------------
-    // 2. DEDUPLICATE SUPERVISORS
-    // ----------------------------------------------------
-    echo "--- Deduplicating Supervisors ---\n";
-    $supStmt = $pdo->query("SELECT s.*, 
-        (SELECT COUNT(*) FROM student_supervisors ss WHERE ss.supervisor_id = s.supervisor_id) AS student_count
-        FROM supervisors s ORDER BY supervisor_id ASC");
-    $supervisors = $supStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $supGroups = [];
-    foreach ($supervisors as $sup) {
-        $norm = normalizeName($sup['supervisor_name']);
-        if ($norm === '') $norm = strtolower(trim($sup['supervisor_name']));
-        $supGroups[$norm][] = $sup;
-    }
-
-    $mergedSupCount = 0;
-
-    foreach ($supGroups as $norm => $group) {
-        if (count($group) < 2) continue;
-
-        usort($group, function($a, $b) {
-            if ($a['student_count'] !== $b['student_count']) {
-                return $b['student_count'] <=> $a['student_count'];
-            }
-            $scoreA = (!empty($a['email']) ? 2 : 0) + (!empty($a['department']) ? 1 : 0);
-            $scoreB = (!empty($b['email']) ? 2 : 0) + (!empty($b['department']) ? 1 : 0);
-            if ($scoreA !== $scoreB) {
-                return $scoreB <=> $scoreA;
-            }
-            return $a['supervisor_id'] <=> $b['supervisor_id'];
-        });
-
-        $winner = $group[0];
-        $winnerId = (int)$winner['supervisor_id'];
-        $duplicates = array_slice($group, 1);
-
-        echo "Group '{$norm}': Primary ID {$winnerId} [{$winner['supervisor_name']}]\n";
-
-        $updateFields = [];
-        foreach ($duplicates as $dup) {
-            $dupId = (int)$dup['supervisor_id'];
-            echo "  -> Merging Duplicate ID {$dupId} [{$dup['supervisor_name']}]\n";
-
-            if (empty($winner['email']) && !empty($dup['email'])) {
-                $winner['email'] = $dup['email'];
-                $updateFields['email'] = $dup['email'];
-            }
-            if (empty($winner['department']) && !empty($dup['department'])) {
-                $winner['department'] = $dup['department'];
-                $updateFields['department'] = $dup['department'];
-            }
-            if (empty($winner['phone']) && !empty($dup['phone'])) {
-                $winner['phone'] = $dup['phone'];
-                $updateFields['phone'] = $dup['phone'];
-            }
-
-            // Update student_supervisors
-            $ssStmt = $pdo->prepare("SELECT student_id, role FROM student_supervisors WHERE supervisor_id = ?");
-            $ssStmt->execute([$dupId]);
-            $ssRows = $ssStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($ssRows as $ss) {
-                $check = $pdo->prepare("SELECT COUNT(*) FROM student_supervisors WHERE student_id = ? AND supervisor_id = ?");
-                $check->execute([$ss['student_id'], $winnerId]);
-                if ($check->fetchColumn() == 0) {
-                    $upd = $pdo->prepare("UPDATE student_supervisors SET supervisor_id = ? WHERE student_id = ? AND supervisor_id = ?");
-                    $upd->execute([$winnerId, $ss['student_id'], $dupId]);
-                } else {
-                    $del = $pdo->prepare("DELETE FROM student_supervisors WHERE student_id = ? AND supervisor_id = ?");
-                    $del->execute([$ss['student_id'], $dupId]);
-                }
-            }
-
-            // Delete duplicate supervisor
-            $pdo->prepare("DELETE FROM supervisors WHERE supervisor_id = ?")->execute([$dupId]);
-            $mergedSupCount++;
-        }
-
-        if (!empty($updateFields)) {
-            $sets = [];
-            foreach ($updateFields as $k => $v) {
-                $sets[] = "$k = :$k";
-            }
-            $updateFields['id'] = $winnerId;
-            $pdo->prepare("UPDATE supervisors SET " . implode(', ', $sets) . " WHERE supervisor_id = :id")->execute($updateFields);
-        }
-    }
-    echo "Total Supervisors Merged & Deleted: {$mergedSupCount}\n\n";
-
-    $pdo->commit();
-    echo "=== SUCCESS: AUTOMATED DEDUPLICATION COMPLETED CLEANLY ===\n";
-
-} catch (Exception $e) {
-    $pdo->rollBack();
-    echo "ERROR during deduplication: " . $e->getMessage() . "\n";
+    
+    return false;
 }
+
+/**
+ * Score canonical quality of a name to choose primary record
+ */
+function scoreQuality(string $name): int {
+    $score = strlen($name);
+    if (str_contains($name, 'ASSOC. PROF. DR.')) $score += 100;
+    if (str_contains($name, 'PROF. DR.')) $score += 80;
+    if (str_contains($name, 'DR.')) $score += 50;
+    if (str_contains($name, 'BIN ') || str_contains($name, 'BINTI ')) $score += 40;
+    return $score;
+}
+
+// 1. PROCESS SUPERVISORS TABLE
+echo "[1] Processing supervisors table...\n";
+$db->query("SELECT supervisor_id, supervisor_name FROM supervisors");
+$supervisors = $db->resultSet();
+
+$visitedSup = [];
+$supClusters = [];
+
+for ($i = 0; $i < count($supervisors); $i++) {
+    if (isset($visitedSup[$i])) continue;
+    $s1 = $supervisors[$i];
+    $t1 = getCoreTokens($s1['supervisor_name']);
+    $cluster = [$s1];
+    
+    for ($j = $i + 1; $j < count($supervisors); $j++) {
+        if (isset($visitedSup[$j])) continue;
+        $s2 = $supervisors[$j];
+        $t2 = getCoreTokens($s2['supervisor_name']);
+        
+        if (isSamePerson($t1, $t2)) {
+            $visitedSup[$j] = true;
+            $cluster[] = $s2;
+        }
+    }
+    
+    if (count($cluster) > 1) {
+        $supClusters[] = $cluster;
+    }
+}
+
+echo "Found " . count($supClusters) . " supervisor duplicate clusters.\n";
+$supMerged = 0;
+$allReplacements = [];
+
+foreach ($supClusters as $cluster) {
+    usort($cluster, fn($a, $b) => scoreQuality($b['supervisor_name']) <=> scoreQuality($a['supervisor_name']));
+    $primary = $cluster[0];
+    $primaryId = $primary['supervisor_id'];
+    $canonicalName = $primary['supervisor_name'];
+    
+    echo "  Primary: [{$primaryId}] {$canonicalName}\n";
+    
+    for ($k = 1; $k < count($cluster); $k++) {
+        $dup = $cluster[$k];
+        $dupId = $dup['supervisor_id'];
+        $dupName = $dup['supervisor_name'];
+        
+        echo "    <- Merging duplicate: [{$dupId}] {$dupName}\n";
+        $allReplacements[$dupName] = $canonicalName;
+        
+        $db->query("SELECT student_id FROM student_supervisors WHERE supervisor_id = :dupId");
+        $db->bind(':dupId', $dupId);
+        foreach ($db->resultSet() as $link) {
+            $sId = $link['student_id'];
+            $db->query("SELECT id FROM student_supervisors WHERE student_id = :sId AND supervisor_id = :pId");
+            $db->bind(':sId', $sId);
+            $db->bind(':pId', $primaryId);
+            if ($db->single()) {
+                $db->query("DELETE FROM student_supervisors WHERE student_id = :sId AND supervisor_id = :dupId");
+                $db->bind(':sId', $sId);
+                $db->bind(':dupId', $dupId);
+                $db->execute();
+            } else {
+                $db->query("UPDATE student_supervisors SET supervisor_id = :pId WHERE student_id = :sId AND supervisor_id = :dupId");
+                $db->bind(':pId', $primaryId);
+                $db->bind(':sId', $sId);
+                $db->bind(':dupId', $dupId);
+                $db->execute();
+            }
+        }
+        
+        $db->query("DELETE FROM supervisors WHERE supervisor_id = :dupId");
+        $db->bind(':dupId', $dupId);
+        $db->execute();
+        $supMerged++;
+    }
+}
+echo "Merged {$supMerged} supervisor rows.\n\n";
+
+// 2. PROCESS EXAMINERS TABLE
+echo "[2] Processing examiners table...\n";
+$db->query("SELECT examiner_id, examiner_name FROM examiners");
+$examiners = $db->resultSet();
+
+$visitedExam = [];
+$examClusters = [];
+
+for ($i = 0; $i < count($examiners); $i++) {
+    if (isset($visitedExam[$i])) continue;
+    $e1 = $examiners[$i];
+    $t1 = getCoreTokens($e1['examiner_name']);
+    $cluster = [$e1];
+    
+    for ($j = $i + 1; $j < count($examiners); $j++) {
+        if (isset($visitedExam[$j])) continue;
+        $e2 = $examiners[$j];
+        $t2 = getCoreTokens($e2['examiner_name']);
+        
+        if (isSamePerson($t1, $t2)) {
+            $visitedExam[$j] = true;
+            $cluster[] = $e2;
+        }
+    }
+    
+    if (count($cluster) > 1) {
+        $examClusters[] = $cluster;
+    }
+}
+
+echo "Found " . count($examClusters) . " examiner duplicate clusters.\n";
+$examMerged = 0;
+
+foreach ($examClusters as $cluster) {
+    usort($cluster, fn($a, $b) => scoreQuality($b['examiner_name']) <=> scoreQuality($a['examiner_name']));
+    $primary = $cluster[0];
+    $primaryId = $primary['examiner_id'];
+    $canonicalName = $primary['examiner_name'];
+    
+    echo "  Primary: [{$primaryId}] {$canonicalName}\n";
+    
+    for ($k = 1; $k < count($cluster); $k++) {
+        $dup = $cluster[$k];
+        $dupId = $dup['examiner_id'];
+        $dupName = $dup['examiner_name'];
+        
+        echo "    <- Merging duplicate: [{$dupId}] {$dupName}\n";
+        $allReplacements[$dupName] = $canonicalName;
+        
+        $db->query("UPDATE viva_records SET internal_examiner_id = :pId WHERE internal_examiner_id = :dupId");
+        $db->bind(':pId', $primaryId);
+        $db->bind(':dupId', $dupId);
+        $db->execute();
+
+        $db->query("UPDATE viva_records SET external_examiner_id = :pId WHERE external_examiner_id = :dupId");
+        $db->bind(':pId', $primaryId);
+        $db->bind(':dupId', $dupId);
+        $db->execute();
+
+        $db->query("SELECT student_id FROM student_examiners WHERE examiner_id = :dupId");
+        $db->bind(':dupId', $dupId);
+        foreach ($db->resultSet() as $link) {
+            $sId = $link['student_id'];
+            $db->query("SELECT id FROM student_examiners WHERE student_id = :sId AND examiner_id = :pId");
+            $db->bind(':sId', $sId);
+            $db->bind(':pId', $primaryId);
+            if ($db->single()) {
+                $db->query("DELETE FROM student_examiners WHERE student_id = :sId AND examiner_id = :dupId");
+                $db->bind(':sId', $sId);
+                $db->bind(':dupId', $dupId);
+                $db->execute();
+            } else {
+                $db->query("UPDATE student_examiners SET examiner_id = :pId WHERE student_id = :sId AND examiner_id = :dupId");
+                $db->bind(':pId', $primaryId);
+                $db->bind(':sId', $sId);
+                $db->bind(':dupId', $dupId);
+                $db->execute();
+            }
+        }
+        
+        $db->query("DELETE FROM examiners WHERE examiner_id = :dupId");
+        $db->bind(':dupId', $dupId);
+        $db->execute();
+        $examMerged++;
+    }
+}
+echo "Merged {$examMerged} examiner rows.\n\n";
+
+// 3. UPDATE CHAIRPERSON NAMES IN VIVA_RECORDS
+echo "[3] Normalizing viva_records chairperson names...\n";
+foreach ($allReplacements as $variant => $canonical) {
+    $db->query("UPDATE viva_records SET chairperson_name = :canonical WHERE chairperson_name = :variant");
+    $db->bind(':canonical', $canonical);
+    $db->bind(':variant', $variant);
+    $db->execute();
+}
+
+echo "\nCOMPLETED STRICT DEDUPLICATION!\n";
+
