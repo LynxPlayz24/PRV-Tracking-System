@@ -367,22 +367,13 @@ class DashboardController extends Controller
         ");
         $stats['ready_for_senate'] = (int)($this->db->single()['cnt'] ?? 0);
 
-        // Awaiting Corrections
+        // Awaiting Corrections (status-driven: only explicit in-progress correction statuses)
         $this->db->query("
-            SELECT COUNT(*) as cnt 
+            SELECT COUNT(DISTINCT s.student_id) as cnt 
             FROM students s 
-            LEFT JOIN viva_records v ON s.student_id = v.student_id
             LEFT JOIN corrections c ON s.student_id = c.student_id
-            LEFT JOIN graduation g ON s.student_id = g.student_id
-            WHERE (
-                s.research_status IN ('Viva Completed', 'Corrections Submitted')
-                OR (v.viva_date IS NOT NULL AND v.viva_date != '' AND v.viva_date <= CURDATE())
-                OR (v.viva_result IS NOT NULL AND v.viva_result != '')
-            )
-            AND (c.final_result IS NULL OR c.final_result = '')
-            AND (g.senate_meeting_date IS NULL OR g.senate_meeting_date = '' OR g.senate_meeting_date = '0000-00-00')
-            AND (g.graduation_date IS NULL OR g.graduation_date = '' OR g.graduation_date = '0000-00-00')
-            AND s.research_status NOT IN ('Ready for Senate', 'Graduated')
+            WHERE s.research_status IN ('Viva Completed', 'Corrections Submitted')
+              AND (c.final_result IS NULL OR c.final_result = '')
         ");
         $stats['awaiting_corrections'] = (int)($this->db->single()['cnt'] ?? 0);
 
