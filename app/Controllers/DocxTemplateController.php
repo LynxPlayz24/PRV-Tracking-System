@@ -140,7 +140,7 @@ class DocxTemplateController extends Controller
             'EXTERNAL_EXAMINER'             => $viva['external_examiner_name'] ?? '',
 
             // Viva & Dates
-            'VIVA_DATE'                     => $viva['viva_date'] ?? '',
+            'VIVA_DATE'                     => !empty($viva['viva_date']) ? strtoupper(date('d M Y', strtotime($viva['viva_date']))) : '',
             'VIVA_RESULT'                   => $viva['viva_result'] ?? '',
             'TURNITIN_PERCENTAGE'           => $viva['turnitin_percentage'] ?? '',
             'CORRECTION_DEADLINE'           => $corr['correction_deadline'] ?? '',

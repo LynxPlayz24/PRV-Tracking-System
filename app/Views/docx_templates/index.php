@@ -87,7 +87,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                         <div class="col-12"><hr class="my-2"></div>
                         <div class="col-6">
                             <span class="text-muted d-block small">Viva Date</span>
-                            <span class="fw-semibold text-dark"><?= htmlspecialchars($selectedStudent['viva_records'][0]['viva_date'] ?? 'Not set') ?></span>
+                            <span class="fw-semibold text-dark"><?= !empty($selectedStudent['viva_records'][0]['viva_date']) ? htmlspecialchars(strtoupper(date('d M Y', strtotime($selectedStudent['viva_records'][0]['viva_date'])))) : 'Not set' ?></span>
                         </div>
                         <div class="col-6">
                             <span class="text-muted d-block small">Viva Result</span>
