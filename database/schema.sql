@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `students` (
     `name`            VARCHAR(200) NOT NULL,
     `programme`       VARCHAR(200) DEFAULT NULL,
     `school`          VARCHAR(200) DEFAULT NULL,
-    `degree_level`    ENUM('Masters','PhD','DBA') NOT NULL DEFAULT 'Masters',
+    `degree_level`    VARCHAR(100) NOT NULL DEFAULT 'Masters',
     `cohort`          VARCHAR(50) DEFAULT NULL,
     `its_receipt_date` DATE DEFAULT NULL,
     `thesis_title`    TEXT DEFAULT NULL,

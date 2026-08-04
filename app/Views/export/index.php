@@ -102,9 +102,16 @@ $availableFields = [
                     <div class="mb-3">
                         <label class="filter-label">Degree Level</label>
                         <select name="degree_level[]" class="form-select select2-multiple" multiple data-placeholder="All Levels">
-                            <option value="Masters" <?= in_array('Masters', (array)$filters['degree_level']) ? 'selected' : '' ?>>Masters</option>
-                            <option value="PhD"     <?= in_array('PhD',     (array)$filters['degree_level']) ? 'selected' : '' ?>>PhD</option>
-                            <option value="DBA"     <?= in_array('DBA',     (array)$filters['degree_level']) ? 'selected' : '' ?>>DBA</option>
+                            <?php 
+                            $degreeOptions = [
+                                'Diploma', 'Advanced Diploma', 'Postdoctoral', 'Associate Degree', 
+                                'APEL 7', 'Mobility', 'Program Upgrade', "Bachelor's Degree", 
+                                'Postgraduate Diploma', 'Masters', 'PhD', 'DBA', 
+                                'Certificate', 'Higher National Diploma', 'Executive Diploma'
+                            ];
+                            foreach ($degreeOptions as $d): ?>
+                            <option value="<?= $d ?>" <?= in_array($d, (array)$filters['degree_level']) ? 'selected' : '' ?>><?= $d ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 

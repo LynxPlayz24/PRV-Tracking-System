@@ -27,7 +27,12 @@ class SearchController extends Controller
         // Retrieve unique schools to populate filter dropdowns.
         $this->db->query('SELECT DISTINCT school FROM students WHERE school IS NOT NULL ORDER BY school');
         $schools = $this->db->resultSet();
-        $degrees = ['Masters', 'PhD', 'DBA'];
+        $degrees = [
+            'Diploma', 'Advanced Diploma', 'Postdoctoral', 'Associate Degree', 
+            'APEL 7', 'Mobility', 'Program Upgrade', "Bachelor's Degree", 
+            'Postgraduate Diploma', 'Masters', 'PhD', 'DBA', 
+            'Certificate', 'Higher National Diploma', 'Executive Diploma'
+        ];
         $statuses = [
             'Thesis Submitted', 'Examiner Assigned', 'Viva Scheduled', 
             'Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated'

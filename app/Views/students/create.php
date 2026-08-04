@@ -82,7 +82,25 @@ $supervisors = $supervisors ?? [];
                         <div class="col-md-4">
                             <label class="form-label">Degree Level</label>
                             <select class="form-select" name="degree_level">
-                                <?php foreach(['Masters','PhD','DBA'] as $d): ?>
+                                <?php 
+                                $degreeOptions = [
+                                    'Diploma',
+                                    'Advanced Diploma',
+                                    'Postdoctoral',
+                                    'Associate Degree',
+                                    'APEL 7',
+                                    'Mobility',
+                                    'Program Upgrade',
+                                    'Bachelor\'s Degree',
+                                    'Postgraduate Diploma',
+                                    'Masters',
+                                    'PhD',
+                                    'DBA',
+                                    'Certificate',
+                                    'Higher National Diploma',
+                                    'Executive Diploma'
+                                ];
+                                foreach($degreeOptions as $d): ?>
                                 <option value="<?= $d ?>" <?= ($student['degree_level'] ?? '') === $d ? 'selected' : '' ?>><?= $d ?></option>
                                 <?php endforeach; ?>
                             </select>
