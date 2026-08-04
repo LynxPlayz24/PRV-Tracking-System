@@ -155,6 +155,17 @@ CREATE TABLE IF NOT EXISTS `viva_records` (
     `honorarium_internal`       VARCHAR(100) DEFAULT NULL,
     `honorarium_external`       VARCHAR(100) DEFAULT NULL,
     `honorarium_refreshment`    VARCHAR(100) DEFAULT NULL,
+    -- Re-viva fields
+    `reviva_internal_examiner_id`           INT DEFAULT NULL,
+    `reviva_external_examiner_id`           INT DEFAULT NULL,
+    `reviva_panel_appointment_letter_date`  DATE DEFAULT NULL,
+    `reviva_thesis_to_panel_hard_copy_date` DATE DEFAULT NULL,
+    `reviva_thesis_to_panel_soft_copy_date` DATE DEFAULT NULL,
+    `reviva_confirm_date_email_date`        DATE DEFAULT NULL,
+    `reviva_invitation_letter_date`         DATE DEFAULT NULL,
+    `reviva_date`                           DATE DEFAULT NULL,
+    `reviva_chairperson_name`               VARCHAR(200) DEFAULT NULL,
+    `reviva_result`                         VARCHAR(100) DEFAULT NULL,
 
     INDEX `idx_viva_student` (`student_id`),
     INDEX `idx_viva_date`    (`viva_date`),
@@ -167,6 +178,12 @@ CREATE TABLE IF NOT EXISTS `viva_records` (
         ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT `fk_viva_external_exam`
         FOREIGN KEY (`external_examiner_id`) REFERENCES `examiners`(`examiner_id`)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `fk_viva_reviva_internal_exam`
+        FOREIGN KEY (`reviva_internal_examiner_id`) REFERENCES `examiners`(`examiner_id`)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT `fk_viva_reviva_external_exam`
+        FOREIGN KEY (`reviva_external_examiner_id`) REFERENCES `examiners`(`examiner_id`)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

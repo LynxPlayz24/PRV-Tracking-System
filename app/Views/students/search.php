@@ -38,6 +38,17 @@
                     </select>
                 </div>
                 
+                <!-- Programme -->
+                <div class="mb-3">
+                    <label class="form-label">Programme</label>
+                    <select class="form-select form-select-sm" name="programme" id="filterProgramme">
+                        <option value="">All Programmes</option>
+                        <?php foreach($programmes as $p): ?>
+                            <option value="<?= htmlspecialchars($p) ?>"><?= htmlspecialchars($p) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
                 <!-- Research Status -->
                 <div class="mb-3">
                     <label class="form-label">Research Status</label>
@@ -48,6 +59,7 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
+
                 
                 <!-- Viva Year -->
                 <div class="mb-3">

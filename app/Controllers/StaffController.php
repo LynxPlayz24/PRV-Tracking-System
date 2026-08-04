@@ -74,6 +74,8 @@ class StaffController extends Controller
         $this->redirect($this->baseUrl() . '/staff');
     }
 
+
+
     public function updateSupervisor(string $id): void
     {
         Middleware::requireAdmin();
@@ -296,4 +298,114 @@ class StaffController extends Controller
 
         $this->redirect($this->baseUrl() . '/staff#chairpersons');
     }
+
+    // --- AJAX APIs (No Redirection) ---
+
+    public function apiStoreSupervisor(): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid CSRF token.'], 400);
+            return;
+        }
+
+        $data = [
+            'supervisor_name' => trim($this->input('supervisor_name', '')),
+            'email'           => trim($this->input('email', '')),
+            'phone'           => trim($this->input('phone', '')),
+            'department'      => trim($this->input('department', '')),
+        ];
+
+        if (empty($data['supervisor_name'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Supervisor name is required.'], 400);
+            return;
+        }
+
+        $newId = $this->supervisorModel->create($data);
+        if ($newId) {
+            $this->jsonResponse([
+                'success'        => true,
+                'id'             => $newId,
+                'name'           => $data['supervisor_name'],
+                'new_csrf_token' => $this->generateCsrfToken(),
+                'message'        => 'Supervisor added successfully.'
+            ]);
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to add supervisor.'], 500);
+        }
+    }
+
+    public function apiStoreExaminer(): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid CSRF token.'], 400);
+            return;
+        }
+
+        $data = [
+            'examiner_name'  => trim($this->input('examiner_name', '')),
+            'email'          => trim($this->input('email', '')),
+            'phone'          => trim($this->input('phone', '')),
+            'institution'    => trim($this->input('institution', '')),
+            'classification' => trim($this->input('classification', 'Internal')),
+        ];
+
+        if (empty($data['examiner_name'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Examiner name is required.'], 400);
+            return;
+        }
+
+        $newId = $this->examinerModel->create($data);
+        if ($newId) {
+            $this->jsonResponse([
+                'success'        => true,
+                'id'             => $newId,
+                'name'           => $data['examiner_name'],
+                'classification' => $data['classification'],
+                'new_csrf_token' => $this->generateCsrfToken(),
+                'message'        => 'Examiner added successfully.'
+            ]);
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to add examiner.'], 500);
+        }
+    }
+
+    public function apiStoreChairperson(): void
+    {
+        Middleware::requireAdmin();
+
+        if (!$this->validateCsrfToken()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid CSRF token.'], 400);
+            return;
+        }
+
+        $data = [
+            'chairperson_name' => trim($this->input('chairperson_name', '')),
+            'email'            => trim($this->input('email', '')),
+            'phone'            => trim($this->input('phone', '')),
+            'department'       => trim($this->input('department', '')),
+        ];
+
+        if (empty($data['chairperson_name'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Chairperson name is required.'], 400);
+            return;
+        }
+
+        $newId = $this->chairpersonModel->create($data);
+        if ($newId) {
+            $this->jsonResponse([
+                'success'        => true,
+                'id'             => $newId,
+                'name'           => $data['chairperson_name'],
+                'new_csrf_token' => $this->generateCsrfToken(),
+                'message'        => 'Chairperson added successfully.'
+            ]);
+        } else {
+            $this->jsonResponse(['success' => false, 'message' => 'Failed to add chairperson.'], 500);
+        }
+    }
 }
+

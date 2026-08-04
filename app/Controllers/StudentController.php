@@ -174,6 +174,10 @@ class StudentController extends Controller
             }
         }
 
+        // Map first internal/external examiner IDs to viva_records columns
+        $_POST['internal_examiner_id'] = !empty($internalExaminers[0]) ? (int)$internalExaminers[0] : null;
+        $_POST['external_examiner_id'] = !empty($externalExaminers[0]) ? (int)$externalExaminers[0] : null;
+
         // 3. Create Viva Record
         $this->vivaModel->createOrUpdate($studentId, $_POST);
 
@@ -345,6 +349,10 @@ class StudentController extends Controller
                 $this->examinerModel->assignToStudent($studentId, (int)$exId, 'External', $emailDate, $status, $reportDate);
             }
         }
+
+        // Map first internal/external examiner IDs to viva_records columns
+        $_POST['internal_examiner_id'] = !empty($internalExaminers[0]) ? (int)$internalExaminers[0] : null;
+        $_POST['external_examiner_id'] = !empty($externalExaminers[0]) ? (int)$externalExaminers[0] : null;
 
         // Map re-viva examiner arrays to scalar IDs for viva_records columns
         $_POST['reviva_internal_examiner_id'] = !empty($_POST['reviva_internal_examiners'][0]) ? (int)$_POST['reviva_internal_examiners'][0] : null;

@@ -42,6 +42,10 @@ class SearchController extends Controller
         $this->db->query('SELECT DISTINCT YEAR(v.viva_date) AS viva_year FROM viva_records v WHERE v.viva_date IS NOT NULL ORDER BY viva_year DESC');
         $vivaYears = array_column($this->db->resultSet(), 'viva_year');
 
+        // Retrieve distinct programmes for the programme filter.
+        $this->db->query('SELECT DISTINCT programme FROM students WHERE programme IS NOT NULL AND programme != \'\' ORDER BY programme');
+        $programmes = array_column($this->db->resultSet(), 'programme');
+
         $data = [
             'pageTitle'    => 'Search Students',
             'currentPage'  => 'search',
@@ -49,6 +53,7 @@ class SearchController extends Controller
             'degrees'      => $degrees,
             'statuses'     => $statuses,
             'vivaYears'    => $vivaYears,
+            'programmes'   => $programmes,
             'extraScripts' => ['search.js']
         ];
 
@@ -68,6 +73,7 @@ class SearchController extends Controller
         $query         = $this->param('q', '');
         $degree        = $this->param('degree', '');
         $school        = $this->param('school', '');
+        $programme     = $this->param('programme', '');
         $researchStatus= $this->param('research_status', '');
         $vivaYear      = $this->param('viva_year', '');
 
@@ -109,6 +115,11 @@ class SearchController extends Controller
         if (!empty($school)) {
             $sql .= " AND s.school = :school";
             $params[':school'] = $school;
+        }
+
+        if (!empty($programme)) {
+            $sql .= " AND s.programme = :programme";
+            $params[':programme'] = $programme;
         }
 
         if (!empty($researchStatus)) {

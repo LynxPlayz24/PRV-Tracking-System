@@ -86,6 +86,12 @@ class App
         $this->router->post('/staff/chairpersons/update/{id}', 'StaffController', 'updateChairperson');
         $this->router->post('/staff/chairpersons/delete/{id}', 'StaffController', 'deleteChairperson');
 
+        // ── Academic Staff AJAX APIs (Student Form Quick-Add) ──
+        $this->router->post('/staff/api/supervisors/store', 'StaffController', 'apiStoreSupervisor');
+        $this->router->post('/staff/api/examiners/store',   'StaffController', 'apiStoreExaminer');
+        $this->router->post('/staff/api/chairpersons/store','StaffController', 'apiStoreChairperson');
+
+
         // ── Profile ──
         $this->router->get('/profile',         'ProfileController', 'index');
         $this->router->post('/profile/update', 'ProfileController', 'update');

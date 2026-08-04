@@ -34,6 +34,9 @@ unset($_SESSION['flash']);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="<?= $baseUrl ?>/assets/css/style.css" rel="stylesheet">
+    <!-- Flatpickr (date picker dd/mm/yyyy) -->
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" rel="stylesheet">
+
     
     <!-- jQuery (required for Select2) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

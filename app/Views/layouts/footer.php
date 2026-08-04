@@ -14,7 +14,32 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <script>
+    // Global flatpickr init for all date inputs.
+    // altInput shows dd/mm/yyyy; name attribute submits yyyy-mm-dd to server.
+    function initFlatpickr(scope) {
+        var root = scope || document;
+        root.querySelectorAll('input[type="date"]:not(.flatpickr-input)').forEach(function(el) {
+            flatpickr(el, {
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd/m/Y',
+                allowInput: true,
+                altInputClass: 'form-control flatpickr-input',
+                onReady: function(selectedDates, dateStr, instance) {
+                    if (instance.altInput) {
+                        instance.altInput.setAttribute('placeholder', 'dd/mm/yyyy');
+                    }
+                }
+            });
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function() { initFlatpickr(); });
+    </script>
     <script src="<?= $baseUrl ?>/assets/js/searchable-select.js?v=<?= time() ?>"></script>
+
 
     <!-- Sidebar Toggle Script -->
     <script>

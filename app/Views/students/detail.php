@@ -58,7 +58,7 @@ function showMoney($val) {
             <ul class="list-group list-group-flush border-top">
                 <li class="list-group-item d-flex justify-content-between align-items-center p-3">
                     <span class="text-muted flex-shrink-0 me-2">Degree</span>
-                    <strong class="text-end"><?= htmlspecialchars($student['degree_level']) ?></strong>
+                    <strong class="text-end"><?= showVal($student['degree_level'] ?? null) ?></strong>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center p-3">
                     <span class="text-muted flex-shrink-0 me-2">School</span>
@@ -151,26 +151,44 @@ function showMoney($val) {
                     <div class="tab-pane fade" id="tab-viva">
                         <h5 class="mb-4">Examination Panel & Viva Arrangements</h5>
                         <table class="table table-borderless table-sm">
+                            <?php
+                                // Extract examiners from junction table data
+                                $intExaminers = array_filter($student['examiners'] ?? [], fn($e) => $e['role'] === 'Internal');
+                                $extExaminers = array_filter($student['examiners'] ?? [], fn($e) => $e['role'] === 'External');
+                                $intNames = implode(', ', array_column(array_values($intExaminers), 'examiner_name'));
+                                $extNames = implode(', ', array_column(array_values($extExaminers), 'examiner_name'));
+                                // For email/status use viva_records (single slot legacy fields)
+                            ?>
                             <tr><td class="text-muted" style="width: 35%;">Chairperson</td><td><strong><?= showVal($viva['chairperson_name'] ?? null) ?></strong></td></tr>
-                            <tr><td class="text-muted">Internal Examiner</td><td><strong><?= showVal($viva['examiner_name'] ?? null) ?></strong></td></tr>
-                            <tr><td class="text-muted">External Examiner</td><td><strong><?= showVal($viva['external_examiner_name'] ?? null) ?></strong></td></tr>
+                            <tr><td class="text-muted">Internal Examiner</td><td><strong><?= $intNames ? htmlspecialchars($intNames) : '<span class="text-muted">-</span>' ?></strong></td></tr>
+                            <tr><td class="text-muted">External Examiner</td><td><strong><?= $extNames ? htmlspecialchars($extNames) : '<span class="text-muted">-</span>' ?></strong></td></tr>
                             <tr><td colspan="2"><hr></td></tr>
-                            <tr><td class="text-muted">Internal Examiner Confirmation Email</td><td>
-                                <?= showDate($viva['internal_examiner_email_date'] ?? null) ?>
-                                <?php if(!empty($viva['internal_examiner_email_date'])): ?>
-                                    <span class="badge bg-<?= ($viva['internal_examiner_status'] ?? '') == 'Confirmed' ? 'success' : 'warning text-dark' ?> ms-2">
-                                        <?= htmlspecialchars($viva['internal_examiner_status'] ?? 'Pending') ?>
+                            <?php foreach($intExaminers as $ex): ?>
+                            <tr><td class="text-muted">Internal Examiner Confirmation Email<br><small class="text-secondary"><?= htmlspecialchars($ex['examiner_name']) ?></small></td><td>
+                                <?= showDate($ex['email_date'] ?? null) ?>
+                                <?php if(!empty($ex['email_date'])): ?>
+                                    <span class="badge bg-<?= ($ex['status'] ?? '') == 'Confirmed' ? 'success' : 'warning text-dark' ?> ms-2">
+                                        <?= htmlspecialchars($ex['status'] ?? 'Pending') ?>
                                     </span>
                                 <?php endif; ?>
                             </td></tr>
-                            <tr><td class="text-muted">External Examiner Confirmation Email</td><td>
-                                <?= showDate($viva['external_examiner_email_date'] ?? null) ?>
-                                <?php if(!empty($viva['external_examiner_email_date'])): ?>
-                                    <span class="badge bg-<?= ($viva['external_examiner_status'] ?? '') == 'Confirmed' ? 'success' : 'warning text-dark' ?> ms-2">
-                                        <?= htmlspecialchars($viva['external_examiner_status'] ?? 'Pending') ?>
+                            <?php endforeach; ?>
+                            <?php if(empty($intExaminers)): ?>
+                            <tr><td class="text-muted">Internal Examiner Confirmation Email</td><td><span class="text-muted">-</span></td></tr>
+                            <?php endif; ?>
+                            <?php foreach($extExaminers as $ex): ?>
+                            <tr><td class="text-muted">External Examiner Confirmation Email<br><small class="text-secondary"><?= htmlspecialchars($ex['examiner_name']) ?></small></td><td>
+                                <?= showDate($ex['email_date'] ?? null) ?>
+                                <?php if(!empty($ex['email_date'])): ?>
+                                    <span class="badge bg-<?= ($ex['status'] ?? '') == 'Confirmed' ? 'success' : 'warning text-dark' ?> ms-2">
+                                        <?= htmlspecialchars($ex['status'] ?? 'Pending') ?>
                                     </span>
                                 <?php endif; ?>
                             </td></tr>
+                            <?php endforeach; ?>
+                            <?php if(empty($extExaminers)): ?>
+                            <tr><td class="text-muted">External Examiner Confirmation Email</td><td><span class="text-muted">-</span></td></tr>
+                            <?php endif; ?>
                             <tr><td class="text-muted">Panel Appointment Letter</td><td><?= showDate($viva['panel_appointment_letter_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Thesis to Panel (Hard)</td><td><?= showDate($viva['thesis_to_panel_hard_copy_date'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Thesis to Panel (Soft)</td><td><?= showDate($viva['thesis_to_panel_soft_copy_date'] ?? null) ?></td></tr>

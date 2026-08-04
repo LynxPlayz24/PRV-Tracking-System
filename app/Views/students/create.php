@@ -100,8 +100,10 @@ $supervisors = $supervisors ?? [];
                                     'Higher National Diploma',
                                     'Executive Diploma'
                                 ];
+                                // Default to Masters for new students
+                                $currentDegree = $student['degree_level'] ?? 'Masters';
                                 foreach($degreeOptions as $d): ?>
-                                <option value="<?= $d ?>" <?= ($student['degree_level'] ?? '') === $d ? 'selected' : '' ?>><?= $d ?></option>
+                                <option value="<?= $d ?>" <?= $currentDegree === $d ? 'selected' : '' ?>><?= $d ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -156,7 +158,12 @@ $supervisors = $supervisors ?? [];
                         </div>
                         <div class="col-12"><hr></div>
                         <div class="col-md-6">
-                            <label class="form-label">Main Supervisor(s)</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">Main Supervisor(s)</label>
+                                <button type="button" class="btn btn-xs btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#quickAddSupervisorModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Add New
+                                </button>
+                            </div>
                             <select class="form-select select2-multiple" name="main_supervisors[]" multiple size="4">
                                 <?php foreach($supervisors as $sup): ?>
                                     <option value="<?= $sup['supervisor_id'] ?>" <?= in_array($sup['supervisor_id'], $mainSups) ? 'selected' : '' ?>>
@@ -167,7 +174,12 @@ $supervisors = $supervisors ?? [];
                             <div class="form-text">Hold CTRL/CMD to select multiple</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Co-Supervisor(s)</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">Co-Supervisor(s)</label>
+                                <button type="button" class="btn btn-xs btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#quickAddSupervisorModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Add New
+                                </button>
+                            </div>
                             <select class="form-select select2-multiple" name="co_supervisors[]" multiple size="4">
                                 <?php foreach($supervisors as $sup): ?>
                                     <option value="<?= $sup['supervisor_id'] ?>" <?= in_array($sup['supervisor_id'], $coSups) ? 'selected' : '' ?>>
@@ -223,7 +235,12 @@ $supervisors = $supervisors ?? [];
                             }
                         ?>
                         <div class="col-md-6">
-                            <label class="form-label">Internal Examiner(s)</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">Internal Examiner(s)</label>
+                                <button type="button" class="btn btn-xs btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#quickAddExaminerModal" onclick="document.getElementById('quickExaminerClassification').value='Internal';">
+                                    <i class="bi bi-plus-circle me-1"></i>Add New
+                                </button>
+                            </div>
                             <select class="form-select select2-multiple" name="internal_examiners[]" id="internal_examiners" multiple data-placeholder="Select Internal Examiners">
                                 <?php foreach($examiners as $ex): ?>
                                     <option value="<?= $ex['examiner_id'] ?>" data-name="<?= htmlspecialchars($ex['examiner_name']) ?>" <?= in_array($ex['examiner_id'], $intExamIds) ? 'selected' : '' ?>>
@@ -233,7 +250,12 @@ $supervisors = $supervisors ?? [];
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">External Examiner(s)</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">External Examiner(s)</label>
+                                <button type="button" class="btn btn-xs btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#quickAddExaminerModal" onclick="document.getElementById('quickExaminerClassification').value='External';">
+                                    <i class="bi bi-plus-circle me-1"></i>Add New
+                                </button>
+                            </div>
                             <select class="form-select select2-multiple" name="external_examiners[]" id="external_examiners" multiple data-placeholder="Select External Examiners">
                                 <?php foreach($examiners as $ex): ?>
                                     <option value="<?= $ex['examiner_id'] ?>" data-name="<?= htmlspecialchars($ex['examiner_name']) ?>" <?= in_array($ex['examiner_id'], $extExamIds) ? 'selected' : '' ?>>
@@ -271,7 +293,12 @@ $supervisors = $supervisors ?? [];
                             <input type="date" class="form-control" name="viva_date" value="<?= htmlspecialchars($viva['viva_date'] ?? '') ?>">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Chairperson</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label mb-0">Chairperson</label>
+                                <button type="button" class="btn btn-xs btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#quickAddChairpersonModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Add New
+                                </button>
+                            </div>
                             <?php
                                 $chairpersons = $chairpersons ?? [];
                                 $currentChairName = htmlspecialchars($viva['chairperson_name'] ?? '');
@@ -988,6 +1015,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!hasExaminers) {
             container.innerHTML = '';
         }
+
+        // Init flatpickr on any newly injected date inputs
+        if (typeof initFlatpickr === 'function') {
+            initFlatpickr(container);
+        }
     }
 
     if (internalSelect.length && externalSelect.length) {
@@ -1065,6 +1097,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<?php $this->view('students._quick_staff_modals', $data); ?>
+
+
 <style>
 @keyframes pulseHighlight {
     0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); border-color: #0d6efd; }
@@ -1075,4 +1111,10 @@ document.addEventListener('DOMContentLoaded', function() {
     animation: pulseHighlight 1.5s infinite;
     background-color: #f8fbff;
 }
+.btn-xs {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+}
 </style>
+
+
