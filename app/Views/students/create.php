@@ -19,6 +19,37 @@ if ($isEdit && !empty($student['supervisors'])) {
 // Ensure examiners exists even if empty
 $examiners = $examiners ?? [];
 $supervisors = $supervisors ?? [];
+
+$defaultSchools = ['SOG', 'SOIS', 'SOL', 'STHEM'];
+$allSchoolsList = array_unique(array_filter(array_merge($defaultSchools, $schools ?? [])));
+sort($allSchoolsList);
+
+$programmeSchoolMap = [
+    'PUBLIC MANAGEMENT' => 'SOG',
+    'DOKTOR FALSAFAH (PENGURUSAN AWAM)' => 'SOG',
+    'PUBLIC ADMINISTRATION' => 'SOG',
+    'DEVELOPMENT MANAGEMENT' => 'SOG',
+    'SOCIOLOGY' => 'SOG',
+    'INTERNATIONAL BUSINESS' => 'SOIS',
+    'INTERNATIONAL STUDIES' => 'SOIS',
+    'INTERNATIONAL RELATIONS' => 'SOIS',
+    'POLITICAL SCIENCE' => 'SOIS',
+    'ISLAMICJERUSALEM STUDIES' => 'SOIS',
+    'STRATEGIC STUDIES' => 'SOIS',
+    'LAW' => 'SOL',
+    'TOURISM MANAGEMENT' => 'STHEM',
+    'TOURISM AND HOSPITALITY MANAGEMENT' => 'STHEM',
+];
+
+$defaultProgrammes = array_keys($programmeSchoolMap);
+$allProgrammesList = array_unique(array_filter(array_merge($defaultProgrammes, $programmes ?? [])));
+sort($allProgrammesList);
+
+$currentProg = $student['programme'] ?? '';
+$currentSch = $student['school'] ?? '';
+
+$isProgCustom = !empty($currentProg) && !in_array($currentProg, $allProgrammesList);
+$isSchCustom = !empty($currentSch) && !in_array($currentSch, $allSchoolsList);
 ?>
 <div class="page-header animate-fade-in-up">
     <div>
@@ -109,11 +140,31 @@ $supervisors = $supervisors ?? [];
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Programme</label>
-                            <input type="text" class="form-control" name="programme" value="<?= htmlspecialchars($student['programme'] ?? '') ?>">
+                            <select class="form-select" id="programmeSelect" name="programme">
+                                <option value="">-- Select Programme --</option>
+                                <?php foreach($allProgrammesList as $p): ?>
+                                <option value="<?= htmlspecialchars($p) ?>" <?= ($currentProg === $p) ? 'selected' : '' ?>><?= htmlspecialchars($p) ?></option>
+                                <?php endforeach; ?>
+                                <option value="__custom__" <?= $isProgCustom ? 'selected' : '' ?>>-- Other / Custom --</option>
+                            </select>
+                            <input type="text" class="form-control mt-2" id="programmeCustomInput" name="programme_custom" 
+                                   placeholder="Type custom programme name" 
+                                   value="<?= $isProgCustom ? htmlspecialchars($currentProg) : '' ?>" 
+                                   style="<?= $isProgCustom ? '' : 'display: none;' ?>">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">School</label>
-                            <input type="text" class="form-control" name="school" value="<?= htmlspecialchars($student['school'] ?? '') ?>">
+                            <select class="form-select" id="schoolSelect" name="school">
+                                <option value="">-- Select School --</option>
+                                <?php foreach($allSchoolsList as $s): ?>
+                                <option value="<?= htmlspecialchars($s) ?>" <?= ($currentSch === $s) ? 'selected' : '' ?>><?= htmlspecialchars($s) ?></option>
+                                <?php endforeach; ?>
+                                <option value="__custom__" <?= $isSchCustom ? 'selected' : '' ?>>-- Other / Custom --</option>
+                            </select>
+                            <input type="text" class="form-control mt-2" id="schoolCustomInput" name="school_custom" 
+                                   placeholder="Type custom school name" 
+                                   value="<?= $isSchCustom ? htmlspecialchars($currentSch) : '' ?>" 
+                                   style="<?= $isSchCustom ? '' : 'display: none;' ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Thesis/Cohort</label>
@@ -1095,7 +1146,58 @@ document.addEventListener('DOMContentLoaded', function() {
             applyHighlight();
         }, 600);
     }
+
 });
+</script>
+
+<script>
+(function() {
+    var programmeSchoolMap = <?= json_encode($programmeSchoolMap) ?>;
+
+    var progSel   = document.getElementById('programmeSelect');
+    var progCustom = document.getElementById('programmeCustomInput');
+    var schSel    = document.getElementById('schoolSelect');
+    var schCustom  = document.getElementById('schoolCustomInput');
+
+    function handleProgrammeChange() {
+        var val = progSel.value;
+        if (val === '__custom__') {
+            progCustom.style.display = '';
+            progCustom.focus();
+        } else {
+            progCustom.style.display = 'none';
+            // Auto-pick school
+            if (val && programmeSchoolMap[val]) {
+                var mapped = programmeSchoolMap[val];
+                for (var i = 0; i < schSel.options.length; i++) {
+                    if (schSel.options[i].value === mapped) {
+                        schSel.selectedIndex = i;
+                        break;
+                    }
+                }
+                handleSchoolChange();
+            }
+        }
+    }
+
+    function handleSchoolChange() {
+        if (schSel.value === '__custom__') {
+            schCustom.style.display = '';
+            schCustom.focus();
+        } else {
+            schCustom.style.display = 'none';
+        }
+    }
+
+    if (progSel) {
+        progSel.addEventListener('change', handleProgrammeChange);
+        progSel.onchange = handleProgrammeChange;
+    }
+    if (schSel) {
+        schSel.addEventListener('change', handleSchoolChange);
+        schSel.onchange = handleSchoolChange;
+    }
+})();
 </script>
 
 <?php $this->view('students._quick_staff_modals', $data); ?>

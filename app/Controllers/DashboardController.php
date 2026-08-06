@@ -158,32 +158,6 @@ class DashboardController extends Controller
             ];
         }
 
-        // 5. Missing Corrected Thesis Received (deadline passed, no thesis received)
-        $this->db->query("
-            SELECT s.student_id, s.name, s.matric_no, c.correction_id, c.correction_deadline
-            FROM students s
-            JOIN corrections c ON s.student_id = c.student_id
-            WHERE c.correction_deadline IS NOT NULL
-              AND c.correction_deadline < CURDATE()
-              AND (c.corrected_thesis_received_date IS NULL OR c.corrected_thesis_received_date = '')
-            ORDER BY c.correction_deadline ASC
-        ");
-        foreach ($this->db->resultSet() as $row) {
-            $key = 'no_thesis_' . $row['correction_id'];
-            $actions[] = [
-                'alert_key'  => $key,
-                'student_id' => $row['student_id'],
-                'name'       => $row['name'],
-                'matric_no'  => $row['matric_no'],
-                'type'       => 'Corrected Thesis Not Received',
-                'date'       => $row['correction_deadline'],
-                'badge'      => 'bg-danger text-white',
-                'icon'       => 'bi-file-earmark-x',
-                'tab'        => 'postviva',
-                'highlight'  => 'corrected_thesis_received_date'
-            ];
-        }
-
         return $actions;
     }
 

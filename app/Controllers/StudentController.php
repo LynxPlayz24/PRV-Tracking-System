@@ -81,7 +81,9 @@ class StudentController extends Controller
             'currentPage'  => 'create',
             'supervisors'  => $this->supervisorModel->getAll(),
             'examiners'    => $this->examinerModel->getAll(),
-            'chairpersons' => $this->chairpersonModel->getAll()
+            'chairpersons' => $this->chairpersonModel->getAll(),
+            'programmes'   => $this->studentModel->getProgrammes(),
+            'schools'      => $this->studentModel->getSchools()
         ];
 
         $this->view('layouts.header', $data);
@@ -127,14 +129,22 @@ class StudentController extends Controller
         }
 
         // Use manual research status
-        $status = $this->input('research_status', 'Thesis Submitted');
+        $programme = trim($this->input('programme', ''));
+        if ($programme === '__custom__' || $programme === 'custom') {
+            $programme = trim($this->input('programme_custom', ''));
+        }
+
+        $school = trim($this->input('school', ''));
+        if ($school === '__custom__' || $school === 'custom') {
+            $school = trim($this->input('school_custom', ''));
+        }
 
         // 1. Create Student
         $studentId = $this->studentModel->create([
             'matric_no'       => $matricNo,
             'name'            => trim($this->input('name')),
-            'programme'       => trim($this->input('programme')),
-            'school'          => trim($this->input('school')),
+            'programme'       => $programme,
+            'school'          => $school,
             'degree_level'    => $this->input('degree_level'),
             'cohort'          => trim($this->input('cohort')),
             'its_receipt_date'=> $this->input('its_receipt_date'),
@@ -262,7 +272,9 @@ class StudentController extends Controller
             'supervisors'  => $this->supervisorModel->getAll(),
             'examiners'    => $this->examinerModel->getAll(),
             'remarks'      => $this->remarkModel->getForStudent($studentId),
-            'chairpersons' => $this->chairpersonModel->getAll()
+            'chairpersons' => $this->chairpersonModel->getAll(),
+            'programmes'   => $this->studentModel->getProgrammes(),
+            'schools'      => $this->studentModel->getSchools()
         ];
 
         $this->view('layouts.header', $data);
@@ -301,14 +313,22 @@ class StudentController extends Controller
             return;
         }
 
-        $status = $this->input('research_status', 'Thesis Submitted');
+        $programme = trim($this->input('programme', ''));
+        if ($programme === '__custom__' || $programme === 'custom') {
+            $programme = trim($this->input('programme_custom', ''));
+        }
+
+        $school = trim($this->input('school', ''));
+        if ($school === '__custom__' || $school === 'custom') {
+            $school = trim($this->input('school_custom', ''));
+        }
 
         // 1. Update Student
         $this->studentModel->update($studentId, [
             'matric_no'       => $matricNo,
             'name'            => trim($this->input('name')),
-            'programme'       => trim($this->input('programme')),
-            'school'          => trim($this->input('school')),
+            'programme'       => $programme,
+            'school'          => $school,
             'degree_level'    => $this->input('degree_level'),
             'cohort'          => trim($this->input('cohort')),
             'its_receipt_date'=> $this->input('its_receipt_date'),
