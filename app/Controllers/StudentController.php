@@ -139,6 +139,8 @@ class StudentController extends Controller
             $school = trim($this->input('school_custom', ''));
         }
 
+        $researchStatus = trim($this->input('research_status', 'Thesis Submitted'));
+
         // 1. Create Student
         $studentId = $this->studentModel->create([
             'matric_no'       => $matricNo,
@@ -149,7 +151,7 @@ class StudentController extends Controller
             'cohort'          => trim($this->input('cohort')),
             'its_receipt_date'=> $this->input('its_receipt_date'),
             'thesis_title'    => strtoupper(trim($this->input('thesis_title'))),
-            'research_status' => $status
+            'research_status' => $researchStatus
         ]);
 
         // 2. Assign Supervisors
@@ -323,6 +325,8 @@ class StudentController extends Controller
             $school = trim($this->input('school_custom', ''));
         }
 
+        $researchStatus = trim($this->input('research_status', 'Thesis Submitted'));
+
         // 1. Update Student
         $this->studentModel->update($studentId, [
             'matric_no'       => $matricNo,
@@ -333,7 +337,7 @@ class StudentController extends Controller
             'cohort'          => trim($this->input('cohort')),
             'its_receipt_date'=> $this->input('its_receipt_date'),
             'thesis_title'    => strtoupper(trim($this->input('thesis_title'))),
-            'research_status' => $status
+            'research_status' => $researchStatus
         ]);
 
         // 2. Update Supervisors (Remove all, then add)
@@ -564,13 +568,14 @@ class StudentController extends Controller
     private function syncStudentResearchStatus(int $studentId, array $post): void
     {
         $order = [
-            'Thesis Submitted'    => 1,
-            'Examiner Assigned'   => 2,
-            'Viva Scheduled'      => 3,
-            'Viva Completed'      => 4,
-            'Corrections Submitted' => 5,
-            'Ready for Senate'    => 6,
-            'Graduated'           => 7,
+            'Thesis Submitted'      => 1,
+            'Examiner Assigned'     => 2,
+            'Viva Scheduled'        => 3,
+            'Viva Completed'        => 4,
+            'Re-Viva'               => 5,
+            'Corrections Submitted' => 6,
+            'Ready for Senate'      => 7,
+            'Graduated'             => 8,
         ];
 
         $current = $this->studentModel->findById($studentId)['research_status'] ?? 'Thesis Submitted';
@@ -591,6 +596,8 @@ class StudentController extends Controller
             $derived = 'Ready for Senate';
         } elseif (!empty($correctedThesis)) {
             $derived = 'Corrections Submitted';
+        } elseif (!empty($vivaResult) && (stripos($vivaResult, 're-viva') !== false || stripos($vivaResult, 're-examination') !== false)) {
+            $derived = 'Re-Viva';
         } elseif (!empty($vivaResult)) {
             $derived = 'Viva Completed';
         } elseif (!empty($vivaDate) && strtotime($vivaDate) <= time()) {

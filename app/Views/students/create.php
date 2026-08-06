@@ -174,7 +174,7 @@ $isSchCustom = !empty($currentSch) && !in_array($currentSch, $allSchoolsList);
                             <label class="form-label">Research Status <span class="text-danger">*</span></label>
                             <select class="form-select" name="research_status" required>
                                 <?php 
-                                $statuses = ['Thesis Submitted', 'Examiner Assigned', 'Viva Scheduled', 'Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated'];
+                                $statuses = ['Thesis Submitted', 'Examiner Assigned', 'Viva Scheduled', 'Viva Completed', 'Re-Viva', 'Corrections Submitted', 'Ready for Senate', 'Graduated'];
                                 foreach($statuses as $rs): ?>
                                 <option value="<?= $rs ?>" <?= ($student['research_status'] ?? 'Thesis Submitted') === $rs ? 'selected' : '' ?>><?= $rs ?></option>
                                 <?php endforeach; ?>

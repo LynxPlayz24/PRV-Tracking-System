@@ -48,6 +48,8 @@ foreach ($students as $s) {
         $newStatus = 'Ready for Senate';
     } elseif ((!empty($corrReceived) && $corrReceived !== '0000-00-00') || (!empty($endorsement) && $endorsement !== '0000-00-00')) {
         $newStatus = 'Corrections Submitted';
+    } elseif (!empty($vivaResult) && (stripos($vivaResult, 're-viva') !== false || stripos($vivaResult, 're-examination') !== false)) {
+        $newStatus = 'Re-Viva';
     } elseif ((!empty($vivaDate) && $vivaDate !== '0000-00-00' && strtotime($vivaDate) <= time()) || !empty($vivaResult)) {
         $newStatus = 'Viva Completed';
     } elseif (!empty($vivaDate) && $vivaDate !== '0000-00-00') {

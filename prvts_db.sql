@@ -269,7 +269,7 @@ CREATE TABLE `students` (
   `cohort` varchar(50) DEFAULT NULL,
   `its_receipt_date` date DEFAULT NULL,
   `thesis_title` text DEFAULT NULL,
-  `research_status` enum('Thesis Submitted','Examiner Assigned','Viva Scheduled','Viva Completed','Corrections Submitted','Ready for Senate','Graduated') NOT NULL DEFAULT 'Thesis Submitted',
+  `research_status` enum('Thesis Submitted','Examiner Assigned','Viva Scheduled','Viva Completed','Re-Viva','Corrections Submitted','Ready for Senate','Graduated') NOT NULL DEFAULT 'Thesis Submitted',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`student_id`),

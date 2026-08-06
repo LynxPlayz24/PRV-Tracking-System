@@ -84,19 +84,19 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     <div class="col-lg-6">
         <div class="card h-100 shadow-sm border-0">
             <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <h5 class="mb-0 fw-bold text-dark">
+                <div class="d-flex align-items-center gap-2 flex-wrap min-w-0">
+                    <h5 class="mb-0 fw-bold text-dark fs-6 fs-xl-5 text-nowrap">
                         <i class="bi bi-exclamation-circle-fill text-danger me-2"></i>Action Required Alerts
                     </h5>
-                    <span class="badge bg-secondary" id="action-alerts-badge"><?= count($actions) ?> active</span>
+                    <span class="badge bg-secondary flex-shrink-0" id="action-alerts-badge"><?= count($actions) ?> active</span>
                 </div>
                 <?php if (!empty($actions)): ?>
                     <?php
                     $alertTypes = array_values(array_unique(array_column($actions, 'type')));
                     sort($alertTypes);
                     ?>
-                    <div class="d-flex align-items-center gap-2">
-                        <select class="form-select form-select-sm shadow-none border-secondary-subtle" id="actionAlertFilter" style="font-size: 0.85rem; max-width: 220px;">
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <select class="form-select form-select-sm shadow-none border-secondary-subtle" id="actionAlertFilter" style="font-size: 0.825rem; max-width: 185px;">
                             <option value="all">All Alert Types (<?= count($actions) ?>)</option>
                             <?php foreach ($alertTypes as $t): ?>
                                 <?php 
@@ -160,11 +160,30 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     <!-- Academic Staff Pending Responses Table -->
     <div class="col-lg-6">
         <div class="card h-100 shadow-sm border-0">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark">
-                    <i class="bi bi-person-badge-fill text-warning me-2"></i>Academic Staff Pending Responses
-                </h5>
-                <span class="badge bg-warning text-dark"><?= count($pending) ?> pending</span>
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap min-w-0">
+                    <h5 class="mb-0 fw-bold text-dark fs-6 fs-xl-5 text-nowrap">
+                        <i class="bi bi-person-badge-fill text-warning me-2"></i>Academic Staff Pending Responses
+                    </h5>
+                    <span class="badge bg-warning text-dark flex-shrink-0" id="pending-responses-badge"><?= count($pending) ?> pending</span>
+                </div>
+                <?php if (!empty($pending)): ?>
+                    <?php
+                    $pendingTasks = array_values(array_unique(array_column($pending, 'task')));
+                    sort($pendingTasks);
+                    ?>
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <select class="form-select form-select-sm shadow-none border-secondary-subtle" id="pendingResponseFilter" style="font-size: 0.825rem; max-width: 185px;">
+                            <option value="all">All Response Types (<?= count($pending) ?>)</option>
+                            <?php foreach ($pendingTasks as $t): ?>
+                                <?php 
+                                $typeCount = count(array_filter($pending, fn($p) => $p['task'] === $t));
+                                ?>
+                                <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?> (<?= $typeCount ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="card-body">
                 <?php if (empty($pending)): ?>
@@ -174,7 +193,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                     </div>
                 <?php else: ?>
                     <div class="table-responsive dashboard-alert-scroll">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle mb-0" id="pendingResponsesTable">
                             <thead class="table-light text-muted small">
                                 <tr>
                                     <th>Staff & Role</th>
@@ -185,7 +204,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                             </thead>
                             <tbody>
                                 <?php foreach ($pending as $p): ?>
-                                    <tr id="alert-row-<?= md5($p['alert_key']) ?>">
+                                    <tr id="alert-row-<?= md5($p['alert_key']) ?>" data-task-type="<?= htmlspecialchars($p['task']) ?>">
                                         <td>
                                             <div class="fw-bold text-dark"><?= htmlspecialchars($p['staff_name']) ?></div>
                                             <span class="badge bg-light text-primary border small mb-1"><?= htmlspecialchars($p['role']) ?></span>
@@ -218,6 +237,10 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+                        <div id="no-matching-pending" class="text-center text-muted py-4 d-none">
+                            <i class="bi bi-funnel-fill text-muted fs-3 mb-2 d-block"></i>
+                            No pending responses matching selected filter.
+                        </div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -257,6 +280,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     noMatching.classList.remove('d-none');
                 } else {
                     noMatching.classList.add('d-none');
+                }
+            }
+        });
+    }
+
+    const pendingFilterSelect = document.getElementById('pendingResponseFilter');
+    const pendingTable = document.getElementById('pendingResponsesTable');
+    const pendingBadge = document.getElementById('pending-responses-badge');
+    const noMatchingPending = document.getElementById('no-matching-pending');
+
+    if (pendingFilterSelect && pendingTable) {
+        pendingFilterSelect.addEventListener('change', function() {
+            const selectedTask = this.value;
+            const rows = pendingTable.querySelectorAll('tbody tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const rowTask = row.getAttribute('data-task-type');
+                if (selectedTask === 'all' || rowTask === selectedTask) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (pendingBadge) {
+                pendingBadge.textContent = visibleCount + ' pending';
+            }
+
+            if (noMatchingPending) {
+                if (visibleCount === 0) {
+                    noMatchingPending.classList.remove('d-none');
+                } else {
+                    noMatchingPending.classList.add('d-none');
                 }
             }
         });

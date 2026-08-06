@@ -10,7 +10,7 @@ $months = [
 ];
 $researchStatuses = [
     'Thesis Submitted','Examiner Assigned','Viva Scheduled',
-    'Viva Completed','Corrections Submitted','Ready for Senate','Graduated'
+    'Viva Completed','Re-Viva','Corrections Submitted','Ready for Senate','Graduated'
 ];
 ?>
 <!-- Analytics Content -->

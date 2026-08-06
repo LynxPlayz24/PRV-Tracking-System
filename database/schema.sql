@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `students` (
         'Examiner Assigned',
         'Viva Scheduled',
         'Viva Completed',
+        'Re-Viva',
         'Corrections Submitted',
         'Ready for Senate',
         'Graduated'

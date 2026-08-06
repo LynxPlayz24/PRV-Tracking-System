@@ -119,7 +119,7 @@ $availableFields = [
                         <label class="filter-label">Research Status</label>
                         <select name="research_status[]" class="form-select select2-multiple" multiple data-placeholder="All Statuses">
                             <?php
-                            $statuses = ['Graduated','Ready for Senate','Corrections Submitted','Viva Completed','Viva Scheduled','Examiner Assigned','Thesis Submitted'];
+                            $statuses = ['Graduated','Ready for Senate','Corrections Submitted','Re-Viva','Viva Completed','Viva Scheduled','Examiner Assigned','Thesis Submitted'];
                             foreach($statuses as $st): ?>
                                 <option value="<?= $st ?>" <?= in_array($st, (array)$filters['research_status']) ? 'selected' : '' ?>><?= $st ?></option>
                             <?php endforeach; ?>

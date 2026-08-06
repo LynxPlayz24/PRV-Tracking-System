@@ -35,7 +35,7 @@ class SearchController extends Controller
         ];
         $statuses = [
             'Thesis Submitted', 'Examiner Assigned', 'Viva Scheduled', 
-            'Viva Completed', 'Corrections Submitted', 'Ready for Senate', 'Graduated'
+            'Viva Completed', 'Re-Viva', 'Corrections Submitted', 'Ready for Senate', 'Graduated'
         ];
 
         // Retrieve distinct viva years for the year filter.
