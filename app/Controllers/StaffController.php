@@ -53,7 +53,7 @@ class StaffController extends Controller
         }
 
         $data = [
-            'supervisor_name' => trim($this->input('supervisor_name', '')),
+            'supervisor_name' => strtoupper(trim($this->input('supervisor_name', ''))),
             'email'           => trim($this->input('email', '')),
             'phone'           => trim($this->input('phone', '')),
             'department'      => trim($this->input('department', '')),
@@ -87,7 +87,7 @@ class StaffController extends Controller
         }
 
         $data = [
-            'supervisor_name' => trim($this->input('supervisor_name', '')),
+            'supervisor_name' => strtoupper(trim($this->input('supervisor_name', ''))),
             'email'           => trim($this->input('email', '')),
             'phone'           => trim($this->input('phone', '')),
             'department'      => trim($this->input('department', '')),
@@ -140,7 +140,7 @@ class StaffController extends Controller
         }
 
         $data = [
-            'examiner_name'  => trim($this->input('examiner_name', '')),
+            'examiner_name'  => strtoupper(trim($this->input('examiner_name', ''))),
             'email'          => trim($this->input('email', '')),
             'phone'          => trim($this->input('phone', '')),
             'institution'    => trim($this->input('institution', '')),
@@ -173,7 +173,7 @@ class StaffController extends Controller
         }
 
         $data = [
-            'examiner_name'  => trim($this->input('examiner_name', '')),
+            'examiner_name'  => strtoupper(trim($this->input('examiner_name', ''))),
             'email'          => trim($this->input('email', '')),
             'phone'          => trim($this->input('phone', '')),
             'institution'    => trim($this->input('institution', '')),
@@ -311,7 +311,7 @@ class StaffController extends Controller
         }
 
         $data = [
-            'supervisor_name' => trim($this->input('supervisor_name', '')),
+            'supervisor_name' => strtoupper(trim($this->input('supervisor_name', ''))),
             'email'           => trim($this->input('email', '')),
             'phone'           => trim($this->input('phone', '')),
             'department'      => trim($this->input('department', '')),
@@ -346,7 +346,7 @@ class StaffController extends Controller
         }
 
         $data = [
-            'examiner_name'  => trim($this->input('examiner_name', '')),
+            'examiner_name'  => strtoupper(trim($this->input('examiner_name', ''))),
             'email'          => trim($this->input('email', '')),
             'phone'          => trim($this->input('phone', '')),
             'institution'    => trim($this->input('institution', '')),
