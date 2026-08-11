@@ -6,4 +6,5 @@
 .idea/
 *.log
 .codegraph/
+*_backup.sql
 
