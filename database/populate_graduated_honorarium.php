@@ -14,6 +14,14 @@
  * php database/populate_graduated_honorarium.php
  */
 
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+    if (class_exists('Dotenv\Dotenv')) {
+        $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
+        $dotenv->safeLoad();
+    }
+}
+
 require_once __DIR__ . '/../app/Core/Database.php';
 
 use App\Core\Database;

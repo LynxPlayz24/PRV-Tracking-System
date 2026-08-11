@@ -284,6 +284,7 @@ CREATE TABLE IF NOT EXISTS `honorarium_payments` (
     `staff_name`    VARCHAR(200) DEFAULT NULL,
     `examiner_id`   INT DEFAULT NULL,
     `amount`        DECIMAL(10,2) DEFAULT NULL,
+    `payment_date`  DATE DEFAULT NULL,
     INDEX `idx_hp_student` (`student_id`),
     INDEX `idx_hp_examiner` (`examiner_id`),
     CONSTRAINT `fk_hp_student`
