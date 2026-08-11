@@ -431,22 +431,26 @@ $coSups = array_filter($student['supervisors'] ?? [], fn($s) => $s['role'] === '
     <div class="section">
     <div class="section-title">Honorarium Details</div>
     <table>
-        <tr>
-            <th>Chairperson</th>
-            <td><?= pdfMoney($viva['honorarium_chairperson'] ?? null) ?></td>
-        </tr>
-        <tr>
-            <th>Internal Examiner</th>
-            <td><?= pdfMoney($viva['honorarium_internal'] ?? null) ?></td>
-        </tr>
-        <tr>
-            <th>External Examiner</th>
-            <td><?= pdfMoney($viva['honorarium_external'] ?? null) ?></td>
-        </tr>
-        <tr>
-            <th>Refreshment</th>
-            <td><?= pdfMoney($viva['honorarium_refreshment'] ?? null) ?></td>
-        </tr>
+        <?php
+            $roleLabels = ['Chairperson' => 'Chairperson', 'Internal' => 'Internal Examiner', 'External' => 'External Examiner', 'Refreshment' => 'Refreshment'];
+            if (!empty($honorariumPayments)):
+                foreach ($honorariumPayments as $hp):
+                    $roleLabel = $roleLabels[$hp['role']] ?? $hp['role'];
+                    $label = !empty($hp['staff_name']) ? $roleLabel . ' - ' . $hp['staff_name'] : $roleLabel;
+        ?>
+            <tr>
+                <th><?= htmlspecialchars($label) ?></th>
+                <td>
+                    <?= pdfMoney($hp['amount']) ?>
+                    <?= !empty($hp['payment_date']) ? ' <span style="font-size:10px;color:#666;">(Paid: ' . date('d/m/Y', strtotime($hp['payment_date'])) . ')</span>' : '' ?>
+                </td>
+            </tr>
+        <?php
+                endforeach;
+            else:
+        ?>
+            <tr><td colspan="2" style="color:#888;font-style:italic;">No honorarium recorded.</td></tr>
+        <?php endif; ?>
     </table>
     </div>
 

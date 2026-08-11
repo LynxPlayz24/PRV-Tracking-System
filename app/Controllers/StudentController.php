@@ -11,6 +11,7 @@ use App\Models\Correction;
 use App\Models\Graduation;
 use App\Models\Remark;
 use App\Models\Chairperson;
+use App\Models\HonorariumPayment;
 
 class StudentController extends Controller
 {
@@ -22,6 +23,7 @@ class StudentController extends Controller
     private Graduation $graduationModel;
     private Remark $remarkModel;
     private Chairperson $chairpersonModel;
+    private HonorariumPayment $honorariumModel;
 
     public function __construct()
     {
@@ -33,6 +35,7 @@ class StudentController extends Controller
         $this->graduationModel = new Graduation();
         $this->remarkModel     = new Remark();
         $this->chairpersonModel = new Chairperson();
+        $this->honorariumModel = new HonorariumPayment();
     }
 
     /**
@@ -54,10 +57,11 @@ class StudentController extends Controller
         $remarks = $this->remarkModel->getForStudent($studentId);
 
         $data = [
-            'pageTitle'   => 'Student Details - ' . $student['name'],
-            'currentPage' => 'search',
-            'student'     => $student,
-            'remarks'     => $remarks
+            'pageTitle'          => 'Student Details - ' . $student['name'],
+            'currentPage'        => 'search',
+            'student'            => $student,
+            'remarks'            => $remarks,
+            'honorariumPayments' => $this->honorariumModel->getForStudent($studentId),
         ];
 
         $this->view('layouts.header', $data);
@@ -199,6 +203,25 @@ class StudentController extends Controller
         // 5. Create Graduation Record
         $this->graduationModel->createOrUpdate($studentId, $_POST);
 
+        // 5B. Save per-examiner honorarium payments
+        $this->honorariumModel->saveForStudent($studentId, $this->buildHonorariumPayments(
+            $_POST['honorarium_chairperson'] ?? null,
+            $_POST['honorarium_chairperson_date'] ?? null,
+            $internalExaminers,
+            $externalExaminers,
+            $_POST['honorarium_internal'] ?? null,
+            $_POST['honorarium_internal_date'] ?? null,
+            $_POST['honorarium_external'] ?? null,
+            $_POST['honorarium_external_date'] ?? null,
+            $_POST['honorarium_internal_list'] ?? [],
+            $_POST['honorarium_internal_date_list'] ?? [],
+            $_POST['honorarium_external_list'] ?? [],
+            $_POST['honorarium_external_date_list'] ?? [],
+            $_POST['honorarium_refreshment'] ?? null,
+            $_POST['honorarium_refreshment_date'] ?? null,
+            $this->examinerModel->getForStudent($studentId)
+        ));
+
         // 6. Sync Research Status automatically
         $this->syncStudentResearchStatus($studentId, $_POST);
 
@@ -268,15 +291,16 @@ class StudentController extends Controller
         $this->generateCsrfToken();
 
         $data = [
-            'pageTitle'    => 'Edit Student',
-            'currentPage'  => 'manage',
-            'student'      => $student,
-            'supervisors'  => $this->supervisorModel->getAll(),
-            'examiners'    => $this->examinerModel->getAll(),
-            'remarks'      => $this->remarkModel->getForStudent($studentId),
-            'chairpersons' => $this->chairpersonModel->getAll(),
-            'programmes'   => $this->studentModel->getProgrammes(),
-            'schools'      => $this->studentModel->getSchools()
+            'pageTitle'          => 'Edit Student',
+            'currentPage'        => 'manage',
+            'student'            => $student,
+            'supervisors'        => $this->supervisorModel->getAll(),
+            'examiners'          => $this->examinerModel->getAll(),
+            'remarks'            => $this->remarkModel->getForStudent($studentId),
+            'chairpersons'       => $this->chairpersonModel->getAll(),
+            'programmes'         => $this->studentModel->getProgrammes(),
+            'schools'            => $this->studentModel->getSchools(),
+            'honorariumPayments' => $this->honorariumModel->getForStudent($studentId),
         ];
 
         $this->view('layouts.header', $data);
@@ -386,6 +410,25 @@ class StudentController extends Controller
         $this->vivaModel->createOrUpdate($studentId, $_POST);
         $this->correctionModel->createOrUpdate($studentId, $_POST);
         $this->graduationModel->createOrUpdate($studentId, $_POST);
+
+        // 3B. Save per-examiner honorarium payments
+        $this->honorariumModel->saveForStudent($studentId, $this->buildHonorariumPayments(
+            $_POST['honorarium_chairperson'] ?? null,
+            $_POST['honorarium_chairperson_date'] ?? null,
+            $internalExaminers,
+            $externalExaminers,
+            $_POST['honorarium_internal'] ?? null,
+            $_POST['honorarium_internal_date'] ?? null,
+            $_POST['honorarium_external'] ?? null,
+            $_POST['honorarium_external_date'] ?? null,
+            $_POST['honorarium_internal_list'] ?? [],
+            $_POST['honorarium_internal_date_list'] ?? [],
+            $_POST['honorarium_external_list'] ?? [],
+            $_POST['honorarium_external_date_list'] ?? [],
+            $_POST['honorarium_refreshment'] ?? null,
+            $_POST['honorarium_refreshment_date'] ?? null,
+            $this->examinerModel->getForStudent($studentId)
+        ));
 
         // Sync Research Status automatically
         $this->syncStudentResearchStatus($studentId, $_POST);
@@ -651,5 +694,117 @@ class StudentController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Build the payments array for HonorariumPayment::saveForStudent().
+     * Handles 1 or many internal/external examiners along with payment dates.
+     */
+    private function buildHonorariumPayments(
+        ?string $chairAmount,
+        ?string $chairDate,
+        array $internalIds,
+        array $externalIds,
+        ?string $singleIntAmount,
+        ?string $singleIntDate,
+        ?string $singleExtAmount,
+        ?string $singleExtDate,
+        array $intList,       // ['examiner_id' => amount, ...]
+        array $intDateList,   // ['examiner_id' => date, ...]
+        array $extList,       // ['examiner_id' => amount, ...]
+        array $extDateList,   // ['examiner_id' => date, ...]
+        ?string $refreshAmount,
+        ?string $refreshDate,
+        array $examinerRows   // from Examiner::getForStudent
+    ): array {
+        $payments = [];
+
+        // Chairperson
+        if (($chairAmount !== null && $chairAmount !== '') || !empty($chairDate)) {
+            $payments[] = [
+                'role'         => 'Chairperson',
+                'staff_name'   => null,
+                'examiner_id'  => null,
+                'amount'       => $chairAmount,
+                'payment_date' => $chairDate ?: null
+            ];
+        }
+
+        // Build examiner name lookup
+        $examinerNames = [];
+        foreach ($examinerRows as $row) {
+            $examinerNames[(int)$row['examiner_id']] = $row['examiner_name'];
+        }
+
+        // Internal examiners
+        if (count($internalIds) === 1) {
+            $exId = (int)$internalIds[0];
+            if ($exId && (($singleIntAmount !== null && $singleIntAmount !== '') || !empty($singleIntDate))) {
+                $payments[] = [
+                    'role'         => 'Internal',
+                    'staff_name'   => $examinerNames[$exId] ?? null,
+                    'examiner_id'  => $exId,
+                    'amount'       => $singleIntAmount,
+                    'payment_date' => $singleIntDate ?: null
+                ];
+            }
+        } elseif (count($internalIds) > 1) {
+            foreach ($internalIds as $exId) {
+                $exId = (int)$exId;
+                if (!$exId) continue;
+                $amount = $intList[$exId] ?? null;
+                $date = $intDateList[$exId] ?? null;
+                if (($amount === null || $amount === '') && empty($date)) continue;
+                $payments[] = [
+                    'role'         => 'Internal',
+                    'staff_name'   => $examinerNames[$exId] ?? null,
+                    'examiner_id'  => $exId,
+                    'amount'       => $amount,
+                    'payment_date' => $date ?: null
+                ];
+            }
+        }
+
+        // External examiners
+        if (count($externalIds) === 1) {
+            $exId = (int)$externalIds[0];
+            if ($exId && (($singleExtAmount !== null && $singleExtAmount !== '') || !empty($singleExtDate))) {
+                $payments[] = [
+                    'role'         => 'External',
+                    'staff_name'   => $examinerNames[$exId] ?? null,
+                    'examiner_id'  => $exId,
+                    'amount'       => $singleExtAmount,
+                    'payment_date' => $singleExtDate ?: null
+                ];
+            }
+        } elseif (count($externalIds) > 1) {
+            foreach ($externalIds as $exId) {
+                $exId = (int)$exId;
+                if (!$exId) continue;
+                $amount = $extList[$exId] ?? null;
+                $date = $extDateList[$exId] ?? null;
+                if (($amount === null || $amount === '') && empty($date)) continue;
+                $payments[] = [
+                    'role'         => 'External',
+                    'staff_name'   => $examinerNames[$exId] ?? null,
+                    'examiner_id'  => $exId,
+                    'amount'       => $amount,
+                    'payment_date' => $date ?: null
+                ];
+            }
+        }
+
+        // Refreshment
+        if (($refreshAmount !== null && $refreshAmount !== '') || !empty($refreshDate)) {
+            $payments[] = [
+                'role'         => 'Refreshment',
+                'staff_name'   => null,
+                'examiner_id'  => null,
+                'amount'       => $refreshAmount,
+                'payment_date' => $refreshDate ?: null
+            ];
+        }
+
+        return $payments;
     }
 }

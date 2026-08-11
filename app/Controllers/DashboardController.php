@@ -126,17 +126,34 @@ class DashboardController extends Controller
             ];
         }
 
-        // 4. Pending Honorarium Payments (Viva Completed but any honorarium numeric RM amount is missing, text string, or 0)
+        // 4. Pending Honorarium Payments
+        // Triggers ONLY when staff honorarium (Chairperson, Internal Examiners, External Examiners) is missing or unassigned/unfilled. Refreshment is ignored.
         $this->db->query("
-            SELECT s.student_id, s.name, s.matric_no, v.viva_id, v.viva_date,
-                   v.honorarium_chairperson, v.honorarium_internal, v.honorarium_external
+            SELECT DISTINCT s.student_id, s.name, s.matric_no, v.viva_id, v.viva_date
             FROM students s
             JOIN viva_records v ON s.student_id = v.student_id
             WHERE v.viva_date IS NOT NULL AND v.viva_date <= CURDATE()
               AND (
-                  v.honorarium_chairperson IS NULL OR v.honorarium_chairperson NOT REGEXP '^[0-9]+(\\\\.[0-9]+)?$' OR CAST(v.honorarium_chairperson AS DECIMAL(10,2)) <= 0 OR
-                  v.honorarium_internal IS NULL OR v.honorarium_internal NOT REGEXP '^[0-9]+(\\\\.[0-9]+)?$' OR CAST(v.honorarium_internal AS DECIMAL(10,2)) <= 0 OR
-                  v.honorarium_external IS NULL OR v.honorarium_external NOT REGEXP '^[0-9]+(\\\\.[0-9]+)?$' OR CAST(v.honorarium_external AS DECIMAL(10,2)) <= 0
+                  -- Has assigned staff examiners but any assigned staff examiner is missing an amount in honorarium_payments
+                  EXISTS (
+                      SELECT 1 FROM student_examiners se
+                      LEFT JOIN honorarium_payments hp ON se.student_id = hp.student_id AND se.examiner_id = hp.examiner_id
+                      WHERE se.student_id = s.student_id
+                        AND (hp.amount IS NULL OR hp.amount <= 0)
+                  )
+                  -- OR no staff examiner entries recorded in honorarium_payments at all
+                  OR NOT EXISTS (
+                      SELECT 1 FROM honorarium_payments hp
+                      WHERE hp.student_id = s.student_id AND hp.role IN ('Internal', 'External')
+                  )
+                  -- OR chairperson is assigned in viva_records but chairperson honorarium amount is missing
+                  OR (
+                      v.chairperson_name IS NOT NULL AND v.chairperson_name != ''
+                      AND NOT EXISTS (
+                          SELECT 1 FROM honorarium_payments hp
+                          WHERE hp.student_id = s.student_id AND hp.role = 'Chairperson' AND hp.amount IS NOT NULL AND hp.amount > 0
+                      )
+                  )
               )
             ORDER BY v.viva_date DESC
         ");

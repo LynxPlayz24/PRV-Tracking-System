@@ -106,13 +106,7 @@ class AnalyticsController extends Controller
         $stats['pending_viva'] = (int)($this->db->single()['cnt'] ?? 0);
 
         // Financial & Operational Metrics
-        $this->db->query("
-            SELECT SUM(CAST(NULLIF(honorarium_chairperson, '') AS DECIMAL(10,2)) 
-                     + CAST(NULLIF(honorarium_internal, '') AS DECIMAL(10,2)) 
-                     + CAST(NULLIF(honorarium_external, '') AS DECIMAL(10,2)) 
-                     + CAST(NULLIF(honorarium_refreshment, '') AS DECIMAL(10,2))) as total 
-            FROM viva_records
-        ");
+        $this->db->query("SELECT SUM(amount) as total FROM honorarium_payments");
         $stats['total_viva_budget'] = $this->db->single()['total'] ?? 0;
 
         $this->db->query("SELECT COUNT(*) as cnt FROM student_supervisors");

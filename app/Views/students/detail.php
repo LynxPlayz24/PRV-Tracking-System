@@ -251,12 +251,34 @@ function showMoney($val) {
                             <tr><td class="text-muted">COLGIS JIL Meeting No.</td><td><?= showVal($corr['colgis_jil_meeting_no'] ?? null) ?></td></tr>
                             <tr><td class="text-muted">Final Result</td><td><strong class="text-success"><?= showVal($corr['final_result'] ?? null) ?></strong></td></tr>
                             
+                            <?php
+                                $chairNameStr = $viva['chairperson_name'] ?? '';
+                                $roleLabels = ['Chairperson' => 'Chairperson', 'Internal' => 'Internal Examiner', 'External' => 'External Examiner', 'Refreshment' => 'Refreshment'];
+                                $roleIcons  = ['Chairperson' => '🪑', 'Internal' => '🔍', 'External' => '🌐', 'Refreshment' => '☕'];
+                            ?>
                             <tr><td colspan="2"><hr></td></tr>
                             <tr><td class="text-muted fw-bold" colspan="2">Honorarium Details</td></tr>
-                            <tr><td class="text-muted">Chairperson</td><td><?= showMoney($viva['honorarium_chairperson'] ?? null) ?></td></tr>
-                            <tr><td class="text-muted">Internal Examiner</td><td><?= showMoney($viva['honorarium_internal'] ?? null) ?></td></tr>
-                            <tr><td class="text-muted">External Examiner</td><td><?= showMoney($viva['honorarium_external'] ?? null) ?></td></tr>
-                            <tr><td class="text-muted">Refreshment</td><td><?= showMoney($viva['honorarium_refreshment'] ?? null) ?></td></tr>
+                            <?php if (!empty($honorariumPayments)): ?>
+                                <?php foreach ($honorariumPayments as $hp): ?>
+                                    <?php
+                                        $roleLabel = $roleLabels[$hp['role']] ?? $hp['role'];
+                                        $staffLabel = !empty($hp['staff_name']) ? htmlspecialchars($hp['staff_name']) : (!empty($chairNameStr) && $hp['role'] === 'Chairperson' ? htmlspecialchars($chairNameStr) : null);
+                                        $displayLabel = $roleLabel . ($staffLabel ? ' (' . $staffLabel . ')' : '');
+                                        $pDate = !empty($hp['payment_date']) ? date('d/m/Y', strtotime($hp['payment_date'])) : null;
+                                    ?>
+                                    <tr>
+                                        <td class="text-muted"><?= $displayLabel ?></td>
+                                        <td>
+                                            <?= showMoney($hp['amount']) ?>
+                                            <?php if ($pDate): ?>
+                                                <span class="ms-2 text-muted small"><i class="bi bi-calendar-check me-1"></i><?= $pDate ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="2" class="text-muted fst-italic small">No honorarium recorded yet.</td></tr>
+                            <?php endif; ?>
                         </table>
                     </div>
 

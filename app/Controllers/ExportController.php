@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Middleware;
 use App\Models\Student;
+use App\Models\HonorariumPayment;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -15,10 +16,12 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class ExportController extends Controller
 {
     private Student $studentModel;
+    private HonorariumPayment $honorariumModel;
 
     public function __construct()
     {
-        $this->studentModel = new Student();
+        $this->studentModel    = new Student();
+        $this->honorariumModel = new HonorariumPayment();
     }
 
     /**
@@ -90,7 +93,10 @@ class ExportController extends Controller
         $dompdf = new Dompdf($options);
 
         ob_start();
-        $this->view('export.pdf_template', ['student' => $student]);
+        $this->view('export.pdf_template', [
+            'student'            => $student,
+            'honorariumPayments' => $this->honorariumModel->getForStudent($studentId),
+        ]);
         $html = ob_get_clean();
 
         $dompdf->loadHtml($html);
@@ -236,10 +242,21 @@ class ExportController extends Controller
         };
 
         $addHeader('6. Honorarium Details');
-        $addRow('Chairperson Honorarium', $formatMoney($viva['honorarium_chairperson'] ?? null));
-        $addRow('Internal Examiner Honorarium', $formatMoney($viva['honorarium_internal'] ?? null));
-        $addRow('External Examiner Honorarium', $formatMoney($viva['honorarium_external'] ?? null));
-        $addRow('Refreshment Honorarium', $formatMoney($viva['honorarium_refreshment'] ?? null));
+        $honorariumPayments = $this->honorariumModel->getForStudent($studentId);
+        $roleLabels = ['Chairperson' => 'Chairperson', 'Internal' => 'Internal Examiner', 'External' => 'External Examiner', 'Refreshment' => 'Refreshment'];
+        if (!empty($honorariumPayments)) {
+            foreach ($honorariumPayments as $hp) {
+                $roleLabel = $roleLabels[$hp['role']] ?? $hp['role'];
+                $label = !empty($hp['staff_name']) ? $roleLabel . ' - ' . $hp['staff_name'] : $roleLabel;
+                $valStr = $formatMoney($hp['amount']);
+                if (!empty($hp['payment_date'])) {
+                    $valStr .= ' (Paid: ' . date('d/m/Y', strtotime($hp['payment_date'])) . ')';
+                }
+                $addRow($label, $valStr);
+            }
+        } else {
+            $addRow('Honorarium', '-');
+        }
         $row++;
 
         // 7. Graduation & Approvals

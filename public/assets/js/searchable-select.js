@@ -25,5 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
             allowClear: true,
             placeholder: 'Select or type a name'
         });
+
+        // Notify other scripts that Select2 is ready
+        document.dispatchEvent(new Event('select2:ready'));
     }
 });

@@ -603,33 +603,42 @@ $isSchCustom = !empty($currentSch) && !in_array($currentSch, $allSchoolsList);
                         </div>
                         
                         <div class="col-12"><hr></div>
-                        <h6 class="text-secondary fw-bold mb-3"><i class="bi bi-cash-coin me-2"></i>Honorarium Payments</h6>
-                        <div class="col-md-3">
-                            <label class="form-label">Chairperson</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
-                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_chairperson" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_chairperson'] ?? '')) ?>">
-                            </div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="text-secondary fw-bold mb-0"><i class="bi bi-cash-coin me-2"></i>Honorarium Payments</h6>
+                            <span class="badge bg-light text-secondary border fw-normal"><i class="bi bi-info-circle me-1"></i>Follows assigned viva staff</span>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Internal Examiner</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
-                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_internal" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_internal'] ?? '')) ?>">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">External Examiner</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
-                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_external" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_external'] ?? '')) ?>">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Refreshment</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light text-muted fw-bold">RM</span>
-                                <input type="number" step="0.01" min="0" class="form-control" name="honorarium_refreshment" placeholder="0.00" value="<?= htmlspecialchars(preg_replace('/[^0-9.]/', '', $viva['honorarium_refreshment'] ?? '')) ?>">
+                        <?php
+                            // Build JS-ready maps from saved honorarium_payments rows
+                            $savedHonorariumChair = null;
+                            $savedHonorariumChairDate = null;
+                            $savedHonorariumRefresh = null;
+                            $savedHonorariumRefreshDate = null;
+                            $savedHonorariumByExaminer = []; // ['examiner_id' => amount]
+                            $savedHonorariumDateByExaminer = []; // ['examiner_id' => date]
+                            foreach (($honorariumPayments ?? []) as $hp) {
+                                if ($hp['role'] === 'Chairperson') {
+                                    $savedHonorariumChair = $hp['amount'];
+                                    $savedHonorariumChairDate = $hp['payment_date'] ?? null;
+                                } elseif ($hp['role'] === 'Refreshment') {
+                                    $savedHonorariumRefresh = $hp['amount'];
+                                    $savedHonorariumRefreshDate = $hp['payment_date'] ?? null;
+                                } elseif (!empty($hp['examiner_id'])) {
+                                    $savedHonorariumByExaminer[(int)$hp['examiner_id']] = $hp['amount'];
+                                    $savedHonorariumDateByExaminer[(int)$hp['examiner_id']] = $hp['payment_date'] ?? null;
+                                }
+                            }
+                        ?>
+                        <script>
+                        var savedHonorariumChair = <?= json_encode($savedHonorariumChair) ?>;
+                        var savedHonorariumChairDate = <?= json_encode($savedHonorariumChairDate) ?>;
+                        var savedHonorariumRefresh = <?= json_encode($savedHonorariumRefresh) ?>;
+                        var savedHonorariumRefreshDate = <?= json_encode($savedHonorariumRefreshDate) ?>;
+                        var savedHonorariumByExaminer = <?= json_encode($savedHonorariumByExaminer) ?>;
+                        var savedHonorariumDateByExaminer = <?= json_encode($savedHonorariumDateByExaminer) ?>;
+                        </script>
+                        <div class="col-12">
+                            <div class="row g-3" id="dynamic_honorarium_container">
+                                <!-- Dynamic Honorarium inputs (Chairperson, Internal Examiners, External Examiners, Refreshment) will be rendered here -->
                             </div>
                         </div>
                         
@@ -1073,13 +1082,236 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    if (internalSelect.length && externalSelect.length) {
-        internalSelect.on('change', renderExaminerFields);
-        externalSelect.on('change', renderExaminerFields);
-        
-        // Initial render
-        renderExaminerFields();
+    const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    function renderHonorariumFields() {
+        const container = document.getElementById('dynamic_honorarium_container');
+        if (!container) return;
+
+        const currentInputs = container.querySelectorAll('input');
+        const userTypedValues = {};
+        currentInputs.forEach(input => {
+            if (input.name) {
+                userTypedValues[input.name] = input.value;
+            }
+        });
+
+        let html = '';
+
+        // 1. CHAIRPERSON
+        let chairName = '';
+        const chairSelect = document.getElementById('chairpersonSelect');
+        if (chairSelect) {
+            chairName = chairSelect.value ? chairSelect.value.trim() : '';
+        }
+        const chairLabel = chairName ? `Chairperson - ${chairName}` : 'Chairperson (Not Assigned)';
+        const chairVal = (userTypedValues['honorarium_chairperson'] !== undefined) 
+            ? userTypedValues['honorarium_chairperson'] 
+            : (savedHonorariumChair != null ? savedHonorariumChair : '');
+        const chairDateVal = (userTypedValues['honorarium_chairperson_date'] !== undefined)
+            ? userTypedValues['honorarium_chairperson_date']
+            : (savedHonorariumChairDate != null ? savedHonorariumChairDate : '');
+
+        html += `
+            <div class="col-md-3">
+                <label class="form-label text-truncate d-block" title="${escapeHtml(chairLabel)}">
+                    <i class="bi bi-person-badge text-primary me-1"></i><strong>${escapeHtml(chairLabel)}</strong>
+                </label>
+                <div class="input-group mb-1">
+                    <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                    <input type="number" step="0.01" min="0" class="form-control" name="honorarium_chairperson" placeholder="0.00" value="${escapeHtml(chairVal)}">
+                </div>
+                <input type="date" class="form-control form-control-sm" name="honorarium_chairperson_date" value="${escapeHtml(chairDateVal)}" title="Payment Date">
+            </div>
+        `;
+
+        // 2. INTERNAL EXAMINERS
+        const intData = internalSelect.length && $.fn.select2 ? internalSelect.select2('data') : [];
+
+        if (intData.length === 0) {
+            const label = 'Internal Examiner (Not Assigned)';
+            const val = (userTypedValues['honorarium_internal'] !== undefined) ? userTypedValues['honorarium_internal'] : '';
+            const dateVal = (userTypedValues['honorarium_internal_date'] !== undefined) ? userTypedValues['honorarium_internal_date'] : '';
+            html += `
+                <div class="col-md-3">
+                    <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
+                        <i class="bi bi-person-check text-info me-1"></i><strong>${escapeHtml(label)}</strong>
+                    </label>
+                    <div class="input-group mb-1">
+                        <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                        <input type="number" step="0.01" min="0" class="form-control" name="honorarium_internal" placeholder="0.00" value="${escapeHtml(val)}">
+                    </div>
+                    <input type="date" class="form-control form-control-sm" name="honorarium_internal_date" value="${escapeHtml(dateVal)}" title="Payment Date">
+                </div>
+            `;
+        } else if (intData.length === 1) {
+            const exName = intData[0].element ? (intData[0].element.getAttribute('data-name') || intData[0].text) : intData[0].text;
+            const label = `Internal Examiner - ${exName.trim()}`;
+            const exId = intData[0].id;
+            const savedVal = savedHonorariumByExaminer[exId] != null ? savedHonorariumByExaminer[exId] : '';
+            const savedDate = savedHonorariumDateByExaminer[exId] != null ? savedHonorariumDateByExaminer[exId] : '';
+            const val = (userTypedValues['honorarium_internal'] !== undefined) ? userTypedValues['honorarium_internal'] : savedVal;
+            const dateVal = (userTypedValues['honorarium_internal_date'] !== undefined) ? userTypedValues['honorarium_internal_date'] : savedDate;
+            html += `
+                <div class="col-md-3">
+                    <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
+                        <i class="bi bi-person-check text-info me-1"></i><strong>${escapeHtml(label)}</strong>
+                    </label>
+                    <div class="input-group mb-1">
+                        <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                        <input type="number" step="0.01" min="0" class="form-control" name="honorarium_internal" placeholder="0.00" value="${escapeHtml(val)}">
+                    </div>
+                    <input type="date" class="form-control form-control-sm" name="honorarium_internal_date" value="${escapeHtml(dateVal)}" title="Payment Date">
+                </div>
+            `;
+        } else {
+            intData.forEach((opt, idx) => {
+                const exName = opt.element ? (opt.element.getAttribute('data-name') || opt.text) : opt.text;
+                const label = `Internal Examiner - ${exName.trim()}`;
+                const fieldName = `honorarium_internal_list[${opt.id}]`;
+                const dateFieldName = `honorarium_internal_date_list[${opt.id}]`;
+                const savedVal = savedHonorariumByExaminer[opt.id] != null ? savedHonorariumByExaminer[opt.id] : '';
+                const savedDate = savedHonorariumDateByExaminer[opt.id] != null ? savedHonorariumDateByExaminer[opt.id] : '';
+                let val = userTypedValues[fieldName] !== undefined ? userTypedValues[fieldName] : savedVal;
+                let dateVal = userTypedValues[dateFieldName] !== undefined ? userTypedValues[dateFieldName] : savedDate;
+
+                html += `
+                    <div class="col-md-3">
+                        <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
+                            <i class="bi bi-person-check text-info me-1"></i><strong>${escapeHtml(label)}</strong>
+                        </label>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="${fieldName}" placeholder="0.00" value="${escapeHtml(val)}">
+                        </div>
+                        <input type="date" class="form-control form-control-sm" name="${dateFieldName}" value="${escapeHtml(dateVal)}" title="Payment Date">
+                    </div>
+                `;
+            });
+        }
+
+        // 3. EXTERNAL EXAMINERS
+        const extData = externalSelect.length && $.fn.select2 ? externalSelect.select2('data') : [];
+
+        if (extData.length === 0) {
+            const label = 'External Examiner (Not Assigned)';
+            const val = (userTypedValues['honorarium_external'] !== undefined) ? userTypedValues['honorarium_external'] : '';
+            const dateVal = (userTypedValues['honorarium_external_date'] !== undefined) ? userTypedValues['honorarium_external_date'] : '';
+            html += `
+                <div class="col-md-3">
+                    <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
+                        <i class="bi bi-person-bounding-box text-warning me-1"></i><strong>${escapeHtml(label)}</strong>
+                    </label>
+                    <div class="input-group mb-1">
+                        <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                        <input type="number" step="0.01" min="0" class="form-control" name="honorarium_external" placeholder="0.00" value="${escapeHtml(val)}">
+                    </div>
+                    <input type="date" class="form-control form-control-sm" name="honorarium_external_date" value="${escapeHtml(dateVal)}" title="Payment Date">
+                </div>
+            `;
+        } else if (extData.length === 1) {
+            const exName = extData[0].element ? (extData[0].element.getAttribute('data-name') || extData[0].text) : extData[0].text;
+            const label = `External Examiner - ${exName.trim()}`;
+            const exId = extData[0].id;
+            const savedVal = savedHonorariumByExaminer[exId] != null ? savedHonorariumByExaminer[exId] : '';
+            const savedDate = savedHonorariumDateByExaminer[exId] != null ? savedHonorariumDateByExaminer[exId] : '';
+            const val = (userTypedValues['honorarium_external'] !== undefined) ? userTypedValues['honorarium_external'] : savedVal;
+            const dateVal = (userTypedValues['honorarium_external_date'] !== undefined) ? userTypedValues['honorarium_external_date'] : savedDate;
+            html += `
+                <div class="col-md-3">
+                    <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
+                        <i class="bi bi-person-bounding-box text-warning me-1"></i><strong>${escapeHtml(label)}</strong>
+                    </label>
+                    <div class="input-group mb-1">
+                        <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                        <input type="number" step="0.01" min="0" class="form-control" name="honorarium_external" placeholder="0.00" value="${escapeHtml(val)}">
+                    </div>
+                    <input type="date" class="form-control form-control-sm" name="honorarium_external_date" value="${escapeHtml(dateVal)}" title="Payment Date">
+                </div>
+            `;
+        } else {
+            extData.forEach((opt, idx) => {
+                const exName = opt.element ? (opt.element.getAttribute('data-name') || opt.text) : opt.text;
+                const label = `External Examiner - ${exName.trim()}`;
+                const fieldName = `honorarium_external_list[${opt.id}]`;
+                const dateFieldName = `honorarium_external_date_list[${opt.id}]`;
+                const savedVal = savedHonorariumByExaminer[opt.id] != null ? savedHonorariumByExaminer[opt.id] : '';
+                const savedDate = savedHonorariumDateByExaminer[opt.id] != null ? savedHonorariumDateByExaminer[opt.id] : '';
+                let val = userTypedValues[fieldName] !== undefined ? userTypedValues[fieldName] : savedVal;
+                let dateVal = userTypedValues[dateFieldName] !== undefined ? userTypedValues[dateFieldName] : savedDate;
+
+                html += `
+                    <div class="col-md-3">
+                        <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
+                            <i class="bi bi-person-bounding-box text-warning me-1"></i><strong>${escapeHtml(label)}</strong>
+                        </label>
+                        <div class="input-group mb-1">
+                            <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="${fieldName}" placeholder="0.00" value="${escapeHtml(val)}">
+                        </div>
+                        <input type="date" class="form-control form-control-sm" name="${dateFieldName}" value="${escapeHtml(dateVal)}" title="Payment Date">
+                    </div>
+                `;
+            });
+        }
+
+        // 4. REFRESHMENT
+        const refVal = (userTypedValues['honorarium_refreshment'] !== undefined) 
+            ? userTypedValues['honorarium_refreshment'] 
+            : (savedHonorariumRefresh != null ? savedHonorariumRefresh : '');
+        const refDateVal = (userTypedValues['honorarium_refreshment_date'] !== undefined)
+            ? userTypedValues['honorarium_refreshment_date']
+            : (savedHonorariumRefreshDate != null ? savedHonorariumRefreshDate : '');
+        html += `
+            <div class="col-md-3">
+                <label class="form-label text-truncate d-block" title="Refreshment">
+                    <i class="bi bi-cup-hot text-secondary me-1"></i><strong>Refreshment</strong>
+                </label>
+                <div class="input-group mb-1">
+                    <span class="input-group-text bg-light text-muted fw-bold">RM</span>
+                    <input type="number" step="0.01" min="0" class="form-control" name="honorarium_refreshment" placeholder="0.00" value="${escapeHtml(refVal)}">
+                </div>
+                <input type="date" class="form-control form-control-sm" name="honorarium_refreshment_date" value="${escapeHtml(refDateVal)}" title="Payment Date">
+            </div>
+        `;
+
+        container.innerHTML = html;
+        if (typeof initFlatpickr === 'function') {
+            initFlatpickr(container);
+        }
     }
+
+    if (internalSelect.length && externalSelect.length) {
+        internalSelect.on('change', function() {
+            renderExaminerFields();
+            renderHonorariumFields();
+        });
+        externalSelect.on('change', function() {
+            renderExaminerFields();
+            renderHonorariumFields();
+        });
+    }
+
+    const chairSel = $('#chairpersonSelect');
+    if (chairSel.length) {
+        chairSel.on('change', renderHonorariumFields);
+    }
+
+    // Initial render after Select2 is fully initialized by searchable-select.js
+    document.addEventListener('select2:ready', function() {
+        if (internalSelect.length && externalSelect.length) {
+            renderExaminerFields();
+        }
+        renderHonorariumFields();
+    }, { once: true });
 
     // Alert Resolution Navigation: tab switch + field highlight
     const urlParams = new URLSearchParams(window.location.search);
