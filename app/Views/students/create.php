@@ -1104,6 +1104,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // Viva date for pre-filling payment dates
+        const vivaDateEl = document.querySelector('[name="viva_date"]');
+        const vivaDateVal = vivaDateEl ? (vivaDateEl._flatpickr ? vivaDateEl.value : vivaDateEl.value) : '';
+
         let html = '';
 
         // 1. CHAIRPERSON
@@ -1116,9 +1120,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const chairVal = (userTypedValues['honorarium_chairperson'] !== undefined) 
             ? userTypedValues['honorarium_chairperson'] 
             : (savedHonorariumChair != null ? savedHonorariumChair : '');
-        const chairDateVal = (userTypedValues['honorarium_chairperson_date'] !== undefined)
+        const chairDateVal = userTypedValues['honorarium_chairperson_date'] !== undefined
             ? userTypedValues['honorarium_chairperson_date']
-            : (savedHonorariumChairDate != null ? savedHonorariumChairDate : '');
+            : (savedHonorariumChairDate != null ? savedHonorariumChairDate : vivaDateVal);
 
         html += `
             <div class="col-md-3">
@@ -1139,7 +1143,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (intData.length === 0) {
             const label = 'Internal Examiner (Not Assigned)';
             const val = (userTypedValues['honorarium_internal'] !== undefined) ? userTypedValues['honorarium_internal'] : '';
-            const dateVal = (userTypedValues['honorarium_internal_date'] !== undefined) ? userTypedValues['honorarium_internal_date'] : '';
+            const dateVal = userTypedValues['honorarium_internal_date'] !== undefined ? userTypedValues['honorarium_internal_date'] : vivaDateVal;
             html += `
                 <div class="col-md-3">
                     <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
@@ -1159,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const savedVal = savedHonorariumByExaminer[exId] != null ? savedHonorariumByExaminer[exId] : '';
             const savedDate = savedHonorariumDateByExaminer[exId] != null ? savedHonorariumDateByExaminer[exId] : '';
             const val = (userTypedValues['honorarium_internal'] !== undefined) ? userTypedValues['honorarium_internal'] : savedVal;
-            const dateVal = (userTypedValues['honorarium_internal_date'] !== undefined) ? userTypedValues['honorarium_internal_date'] : savedDate;
+            const dateVal = userTypedValues['honorarium_internal_date'] !== undefined ? userTypedValues['honorarium_internal_date'] : (savedDate || vivaDateVal);
             html += `
                 <div class="col-md-3">
                     <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
@@ -1181,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const savedVal = savedHonorariumByExaminer[opt.id] != null ? savedHonorariumByExaminer[opt.id] : '';
                 const savedDate = savedHonorariumDateByExaminer[opt.id] != null ? savedHonorariumDateByExaminer[opt.id] : '';
                 let val = userTypedValues[fieldName] !== undefined ? userTypedValues[fieldName] : savedVal;
-                let dateVal = userTypedValues[dateFieldName] !== undefined ? userTypedValues[dateFieldName] : savedDate;
+                let dateVal = userTypedValues[dateFieldName] !== undefined ? userTypedValues[dateFieldName] : (savedDate || vivaDateVal);
 
                 html += `
                     <div class="col-md-3">
@@ -1204,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (extData.length === 0) {
             const label = 'External Examiner (Not Assigned)';
             const val = (userTypedValues['honorarium_external'] !== undefined) ? userTypedValues['honorarium_external'] : '';
-            const dateVal = (userTypedValues['honorarium_external_date'] !== undefined) ? userTypedValues['honorarium_external_date'] : '';
+            const dateVal = userTypedValues['honorarium_external_date'] !== undefined ? userTypedValues['honorarium_external_date'] : vivaDateVal;
             html += `
                 <div class="col-md-3">
                     <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
@@ -1224,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const savedVal = savedHonorariumByExaminer[exId] != null ? savedHonorariumByExaminer[exId] : '';
             const savedDate = savedHonorariumDateByExaminer[exId] != null ? savedHonorariumDateByExaminer[exId] : '';
             const val = (userTypedValues['honorarium_external'] !== undefined) ? userTypedValues['honorarium_external'] : savedVal;
-            const dateVal = (userTypedValues['honorarium_external_date'] !== undefined) ? userTypedValues['honorarium_external_date'] : savedDate;
+            const dateVal = userTypedValues['honorarium_external_date'] !== undefined ? userTypedValues['honorarium_external_date'] : (savedDate || vivaDateVal);
             html += `
                 <div class="col-md-3">
                     <label class="form-label text-truncate d-block" title="${escapeHtml(label)}">
@@ -1246,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const savedVal = savedHonorariumByExaminer[opt.id] != null ? savedHonorariumByExaminer[opt.id] : '';
                 const savedDate = savedHonorariumDateByExaminer[opt.id] != null ? savedHonorariumDateByExaminer[opt.id] : '';
                 let val = userTypedValues[fieldName] !== undefined ? userTypedValues[fieldName] : savedVal;
-                let dateVal = userTypedValues[dateFieldName] !== undefined ? userTypedValues[dateFieldName] : savedDate;
+                let dateVal = userTypedValues[dateFieldName] !== undefined ? userTypedValues[dateFieldName] : (savedDate || vivaDateVal);
 
                 html += `
                     <div class="col-md-3">
@@ -1267,9 +1271,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const refVal = (userTypedValues['honorarium_refreshment'] !== undefined) 
             ? userTypedValues['honorarium_refreshment'] 
             : (savedHonorariumRefresh != null ? savedHonorariumRefresh : '');
-        const refDateVal = (userTypedValues['honorarium_refreshment_date'] !== undefined)
+        const refDateVal = userTypedValues['honorarium_refreshment_date'] !== undefined
             ? userTypedValues['honorarium_refreshment_date']
-            : (savedHonorariumRefreshDate != null ? savedHonorariumRefreshDate : '');
+            : (savedHonorariumRefreshDate != null ? savedHonorariumRefreshDate : vivaDateVal);
         html += `
             <div class="col-md-3">
                 <label class="form-label text-truncate d-block" title="Refreshment">
