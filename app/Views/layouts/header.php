@@ -16,9 +16,8 @@ $userRole  = Middleware::userRole() ?? 'user';
 $isAdmin   = Middleware::isAdmin();
 $initials  = strtoupper(substr($userName, 0, 1));
 
-// Flash message
+// Flash message (do NOT unset here; sidebar.php consumes and unsets it)
 $flash = $_SESSION['flash'] ?? null;
-unset($_SESSION['flash']);
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -120,8 +120,14 @@ class Student
         $this->db->bind(':id', $studentId);
         $student['examiners'] = $this->db->resultSet();
 
-        // Retrieve viva records.
-        $this->db->query('SELECT * FROM viva_records WHERE student_id = :id ORDER BY viva_date DESC');
+        // Retrieve viva records with reviva examiner names.
+        $this->db->query('SELECT vr.*,
+                          ei.examiner_name AS reviva_internal_examiner_name,
+                          ee.examiner_name AS reviva_external_examiner_name
+                          FROM viva_records vr
+                          LEFT JOIN examiners ei ON vr.reviva_internal_examiner_id = ei.examiner_id
+                          LEFT JOIN examiners ee ON vr.reviva_external_examiner_id = ee.examiner_id
+                          WHERE vr.student_id = :id ORDER BY vr.viva_date DESC');
         $this->db->bind(':id', $studentId);
         $student['viva_records'] = $this->db->resultSet();
 

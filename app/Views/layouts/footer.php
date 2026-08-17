@@ -18,7 +18,20 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
     <script>
     // Global flatpickr init for all date inputs.
-    // altInput shows dd/mm/yyyy; name attribute submits yyyy-mm-dd to server.
+    // altInput shows dd/mm/yyyy; hidden original input submits yyyy-mm-dd to server.
+    function parseDateStr(str) {
+        if (!str) return null;
+        str = str.trim();
+        // yyyy-mm-dd or yyyy/mm/dd
+        var m = str.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+        if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+        // dd/mm/yyyy or dd-mm-yyyy
+        m = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+        if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+        return null;
+    }
+    function padZ(n) { return n < 10 ? '0' + n : '' + n; }
+
     function initFlatpickr(scope) {
         var root = scope || document;
         root.querySelectorAll('input[type="date"]:not(.flatpickr-input)').forEach(function(el) {
@@ -28,6 +41,9 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                 altFormat: 'd/m/Y',
                 allowInput: true,
                 altInputClass: 'form-control flatpickr-input',
+                parseDate: function(dateStr, format) {
+                    return parseDateStr(dateStr);
+                },
                 onReady: function(selectedDates, dateStr, instance) {
                     if (instance.altInput) {
                         instance.altInput.setAttribute('placeholder', 'dd/mm/yyyy');
@@ -36,7 +52,42 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
             });
         });
     }
-    document.addEventListener('DOMContentLoaded', function() { initFlatpickr(); });
+
+    // Before any form submits, sync manually-typed altInput values back to the
+    // hidden original input (Y-m-d) so the server always receives a valid date.
+    document.addEventListener('DOMContentLoaded', function() {
+        initFlatpickr();
+
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            form.querySelectorAll('input[type="date"].flatpickr-input').forEach(function(hiddenEl) {
+                var fp = hiddenEl._flatpickr;
+                if (!fp) return;
+                var altEl = fp.altInput;
+                if (!altEl) return;
+                var typed = altEl.value.trim();
+                if (!typed) {
+                    hiddenEl.value = '';
+                    return;
+                }
+                // If flatpickr already parsed it, selectedDates[0] is reliable
+                if (fp.selectedDates && fp.selectedDates.length > 0) {
+                    var d = fp.selectedDates[0];
+                    hiddenEl.value = d.getFullYear() + '-' + padZ(d.getMonth() + 1) + '-' + padZ(d.getDate());
+                } else {
+                    // Try manual parse (covers typed dd/mm/yyyy)
+                    var parsed = parseDateStr(typed);
+                    if (parsed && !isNaN(parsed.getTime())) {
+                        hiddenEl.value = parsed.getFullYear() + '-' + padZ(parsed.getMonth() + 1) + '-' + padZ(parsed.getDate());
+                        fp.setDate(parsed, false);
+                    } else {
+                        hiddenEl.value = '';
+                    }
+                }
+            });
+        }, true); // capture phase so it runs before form submission
+    });
     </script>
     <script src="<?= $baseUrl ?>/assets/js/searchable-select.js?v=<?= time() ?>"></script>
 

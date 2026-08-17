@@ -194,6 +194,12 @@ class StudentController extends Controller
         $_POST['internal_examiner_id'] = !empty($internalExaminers[0]) ? (int)$internalExaminers[0] : null;
         $_POST['external_examiner_id'] = !empty($externalExaminers[0]) ? (int)$externalExaminers[0] : null;
 
+        // Map first re-viva examiner IDs to viva_records columns
+        $revivaInternals = $_POST['reviva_internal_examiners'] ?? [];
+        $revivaExternals = $_POST['reviva_external_examiners'] ?? [];
+        $_POST['reviva_internal_examiner_id'] = !empty($revivaInternals[0]) ? (int)$revivaInternals[0] : null;
+        $_POST['reviva_external_examiner_id'] = !empty($revivaExternals[0]) ? (int)$revivaExternals[0] : null;
+
         // 3. Create Viva Record
         $this->vivaModel->createOrUpdate($studentId, $_POST);
 
@@ -207,6 +213,7 @@ class StudentController extends Controller
         $this->honorariumModel->saveForStudent($studentId, $this->buildHonorariumPayments(
             $_POST['honorarium_chairperson'] ?? null,
             $_POST['honorarium_chairperson_date'] ?? null,
+            trim($_POST['chairperson_name'] ?? ''),
             $internalExaminers,
             $externalExaminers,
             $_POST['honorarium_internal'] ?? null,
@@ -225,8 +232,8 @@ class StudentController extends Controller
         // 6. Sync Research Status automatically
         $this->syncStudentResearchStatus($studentId, $_POST);
 
-        $this->setFlash('success', 'Student added successfully.');
-        $this->redirect($this->baseUrl() . '/student/' . $studentId);
+        $this->setFlash('success', 'Student <strong>' . htmlspecialchars(trim($this->input('name'))) . '</strong> added successfully.');
+        $this->redirect($this->baseUrl() . '/student/' . $studentId . '?created=1');
     }
 
     /**
@@ -415,6 +422,7 @@ class StudentController extends Controller
         $this->honorariumModel->saveForStudent($studentId, $this->buildHonorariumPayments(
             $_POST['honorarium_chairperson'] ?? null,
             $_POST['honorarium_chairperson_date'] ?? null,
+            trim($_POST['chairperson_name'] ?? ''),
             $internalExaminers,
             $externalExaminers,
             $_POST['honorarium_internal'] ?? null,
@@ -703,6 +711,7 @@ class StudentController extends Controller
     private function buildHonorariumPayments(
         ?string $chairAmount,
         ?string $chairDate,
+        string  $chairName,
         array $internalIds,
         array $externalIds,
         ?string $singleIntAmount,
@@ -723,7 +732,7 @@ class StudentController extends Controller
         if (($chairAmount !== null && $chairAmount !== '') || !empty($chairDate)) {
             $payments[] = [
                 'role'         => 'Chairperson',
-                'staff_name'   => null,
+                'staff_name'   => $chairName !== '' ? $chairName : null,
                 'examiner_id'  => null,
                 'amount'       => $chairAmount,
                 'payment_date' => $chairDate ?: null

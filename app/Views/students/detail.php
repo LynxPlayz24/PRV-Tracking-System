@@ -425,6 +425,42 @@ document.addEventListener("DOMContentLoaded", function() {
             tab.show();
         }
     }
+
+    // Auto-show creation confirmation modal
+    if (new URLSearchParams(window.location.search).get('created') === '1') {
+        var modal = new bootstrap.Modal(document.getElementById('studentCreatedModal'));
+        modal.show();
+        // Clean URL without reload
+        history.replaceState(null, '', window.location.pathname + window.location.hash);
+    }
 });
 </script>
 
+<?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
+<!-- Student Created Confirmation Modal -->
+<div class="modal fade" id="studentCreatedModal" tabindex="-1" aria-labelledby="studentCreatedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center px-4 py-5">
+                <div class="mb-3" style="font-size: 3.5rem; color: var(--bs-success);">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h5 class="fw-bold mb-1" id="studentCreatedModalLabel">Student Added Successfully</h5>
+                <p class="text-muted mb-1"><?= htmlspecialchars($student['name']) ?></p>
+                <p class="text-muted small mb-4"><?= htmlspecialchars($student['matric_no']) ?> &mdash; <?= htmlspecialchars($student['research_status']) ?></p>
+                <div class="d-flex flex-column gap-2">
+                    <a href="<?= $baseUrl ?>/students/create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Add Another Student
+                    </a>
+                    <a href="<?= $baseUrl ?>/students/manage" class="btn btn-outline-secondary">
+                        <i class="bi bi-table me-1"></i>Manage All Students
+                    </a>
+                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">
+                        Stay on This Page
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
