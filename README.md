@@ -6,6 +6,8 @@ The **Progress Report Viva Tracking System (PRVTS)** is a comprehensive web-base
 
 It streamlines the management and tracking of postgraduate students (Masters, PhD, DBA) throughout their research journey—from proposal submission and examination panel assignment to the final viva-voce and graduation.
 
+> 📖 **Comprehensive User Manual & Handbook**: For full feature walkthroughs, UI navigation, and step-by-step operational guides, refer to [USER_MANUAL.md](USER_MANUAL.md).
+
 ---
 
 ## 🚀 Key Features
