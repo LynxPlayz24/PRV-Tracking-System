@@ -157,8 +157,16 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // ── Filter event listeners ──
-    filterForm.querySelectorAll('select, input[type="date"]').forEach(function (el) {
+    filterForm.querySelectorAll('select').forEach(function (el) {
         el.addEventListener('change', function () { fetchResults(1); });
+    });
+
+    // Flatpickr mutates input[type="date"] → type="hidden" after init.
+    // querySelectorAll('input[type="date"]') finds nothing — check _flatpickr instead.
+    filterForm.querySelectorAll('input').forEach(function (el) {
+        if (el._flatpickr) {
+            el.addEventListener('change', function () { fetchResults(1); });
+        }
     });
 
     const kw = filterForm.querySelector('input[name="keyword"]');
