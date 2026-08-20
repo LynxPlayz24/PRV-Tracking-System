@@ -97,4 +97,37 @@ class HistoryController extends Controller
             'diff'      => $diff,
         ]);
     }
+
+    /**
+     * API endpoint to get filtered log rows (AJAX table updates)
+     */
+    public function apiLogs(): void
+    {
+        Middleware::requireAdmin();
+
+        $page   = max(1, (int)$this->param('page', 1));
+        $limit  = 25;
+        $offset = ($page - 1) * $limit;
+
+        $filters = array_filter([
+            'keyword'   => trim((string)$this->param('keyword', '')),
+            'module'    => trim((string)$this->param('module', '')),
+            'action'    => trim((string)$this->param('action', '')),
+            'date_from' => trim((string)$this->param('date_from', '')),
+            'date_to'   => trim((string)$this->param('date_to', '')),
+        ], fn($v) => $v !== '');
+
+        $logs       = $this->auditModel->getFiltered($filters, $limit, $offset);
+        $totalLogs  = $this->auditModel->countFiltered($filters);
+        $totalPages = (int)ceil($totalLogs / $limit);
+
+        $this->jsonResponse([
+            'success'    => true,
+            'logs'       => $logs,
+            'totalLogs'  => $totalLogs,
+            'page'       => $page,
+            'totalPages' => $totalPages,
+            'showing'    => count($logs),
+        ]);
+    }
 }

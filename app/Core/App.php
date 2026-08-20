@@ -98,6 +98,7 @@ class App
 
         // ── Audit History (Admin) ──
         $this->router->get('/history',             'HistoryController', 'index');
+        $this->router->get('/history/logs',        'HistoryController', 'apiLogs');
         $this->router->get('/history/detail/{id}', 'HistoryController', 'apiDetail');
     }
 

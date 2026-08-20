@@ -122,7 +122,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
         <h5 class="mb-0 fw-bold fs-6">
             <i class="bi bi-list-columns-reverse text-primary me-2"></i>Activity Stream
         </h5>
-        <span class="badge bg-light text-dark border">
+        <span class="badge bg-light text-dark border" id="auditCountBadge">
             Showing <?= count($logs) ?> of <?= number_format($totalLogs) ?> events
         </span>
     </div>
@@ -140,7 +140,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                         <th class="px-3 py-2 border-0 text-end" style="width: 110px;">Changes</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="auditTableBody">
                     <?php if (empty($logs)): ?>
                         <tr>
                             <td colspan="7" class="text-center py-5 text-muted">
@@ -245,6 +245,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     </div>
 
     <!-- ── Pagination ── -->
+    <div id="auditPagination">
     <?php if ($totalPages > 1): ?>
         <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center">
             <div class="small text-muted">
@@ -280,6 +281,7 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
             </nav>
         </div>
     <?php endif; ?>
+    </div>
 </div>
 
 <!-- ── Audit Diff Inspection Modal ── -->
@@ -447,23 +449,166 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.innerHTML;
     }
 
-    // ── Auto-apply filters ──
-    const filterForm = document.getElementById('historyFilterForm');
-    if (filterForm) {
-        // Selects & date inputs: submit immediately on change
-        filterForm.querySelectorAll('select, input[type="date"]').forEach(el => {
-            el.addEventListener('change', () => filterForm.submit());
-        });
+    // ── AJAX filter / pagination ──
+    const filterForm   = document.getElementById('historyFilterForm');
+    const tableBody    = document.getElementById('auditTableBody');
+    const countBadge   = document.getElementById('auditCountBadge');
+    const pagination   = document.getElementById('auditPagination');
+    const baseUrl      = '<?= $baseUrl ?>';
 
-        // Keyword text: debounce 600ms
-        const keywordInput = filterForm.querySelector('input[name="keyword"]');
-        if (keywordInput) {
-            let debounceTimer;
-            keywordInput.addEventListener('input', () => {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => filterForm.submit(), 600);
-            });
-        }
+    const ACTION_BADGE = {
+        CREATE: 'bg-success',
+        UPDATE: 'bg-warning text-dark',
+        DELETE: 'bg-danger',
+        IMPORT: 'bg-primary',
+        LOGIN:  'bg-info text-dark',
+        LOGOUT: 'bg-secondary',
+    };
+    const MODULE_BADGE = {
+        Students: 'border-primary text-primary',
+        Staff:    'border-info text-info',
+        Users:    'border-warning text-dark',
+        Import:   'border-success text-success',
+        Auth:     'border-secondary text-secondary',
+    };
+
+    function formatDate(str) {
+        const d = new Date(str.replace(' ', 'T'));
+        return d.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'})
+             + ', ' + d.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',hour12:true});
     }
+
+    function buildRows(logs) {
+        if (!logs.length) {
+            return `<tr><td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                No audit records found matching your filters.
+            </td></tr>`;
+        }
+        return logs.map(log => {
+            const action = (log.action || '').toUpperCase();
+            const actionCls = ACTION_BADGE[action] || 'bg-dark';
+            const moduleCls = MODULE_BADGE[log.module] || 'border-dark text-dark';
+            const hasChanges = log.old_values || log.new_values;
+            const avatar = escapeHtml((log.user_name || 'U').charAt(0).toUpperCase());
+            const userName = escapeHtml(log.user_name || 'System');
+            const ip = escapeHtml(log.ip_address || 'N/A');
+            const module = escapeHtml(log.module || '');
+            const desc = escapeHtml(log.description || '');
+
+            let entityCell = '<span class="text-muted small">-</span>';
+            if (log.entity_name) {
+                entityCell = `<span class="fw-medium small text-dark">${escapeHtml(log.entity_name)}</span>`;
+                if (log.entity_id) entityCell += ` <span class="text-muted small">#${parseInt(log.entity_id)}</span>`;
+            } else if (log.entity_id) {
+                entityCell = `<span class="text-muted small">ID #${parseInt(log.entity_id)}</span>`;
+            }
+
+            const diffBtn = hasChanges
+                ? `<button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-view-diff"
+                        data-id="${log.id}" data-bs-toggle="modal" data-bs-target="#diffModal" title="View Change Diff">
+                        <i class="bi bi-eye-fill me-1"></i>Diff
+                   </button>`
+                : `<button type="button" class="btn btn-sm btn-light py-1 px-2 btn-view-diff text-muted"
+                        data-id="${log.id}" data-bs-toggle="modal" data-bs-target="#diffModal" title="View Details">
+                        <i class="bi bi-info-circle"></i>
+                   </button>`;
+
+            return `<tr>
+                <td class="px-3 text-nowrap">
+                    <div class="fw-medium small text-dark">${formatDate(log.created_at)}</div>
+                    <div class="text-muted" style="font-size:.75rem">IP: ${ip}</div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-sm rounded-circle bg-light border text-primary d-flex align-items-center justify-content-center me-2" style="width:28px;height:28px;font-size:.75rem;font-weight:bold">${avatar}</div>
+                        <span class="small fw-medium text-dark">${userName}</span>
+                    </div>
+                </td>
+                <td><span class="badge border bg-light ${moduleCls} px-2 py-1 small">${module}</span></td>
+                <td><span class="badge ${actionCls} px-2 py-1 small">${action}</span></td>
+                <td>${entityCell}</td>
+                <td><div class="small text-secondary" style="max-width:400px;word-break:break-word">${desc}</div></td>
+                <td class="px-3 text-end">${diffBtn}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function buildPagination(page, totalPages, params) {
+        if (totalPages <= 1) return '';
+        const buildUrl = (p) => {
+            const q = new URLSearchParams({...params, page: p});
+            return baseUrl + '/history?' + q.toString();
+        };
+        let pages = '';
+        for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) {
+            pages += `<li class="page-item ${p === page ? 'active' : ''}">
+                <a class="page-link" href="${buildUrl(p)}">${p}</a></li>`;
+        }
+        return `<div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center">
+            <div class="small text-muted">Page <strong>${page}</strong> of <strong>${totalPages}</strong></div>
+            <nav aria-label="Audit log navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item ${page <= 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="${buildUrl(page - 1)}">Previous</a></li>
+                    ${pages}
+                    <li class="page-item ${page >= totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="${buildUrl(page + 1)}">Next</a></li>
+                </ul>
+            </nav>
+        </div>`;
+    }
+
+    let currentPage = 1;
+    let debounceTimer;
+
+    function getParams(page) {
+        const fd = new FormData(filterForm);
+        const params = {};
+        for (const [k, v] of fd.entries()) if (v.trim()) params[k] = v.trim();
+        params.page = page || currentPage;
+        return params;
+    }
+
+    function fetchLogs(page) {
+        currentPage = page || 1;
+        const params = getParams(currentPage);
+        const qs = new URLSearchParams(params).toString();
+
+        // Sync URL without reload
+        history.pushState(null, '', baseUrl + '/history?' + qs);
+
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</td></tr>';
+
+        fetch(baseUrl + '/history/logs?' + qs, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                tableBody.innerHTML = buildRows(data.logs);
+                countBadge.textContent = `Showing ${data.showing} of ${data.totalLogs.toLocaleString()} events`;
+                pagination.innerHTML  = buildPagination(data.page, data.totalPages, params);
+            })
+            .catch(() => {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">Failed to load results.</td></tr>';
+            });
+    }
+
+    if (filterForm) {
+        filterForm.querySelectorAll('select, input[type="date"]').forEach(el => {
+            el.addEventListener('change', () => fetchLogs(1));
+        });
+        const kw = filterForm.querySelector('input[name="keyword"]');
+        if (kw) kw.addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => fetchLogs(1), 500); });
+        filterForm.addEventListener('submit', e => { e.preventDefault(); fetchLogs(1); });
+    }
+
+    // Pagination link interception (event delegation)
+    document.addEventListener('click', e => {
+        const link = e.target.closest('#auditPagination a.page-link');
+        if (!link) return;
+        e.preventDefault();
+        const url = new URL(link.href);
+        fetchLogs(parseInt(url.searchParams.get('page')) || 1);
+    });
 });
 </script>
