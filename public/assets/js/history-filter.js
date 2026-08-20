@@ -157,8 +157,18 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // ── Filter event listeners ──
-    filterForm.querySelectorAll('select, input[type="date"]').forEach(function (el) {
+    filterForm.querySelectorAll('select').forEach(function (el) {
         el.addEventListener('change', function () { fetchResults(1); });
+    });
+
+    // Date pickers: Flatpickr hides the original input and inserts an altInput.
+    // Native 'change' never fires — push into Flatpickr's own onChange instead.
+    filterForm.querySelectorAll('input[type="date"]').forEach(function (el) {
+        if (el._flatpickr) {
+            el._flatpickr.config.onChange.push(function () { fetchResults(1); });
+        } else {
+            el.addEventListener('change', function () { fetchResults(1); }); // fallback
+        }
     });
 
     const kw = filterForm.querySelector('input[name="keyword"]');
