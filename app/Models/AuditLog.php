@@ -133,8 +133,11 @@ class AuditLog
         $params = [];
 
         if (!empty($filters['keyword'])) {
-            $where[] = '(description LIKE :kw OR entity_name LIKE :kw OR user_name LIKE :kw)';
-            $params[':kw'] = '%' . trim($filters['keyword']) . '%';
+            $where[] = '(description LIKE :kw1 OR entity_name LIKE :kw2 OR user_name LIKE :kw3)';
+            $kwVal = '%' . trim($filters['keyword']) . '%';
+            $params[':kw1'] = $kwVal;
+            $params[':kw2'] = $kwVal;
+            $params[':kw3'] = $kwVal;
         }
 
         if (!empty($filters['module'])) {
