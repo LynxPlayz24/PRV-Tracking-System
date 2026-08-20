@@ -9,6 +9,7 @@ use App\Models\Examiner;
 use App\Models\VivaRecord;
 use App\Models\Correction;
 use App\Models\Graduation;
+use App\Models\AuditLog;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Exception;
@@ -201,6 +202,14 @@ class ImportController extends Controller
             if ($skipCount > 0) {
                 $msg .= " Skipped $skipCount rows with missing Matric No or Name.";
             }
+
+            AuditLog::record('Import', 'IMPORT', "Imported Excel file ({$file['name']}): {$successCount} added, {$updateCount} updated, {$skipCount} skipped", null, $file['name'], null, [
+                'file_name' => $file['name'],
+                'added'     => $successCount,
+                'updated'   => $updateCount,
+                'skipped'   => $skipCount,
+            ]);
+
             $this->setFlash('success', $msg);
 
         } catch (Exception $e) {

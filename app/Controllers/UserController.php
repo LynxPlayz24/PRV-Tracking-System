@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Middleware;
 use App\Models\User;
+use App\Models\AuditLog;
 
 class UserController extends Controller
 {
@@ -85,6 +86,12 @@ class UserController extends Controller
             'password' => $password,
             'role'     => $role,
         ])) {
+            AuditLog::record('Users', 'CREATE', "Created user account: {$name} ({$username}) as " . strtoupper($role), null, $name, null, [
+                'name'     => $name,
+                'email'    => $email,
+                'username' => $username,
+                'role'     => $role,
+            ]);
             $this->setFlash('success', 'User <strong>' . htmlspecialchars($name) . '</strong> created successfully.');
         } else {
             $this->setFlash('danger', 'Failed to create user.');
@@ -122,7 +129,10 @@ class UserController extends Controller
             return;
         }
 
+        $user = $this->userModel->findById($userId);
         if ($this->userModel->updateRole($userId, $role)) {
+            $userName = $user['name'] ?? "User #{$userId}";
+            AuditLog::record('Users', 'UPDATE', "Updated role for {$userName} to " . strtoupper($role), $userId, $userName, ['role' => $user['role'] ?? ''], ['role' => $role]);
             $this->setFlash('success', 'User role updated successfully.');
         } else {
             $this->setFlash('danger', 'Failed to update user role.');
@@ -170,6 +180,7 @@ class UserController extends Controller
 
         if ($this->userModel->updatePassword($userId, $newPassword)) {
             $this->userModel->setForcePasswordChange($userId);
+            AuditLog::record('Users', 'UPDATE', "Reset password for user: {$user['name']} ({$user['username']})", $userId, $user['name']);
             $this->setFlash('success', 'Password for <strong>' . htmlspecialchars($user['name']) . '</strong> has been reset successfully.');
         } else {
             $this->setFlash('danger', 'Failed to reset password.');
@@ -200,8 +211,11 @@ class UserController extends Controller
             return;
         }
 
+        $user = $this->userModel->findById($userId);
         // H2: Use the User model's delete() method instead of inlining raw SQL.
         if ($this->userModel->delete($userId)) {
+            $userName = $user['name'] ?? "User #{$userId}";
+            AuditLog::record('Users', 'DELETE', "Deleted user account: {$userName} (" . ($user['username'] ?? '') . ")", $userId, $userName, $user ?: null, null);
             $this->setFlash('success', 'User deleted successfully.');
         } else {
             $this->setFlash('danger', 'Failed to delete user.');

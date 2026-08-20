@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\User;
+use App\Models\AuditLog;
 
 /**
  * AuthController handles authentication, including login, registration, password resets, and logout.
@@ -104,6 +105,8 @@ class AuthController extends Controller
         $_SESSION['user_role'] = $user['role'];
         $_SESSION['username']  = $user['username'];
 
+        AuditLog::record('Auth', 'LOGIN', "User logged in: {$user['name']} ({$user['username']})", $user['user_id'], $user['name']);
+
         // Force password change on first login
         if (!empty($user['force_password_change'])) {
             $_SESSION['force_password_change'] = true;
@@ -135,6 +138,10 @@ class AuthController extends Controller
      */
     public function logout(): void
     {
+        if (isset($_SESSION['user_id'])) {
+            AuditLog::record('Auth', 'LOGOUT', "User logged out: " . ($_SESSION['user_name'] ?? 'User'), $_SESSION['user_id'], $_SESSION['user_name'] ?? null);
+        }
+
         // Clear session
         $_SESSION = [];
 

@@ -95,6 +95,10 @@ class App
         // ── Profile ──
         $this->router->get('/profile',         'ProfileController', 'index');
         $this->router->post('/profile/update', 'ProfileController', 'update');
+
+        // ── Audit History (Admin) ──
+        $this->router->get('/history',             'HistoryController', 'index');
+        $this->router->get('/history/detail/{id}', 'HistoryController', 'apiDetail');
     }
 
     /**

@@ -295,6 +295,30 @@ CREATE TABLE IF NOT EXISTS `honorarium_payments` (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================
+-- 11. AUDIT_LOGS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+    `id`            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `user_id`       INT NULL,
+    `user_name`     VARCHAR(150) NULL,
+    `action`        VARCHAR(50) NOT NULL,
+    `module`        VARCHAR(50) NOT NULL,
+    `entity_id`     INT NULL,
+    `entity_name`   VARCHAR(255) NULL,
+    `description`   TEXT NOT NULL,
+    `old_values`    LONGTEXT NULL,
+    `new_values`    LONGTEXT NULL,
+    `ip_address`    VARCHAR(45) NULL,
+    `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX `idx_audit_module` (`module`),
+    INDEX `idx_audit_action` (`action`),
+    INDEX `idx_audit_created_at` (`created_at`),
+    INDEX `idx_audit_user` (`user_id`),
+    INDEX `idx_audit_entity` (`entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 COMMIT;
 

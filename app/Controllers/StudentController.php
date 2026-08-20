@@ -12,6 +12,7 @@ use App\Models\Graduation;
 use App\Models\Remark;
 use App\Models\Chairperson;
 use App\Models\HonorariumPayment;
+use App\Models\AuditLog;
 
 class StudentController extends Controller
 {
@@ -232,6 +233,20 @@ class StudentController extends Controller
         // 6. Sync Research Status automatically
         $this->syncStudentResearchStatus($studentId, $_POST);
 
+        // Audit Log
+        $studentName = trim($this->input('name'));
+        AuditLog::record('Students', 'CREATE', "Added new student: {$studentName} ({$matricNo})", $studentId, $studentName, null, [
+            'matric_no'       => $matricNo,
+            'name'            => $studentName,
+            'programme'       => $programme,
+            'school'          => $school,
+            'degree_level'    => $this->input('degree_level'),
+            'cohort'          => trim($this->input('cohort')),
+            'its_receipt_date'=> $this->input('its_receipt_date'),
+            'thesis_title'    => strtoupper(trim($this->input('thesis_title'))),
+            'research_status' => $researchStatus
+        ]);
+
         $this->setFlash('success', 'Student <strong>' . htmlspecialchars(trim($this->input('name'))) . '</strong> added successfully.');
         $this->redirect($this->baseUrl() . '/student/' . $studentId . '?created=1');
     }
@@ -358,6 +373,9 @@ class StudentController extends Controller
 
         $researchStatus = trim($this->input('research_status', 'Thesis Submitted'));
 
+        // Fetch original state before update
+        $oldStudent = $this->studentModel->findById($studentId);
+
         // 1. Update Student
         $this->studentModel->update($studentId, [
             'matric_no'       => $matricNo,
@@ -441,6 +459,11 @@ class StudentController extends Controller
         // Sync Research Status automatically
         $this->syncStudentResearchStatus($studentId, $_POST);
 
+        // Audit Log
+        $newStudent = $this->studentModel->findById($studentId);
+        $studentName = $newStudent['name'] ?? trim($this->input('name'));
+        AuditLog::record('Students', 'UPDATE', "Updated student: {$studentName} ({$matricNo})", $studentId, $studentName, $oldStudent ?: null, $newStudent ?: null);
+
         $this->setFlash('success', 'Student updated successfully.');
         $this->redirect($this->baseUrl() . '/student/' . $studentId);
     }
@@ -458,7 +481,13 @@ class StudentController extends Controller
             return;
         }
 
+        $student = $this->studentModel->findById((int)$id);
         $this->studentModel->delete((int)$id);
+
+        if ($student) {
+            AuditLog::record('Students', 'DELETE', "Deleted student: {$student['name']} ({$student['matric_no']})", (int)$id, $student['name'], $student, null);
+        }
+
         $this->setFlash('success', 'Student deleted successfully.');
         $this->redirect($this->baseUrl() . '/students/manage');
     }
@@ -492,6 +521,8 @@ class StudentController extends Controller
         }
 
         $count = $this->studentModel->deleteMultiple($ids);
+        AuditLog::record('Students', 'DELETE', "Bulk deleted {$count} student record(s) [IDs: " . implode(', ', $ids) . "]", null, "Bulk Delete", null, ['deleted_ids' => $ids, 'count' => $count]);
+
         $this->setFlash('success', "Successfully deleted {$count} student(s).");
         $this->redirect($this->baseUrl() . '/students/manage');
     }
@@ -577,6 +608,12 @@ class StudentController extends Controller
             'file_size'   => $fileData['file_size']
         ]);
 
+        AuditLog::record('Students', 'CREATE', "Added remark to student: {$student['name']}", $studentId, $student['name'], null, [
+            'author'      => $authorName,
+            'remark_text' => $remarkText,
+            'file_name'   => $fileData['file_name']
+        ]);
+
         $this->setFlash('success', 'Remark added successfully.');
         $this->redirect($this->baseUrl() . $redirectUrl);
     }
@@ -591,6 +628,7 @@ class StudentController extends Controller
         $studentId = (int)$id;
         $remId = (int)$remarkId;
 
+        $student = $this->studentModel->findById($studentId);
         $remark = $this->remarkModel->getById($remId);
         if ($remark && $remark['student_id'] == $studentId) {
             if (!empty($remark['file_path'])) {
@@ -600,6 +638,10 @@ class StudentController extends Controller
                 }
             }
             $this->remarkModel->delete($remId);
+
+            $studentName = $student['name'] ?? "Student #{$studentId}";
+            AuditLog::record('Students', 'DELETE', "Deleted remark from student: {$studentName}", $studentId, $studentName, $remark, null);
+
             $this->setFlash('success', 'Remark deleted successfully.');
         } else {
             $this->setFlash('danger', 'Remark not found.');

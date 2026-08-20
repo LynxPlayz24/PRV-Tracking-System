@@ -72,6 +72,10 @@ $current = $currentPage ?? '';
             <i class="bi bi-person-video3"></i>
             <span>Academic Staff</span>
         </a>
+        <a href="<?= $baseUrl ?>/history" class="nav-link <?= $current === 'history' ? 'active' : '' ?>">
+            <i class="bi bi-clock-history"></i>
+            <span>Audit History</span>
+        </a>
     </div>
 
     <?php else: ?>
