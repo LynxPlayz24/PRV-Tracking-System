@@ -59,6 +59,7 @@ class HistoryController extends Controller
             'stats'         => $stats,
             'modules'       => $modules,
             'actions'       => $actions,
+            'baseUrl'       => rtrim($_ENV['APP_URL'] ?? '', '/'),
         ];
 
         $this->view('layouts.header', $data);
