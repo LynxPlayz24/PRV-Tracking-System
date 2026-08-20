@@ -60,6 +60,7 @@ class HistoryController extends Controller
             'modules'       => $modules,
             'actions'       => $actions,
             'baseUrl'       => rtrim($_ENV['APP_URL'] ?? '', '/'),
+            'extraScripts'  => ['history-filter.js'],
         ];
 
         $this->view('layouts.header', $data);
