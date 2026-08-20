@@ -48,6 +48,10 @@ $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
                     if (instance.altInput) {
                         instance.altInput.setAttribute('placeholder', 'dd/mm/yyyy');
                     }
+                },
+                onChange: function(selectedDates, dateStr, instance) {
+                    // Dispatch native change so any JS listening to input[type=date] fires
+                    instance.element.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             });
         });
